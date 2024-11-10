@@ -1,14 +1,28 @@
 # Ausschließen von Traffic-Daten
 traffic_data/
 
+# Ausschließen von Ergebnissen und temporären Dateien
+traffic_analysis/nfstream_results/
+*.csv
+*.log
+
 # Ausschließen von virtuellen Umgebungen, falls notwendig
 .venv/
 myenv/
 
 # Ausschließen von PyCharm-spezifischen Dateien
 .idea/
+*.iml
 
 # Ausschließen von Python-Bytecode-Dateien
 __pycache__/
 *.pyc
 *.pyo
+
+# Ausschließen von Jupyter Notebook-Checkpoints, falls du Notebooks verwendest
+.ipynb_checkpoints/
+
+# Ausschließen von temporären und Systemdateien
+*.swp
+.DS_Store
+Thumbs.db

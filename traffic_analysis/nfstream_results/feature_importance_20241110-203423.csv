@@ -1,8 +1,0 @@
-feature,importance
-dst2src_bytes_per_second,0.26332343572760786
-dst2src_packets_per_second,0.21539463166044095
-src2dst_packets_per_second,0.20369412331888484
-src2dst_bytes_per_second,0.11835836336434916
-bytes_per_second,0.08297686991633682
-duration_seconds,0.08213451231011415
-packets_per_second,0.03411806370226626
