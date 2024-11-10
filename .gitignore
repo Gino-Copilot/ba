@@ -1,0 +1,14 @@
+# Ausschließen von Traffic-Daten
+traffic_data/
+
+# Ausschließen von virtuellen Umgebungen, falls notwendig
+.venv/
+myenv/
+
+# Ausschließen von PyCharm-spezifischen Dateien
+.idea/
+
+# Ausschließen von Python-Bytecode-Dateien
+__pycache__/
+*.pyc
+*.pyo
