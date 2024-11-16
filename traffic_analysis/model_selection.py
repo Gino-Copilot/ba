@@ -24,7 +24,11 @@ MODELS = {
     "Stochastic Gradient Descent": SGDClassifier(max_iter=1000, tol=1e-3),
     "Decision Tree": DecisionTreeClassifier(random_state=42),
     "Naive Bayes": GaussianNB(),
-    "AdaBoost": AdaBoostClassifier(n_estimators=100, random_state=42)
+    "AdaBoost": AdaBoostClassifier(
+        n_estimators=100,
+        random_state=42,
+        algorithm='SAMME'  # Explizit SAMME statt SAMME.R verwenden
+    )
 }
 
 def get_model(name):

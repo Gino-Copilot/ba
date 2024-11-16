@@ -22,10 +22,11 @@ def main():
             classifier.train(df)
             classifier.save_results(df)
 
-        print(f"Analyse abgeschlossen in {time.time() - start_time:.2f} Sekunden")
+        print(f"\nAnalyse abgeschlossen in {time.time() - start_time:.2f} Sekunden")
+        print("\nErgebnisse wurden in den Verzeichnissen 'analysis_results' und 'nfstream_results' gespeichert.")
 
     except Exception as e:
-        print(f"Ein Fehler ist aufgetreten: {str(e)}")
+        print(f"Fehler aufgetreten: {str(e)}")
         sys.exit(1)
 
 

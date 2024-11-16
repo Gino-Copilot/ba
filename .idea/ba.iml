@@ -4,6 +4,9 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/traffic_data" />
+      <excludeFolder url="file://$MODULE_DIR$/tests/mock_pcap_files" />
+      <excludeFolder url="file://$MODULE_DIR$/traffic_analysis/analysis_results" />
+      <excludeFolder url="file://$MODULE_DIR$/traffic_analysis/nfstream_results" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

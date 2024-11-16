@@ -3,26 +3,73 @@ traffic_data/
 
 # Ausschließen von Ergebnissen und temporären Dateien
 traffic_analysis/nfstream_results/
+analysis_results/
+nfstream_results/
+results/
 *.csv
 *.log
+*.png  # für die generierten Plots
+*.pdf  # falls Plots auch als PDF exportiert werden
+*.svg  # falls Plots auch als SVG exportiert werden
 
-# Ausschließen von virtuellen Umgebungen, falls notwendig
+# Ausschließen von Mock-PCAP-Dateien für Tests
+tests/mock_pcap_files/
+
+# Python virtuelle Umgebungen
 .venv/
 myenv/
+venv/
+env/
+.env/
 
-# Ausschließen von PyCharm-spezifischen Dateien
+# IDE-spezifische Dateien
 .idea/
 *.iml
+.vscode/
+*.code-workspace
 
-# Ausschließen von Python-Bytecode-Dateien
+# Python-Bytecode-Dateien
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
+*.so
 
-# Ausschließen von Jupyter Notebook-Checkpoints, falls du Notebooks verwendest
+# Jupyter Notebook
 .ipynb_checkpoints/
 
-# Ausschließen von temporären und Systemdateien
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Unittest / Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# System-spezifische Dateien
 *.swp
 .DS_Store
 Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
