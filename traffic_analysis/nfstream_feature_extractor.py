@@ -2,10 +2,13 @@ import nfstream
 import pandas as pd
 import numpy as np
 import os
+from scipy.stats import entropy
+import math
 
 
 class NFStreamFeatureExtractor:
-    def __init__(self):
+    def __init__(self, use_entropy=False):
+        self.use_entropy = use_entropy
         self.exclude_features = {
             'src_ip', 'dst_ip', 'src_mac', 'dst_mac',
             'src_port', 'dst_port', 'protocol', 'ip_version',
@@ -15,6 +18,44 @@ class NFStreamFeatureExtractor:
             'client_fingerprint', 'server_fingerprint'
         }
 
+    def calculate_byte_entropy(self, data):
+        """Berechnet die Shannon-Entropie der Bytes"""
+        if not data:
+            return 0
+
+        # Zähle die Häufigkeit jedes Bytes
+        byte_counts = {}
+        for byte in data:
+            byte_counts[byte] = byte_counts.get(byte, 0) + 1
+
+        # Berechne die Entropie
+        total_bytes = len(data)
+        probabilities = [count / total_bytes for count in byte_counts.values()]
+        return entropy(probabilities, base=2)
+
+    def calculate_entropy_features(self, flow):
+        """Berechnet verschiedene Entropie-basierte Features"""
+        entropy_features = {}
+
+        if hasattr(flow, 'payload_bytes') and flow.payload_bytes:
+            # Gesamte Payload-Entropie
+            entropy_features['payload_entropy'] = self.calculate_byte_entropy(flow.payload_bytes)
+
+            # Getrennte Entropie für die ersten n Bytes
+            first_n_bytes = 64  # Anzahl der zu analysierenden Bytes
+            if len(flow.payload_bytes) >= first_n_bytes:
+                entropy_features['first_bytes_entropy'] = self.calculate_byte_entropy(
+                    flow.payload_bytes[:first_n_bytes]
+                )
+
+            # Entropie der Paketgrößenverteilung
+            if hasattr(flow, 'packet_lengths'):
+                entropy_features['packet_length_entropy'] = self.calculate_byte_entropy(
+                    bytes(flow.packet_lengths)
+                )
+
+        return entropy_features
+
     def _extract_flow_features(self, flow):
         flow_features = {}
         if flow.bidirectional_packets < 5:
@@ -22,63 +63,24 @@ class NFStreamFeatureExtractor:
 
         duration_sec = flow.bidirectional_duration_ms / 1000 if flow.bidirectional_duration_ms > 0 else 0
         if duration_sec > 0:
-            # Basis-Zeitfeatures
+            # Basis-Features
             flow_features.update({
                 'duration_seconds': duration_sec,
-
-                # Paket-basierte Features
                 'packets_per_second': flow.bidirectional_packets / duration_sec,
+                'bytes_per_second': flow.bidirectional_bytes / duration_sec,
                 'src2dst_packets_per_second': flow.src2dst_packets / duration_sec,
                 'dst2src_packets_per_second': flow.dst2src_packets / duration_sec,
-                'packet_ratio': flow.src2dst_packets / (flow.dst2src_packets + 1),
-                'packet_size_avg': flow.bidirectional_bytes / (flow.bidirectional_packets + 1),
-
-                # Byte-basierte Features
-                'bytes_per_second': flow.bidirectional_bytes / duration_sec,
                 'src2dst_bytes_per_second': flow.src2dst_bytes / duration_sec,
                 'dst2src_bytes_per_second': flow.dst2src_bytes / duration_sec,
-                'byte_ratio': flow.src2dst_bytes / (flow.dst2src_bytes + 1),
-
-                # Statistische Features
-                'iat_avg': flow.bidirectional_duration_ms / (flow.bidirectional_packets + 1),
-                'src2dst_iat_avg': flow.src2dst_duration_ms / (flow.src2dst_packets + 1),
-                'dst2src_iat_avg': flow.dst2src_duration_ms / (flow.dst2src_packets + 1),
+                'packet_size_avg': flow.bidirectional_bytes / flow.bidirectional_packets,
+                'packet_ratio': flow.src2dst_packets / max(flow.dst2src_packets, 1),
+                'byte_ratio': flow.src2dst_bytes / max(flow.dst2src_bytes, 1)
             })
 
-            # Erweiterte Features (mit Verfügbarkeitsprüfung)
-            if hasattr(flow, 'bidirectional_min_piat_ms') and hasattr(flow, 'bidirectional_max_piat_ms'):
-                flow_features.update({
-                    'min_iat_ms': flow.bidirectional_min_piat_ms,
-                    'max_iat_ms': flow.bidirectional_max_piat_ms,
-                })
-
-            # TCP-spezifische Features
-            if hasattr(flow, 'src2dst_tcp_flags') and hasattr(flow, 'dst2src_tcp_flags'):
-                flow_features.update({
-                    'tcp_flags_ratio': flow.src2dst_tcp_flags / (flow.dst2src_tcp_flags + 1),
-                })
-
-            # Burst Features (falls verfügbar)
-            if all(hasattr(flow, attr) for attr in ['src2dst_burst_packets', 'dst2src_burst_packets',
-                                                    'src2dst_burst_bytes', 'dst2src_burst_bytes']):
-                flow_features.update({
-                    'burst_packets_ratio': flow.src2dst_burst_packets / (flow.dst2src_burst_packets + 1),
-                    'burst_bytes_ratio': flow.src2dst_burst_bytes / (flow.dst2src_burst_bytes + 1),
-                })
-
-            # TLS-spezifische Features (optional)
-            if hasattr(flow, 'tls_version'):
-                flow_features.update({
-                    'tls_sni_length': len(flow.requested_server_name) if flow.requested_server_name else 0,
-                })
-                if hasattr(flow, 'tls_client_hello_length'):
-                    flow_features.update({
-                        'tls_client_hello_length': flow.tls_client_hello_length
-                    })
-                if hasattr(flow, 'tls_server_hello_length'):
-                    flow_features.update({
-                        'tls_server_hello_length': flow.tls_server_hello_length
-                    })
+            # Entropie-Features hinzufügen wenn aktiviert
+            if self.use_entropy:
+                entropy_features = self.calculate_entropy_features(flow)
+                flow_features.update(entropy_features)
 
         return flow_features
 
@@ -106,7 +108,6 @@ class NFStreamFeatureExtractor:
                     for flow in streamer:
                         flow_features = self._extract_flow_features(flow)
                         if flow_features:
-                            # Stelle sicher, dass das Label korrekt hinzugefügt wird
                             flow_features['label'] = label
                             flows_data.append(flow_features)
 
@@ -114,7 +115,6 @@ class NFStreamFeatureExtractor:
                     print(f"Fehler bei der Verarbeitung von {filename}: {str(e)}")
                     continue
 
-        # Überprüfe, ob Daten extrahiert wurden
         if not flows_data:
             print("Warnung: Keine Daten extrahiert. Bitte überprüfen Sie die PCAP-Dateien im Verzeichnis:", pcap_dir)
 
@@ -133,7 +133,6 @@ class NFStreamFeatureExtractor:
         df = df.replace([np.inf, -np.inf], np.nan)
         df = df.dropna()
 
-        # Debug-Ausgabe, um sicherzustellen, dass die Spalte 'label' vorhanden ist
         if 'label' not in df.columns:
             print("Fehler: Die Spalte 'label' fehlt im kombinierten DataFrame!")
         else:
@@ -145,7 +144,6 @@ class NFStreamFeatureExtractor:
         print(f"Normal Flows: {len(df[df['label'] == 'normal'])}")
         print(f"Anzahl Features: {len(df.columns) - 1}")
 
-        # Zusätzliche Feature-Statistiken
         print("\nVerfügbare Features:")
         for column in sorted(df.columns):
             if column != 'label':

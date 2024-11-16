@@ -24,6 +24,7 @@ env/
 
 # IDE-spezifische Dateien
 .idea/
+.idea/workspace.xml
 *.iml
 .vscode/
 *.code-workspace
@@ -73,3 +74,5 @@ coverage.xml
 Thumbs.db
 desktop.ini
 $RECYCLE.BIN/
+/traffic_analysis/feature_correlations.png
+/traffic_analysis/feature_distributions.png

@@ -3,6 +3,7 @@ import sys
 from traffic_analysis.nfstream_feature_extractor import NFStreamFeatureExtractor
 from traffic_analysis.sklearn_classifier import ScikitLearnTrafficClassifier
 from traffic_analysis.model_selection import MODELS
+from traffic_analysis.feature_analyzer import FeatureAnalyzer  # Neue Import-Zeile
 
 
 def main():
@@ -15,7 +16,15 @@ def main():
         extractor = NFStreamFeatureExtractor()
         df = extractor.prepare_dataset(proxy_dir, normal_dir)
 
-        # Teste jedes Modell
+        # Feature-Analyse durchführen
+        print("\nStarte Feature-Analyse...")
+        analyzer = FeatureAnalyzer()
+        analysis_results = analyzer.analyze_features(df)
+
+        # Optional: Detaillierte Feature-Beitragsanalyse
+        contribution_results = analyzer.analyze_feature_contribution(df)
+
+        # Modell-Training wie gehabt
         for model_name, model in MODELS.items():
             print(f"\n===== Testing {model_name} =====")
             classifier = ScikitLearnTrafficClassifier(model)

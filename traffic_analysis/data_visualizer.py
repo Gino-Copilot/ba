@@ -81,3 +81,18 @@ class DataVisualizer:
             plt.xlabel('Predicted Label')
             plt.tight_layout()
             plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+
+    def plot_model_comparison(self, results, output_dir, timestamp):
+        """Plot model comparison"""
+        accuracies = {name: data['accuracy'] for name, data in results.items()}
+
+        plot_path = os.path.join(output_dir, f'model_comparison_{timestamp}.png')
+
+        with self.plot_context(figsize=(10, 6)) as fig:
+            plt.bar(accuracies.keys(), accuracies.values())
+            plt.xticks(rotation=45, ha='right')
+            plt.title('Model Performance Comparison')
+            plt.ylabel('Accuracy')
+            plt.ylim(0, 1)
+            plt.tight_layout()
+            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
