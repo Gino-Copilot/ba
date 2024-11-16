@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shadowsocks-detection"
+version = "0.1.0"
+description = "Traffic Analysis Tool für Proxy (shadowsocks) Detection"
+authors = [
+    { name = "Gino Peduto", email = "peduto@stud.uni.heidelberg.de" },
+]
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "nfstream",
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "xgboost",
+    "matplotlib",
+    "seaborn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "flake8",
+    "black",
+    "mypy",
+]
+capture = [
+    "scapy",
+]
+
+[project.scripts]
+traffic-analysis = "traffic_analysis.main:main"
+traffic-capture = "traffic_capture.tcpdump_recorder:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=traffic_analysis"
+
+[tool.black]
+line-length = 88
+target-version = ["py38"]
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["traffic_analysis", "traffic_capture"]

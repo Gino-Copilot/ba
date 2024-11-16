@@ -19,17 +19,67 @@ class NFStreamFeatureExtractor:
         flow_features = {}
         if flow.bidirectional_packets < 5:
             return None
+
         duration_sec = flow.bidirectional_duration_ms / 1000 if flow.bidirectional_duration_ms > 0 else 0
         if duration_sec > 0:
+            # Basis-Zeitfeatures
             flow_features.update({
                 'duration_seconds': duration_sec,
+
+                # Paket-basierte Features
                 'packets_per_second': flow.bidirectional_packets / duration_sec,
-                'bytes_per_second': flow.bidirectional_bytes / duration_sec,
                 'src2dst_packets_per_second': flow.src2dst_packets / duration_sec,
                 'dst2src_packets_per_second': flow.dst2src_packets / duration_sec,
+                'packet_ratio': flow.src2dst_packets / (flow.dst2src_packets + 1),
+                'packet_size_avg': flow.bidirectional_bytes / (flow.bidirectional_packets + 1),
+
+                # Byte-basierte Features
+                'bytes_per_second': flow.bidirectional_bytes / duration_sec,
                 'src2dst_bytes_per_second': flow.src2dst_bytes / duration_sec,
-                'dst2src_bytes_per_second': flow.dst2src_bytes / duration_sec
+                'dst2src_bytes_per_second': flow.dst2src_bytes / duration_sec,
+                'byte_ratio': flow.src2dst_bytes / (flow.dst2src_bytes + 1),
+
+                # Statistische Features
+                'iat_avg': flow.bidirectional_duration_ms / (flow.bidirectional_packets + 1),
+                'src2dst_iat_avg': flow.src2dst_duration_ms / (flow.src2dst_packets + 1),
+                'dst2src_iat_avg': flow.dst2src_duration_ms / (flow.dst2src_packets + 1),
             })
+
+            # Erweiterte Features (mit Verfügbarkeitsprüfung)
+            if hasattr(flow, 'bidirectional_min_piat_ms') and hasattr(flow, 'bidirectional_max_piat_ms'):
+                flow_features.update({
+                    'min_iat_ms': flow.bidirectional_min_piat_ms,
+                    'max_iat_ms': flow.bidirectional_max_piat_ms,
+                })
+
+            # TCP-spezifische Features
+            if hasattr(flow, 'src2dst_tcp_flags') and hasattr(flow, 'dst2src_tcp_flags'):
+                flow_features.update({
+                    'tcp_flags_ratio': flow.src2dst_tcp_flags / (flow.dst2src_tcp_flags + 1),
+                })
+
+            # Burst Features (falls verfügbar)
+            if all(hasattr(flow, attr) for attr in ['src2dst_burst_packets', 'dst2src_burst_packets',
+                                                    'src2dst_burst_bytes', 'dst2src_burst_bytes']):
+                flow_features.update({
+                    'burst_packets_ratio': flow.src2dst_burst_packets / (flow.dst2src_burst_packets + 1),
+                    'burst_bytes_ratio': flow.src2dst_burst_bytes / (flow.dst2src_burst_bytes + 1),
+                })
+
+            # TLS-spezifische Features (optional)
+            if hasattr(flow, 'tls_version'):
+                flow_features.update({
+                    'tls_sni_length': len(flow.requested_server_name) if flow.requested_server_name else 0,
+                })
+                if hasattr(flow, 'tls_client_hello_length'):
+                    flow_features.update({
+                        'tls_client_hello_length': flow.tls_client_hello_length
+                    })
+                if hasattr(flow, 'tls_server_hello_length'):
+                    flow_features.update({
+                        'tls_server_hello_length': flow.tls_server_hello_length
+                    })
+
         return flow_features
 
     def extract_features(self, pcap_dir, label):
@@ -94,5 +144,11 @@ class NFStreamFeatureExtractor:
         print(f"Proxy Flows: {len(df[df['label'] == 'proxy'])}")
         print(f"Normal Flows: {len(df[df['label'] == 'normal'])}")
         print(f"Anzahl Features: {len(df.columns) - 1}")
+
+        # Zusätzliche Feature-Statistiken
+        print("\nVerfügbare Features:")
+        for column in sorted(df.columns):
+            if column != 'label':
+                print(f"- {column}")
 
         return df
