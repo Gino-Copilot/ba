@@ -1,0 +1,2451 @@
+.
+├── project_structure.txt
+├── pyproject.toml
+├── README.md
+├── requirements.txt
+├── tests
+│   ├── __init__.py
+│   ├── mock_pcap_files
+│   │   ├── traffic_capture_2024-10-26_22-08-38.pcap
+│   │   ├── traffic_capture_2024-10-27_00-17-23.pcap
+│   │   ├── traffic_capture_2024-11-01_13-03-41.pcap
+│   │   ├── traffic_capture_2024-11-01_21-46-05.pcap
+│   │   └── traffic_capture_2024-11-02_16-37-17.pcap
+│   ├── __pycache__
+│   │   └── test_nfstream_feature_extractor.cpython-311.pyc
+│   └── test_nfstream_feature_extractor.py
+├── traffic_analysis
+│   ├── analysis_results
+│   │   ├── AdaBoostClassifier_20241116-104229
+│   │   │   ├── classification_report_20241116-104229.csv
+│   │   │   ├── confusion_matrix_20241116-104229.png
+│   │   │   ├── feature_importance_20241116-104229.csv
+│   │   │   ├── feature_importance_20241116-104229.png
+│   │   │   ├── roc_curve_20241116-104229.png
+│   │   │   └── temporal_correlation_20241116-104229.csv
+│   │   ├── AdaBoostClassifier_20241116-105249
+│   │   │   ├── classification_report_20241116-105249.csv
+│   │   │   ├── confusion_matrix_20241116-105249.png
+│   │   │   ├── feature_importance_20241116-105249.png
+│   │   │   ├── roc_curve_20241116-105249.png
+│   │   │   └── temporal_correlation_20241116-105249.csv
+│   │   ├── AdaBoostClassifier_20241116-110934
+│   │   │   ├── classification_report_20241116-110934.csv
+│   │   │   ├── confusion_matrix_20241116-110934.png
+│   │   │   ├── feature_importance_20241116-110934.png
+│   │   │   ├── roc_curve_20241116-110934.png
+│   │   │   └── temporal_correlation_20241116-110934.csv
+│   │   ├── AdaBoostClassifier_20241116-111010
+│   │   │   ├── classification_report_20241116-111010.csv
+│   │   │   ├── confusion_matrix_20241116-111010.png
+│   │   │   ├── feature_importance_20241116-111010.png
+│   │   │   ├── roc_curve_20241116-111010.png
+│   │   │   └── temporal_correlation_20241116-111010.csv
+│   │   ├── AdaBoostClassifier_20241116-111636
+│   │   │   ├── classification_report_20241116-111636.csv
+│   │   │   ├── confusion_matrix_20241116-111636.png
+│   │   │   ├── feature_importance_20241116-111636.png
+│   │   │   ├── roc_curve_20241116-111636.png
+│   │   │   └── temporal_correlation_20241116-111636.csv
+│   │   ├── AdaBoostClassifier_20241116-111713
+│   │   │   ├── classification_report_20241116-111713.csv
+│   │   │   ├── confusion_matrix_20241116-111713.png
+│   │   │   ├── feature_importance_20241116-111713.png
+│   │   │   ├── roc_curve_20241116-111713.png
+│   │   │   └── temporal_correlation_20241116-111713.csv
+│   │   ├── AdaBoostClassifier_20241116-113615
+│   │   │   ├── classification_report_20241116-113615.csv
+│   │   │   ├── confusion_matrix_20241116-113615.png
+│   │   │   ├── feature_importance_20241116-113615.png
+│   │   │   ├── roc_curve_20241116-113615.png
+│   │   │   └── temporal_correlation_20241116-113615.csv
+│   │   ├── AdaBoostClassifier_20241116-115047
+│   │   │   ├── classification_report_20241116-115047.csv
+│   │   │   ├── confusion_matrix_20241116-115047.png
+│   │   │   ├── feature_importance_20241116-115047.png
+│   │   │   ├── roc_curve_20241116-115047.png
+│   │   │   └── temporal_correlation_20241116-115047.csv
+│   │   ├── AdaBoostClassifier_20241116-124319
+│   │   │   ├── classification_report_20241116-124319.csv
+│   │   │   ├── confusion_matrix_20241116-124319.png
+│   │   │   ├── feature_importance_20241116-124319.png
+│   │   │   ├── roc_curve_20241116-124319.png
+│   │   │   └── temporal_correlation_20241116-124319.csv
+│   │   ├── AdaBoostClassifier_20241116-141004
+│   │   │   ├── classification_report_20241116-141004.csv
+│   │   │   ├── confusion_matrix_20241116-141004.png
+│   │   │   ├── feature_importance_20241116-141004.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-141004.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-141004.csv
+│   │   ├── AdaBoostClassifier_20241118-090105
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-090105.csv
+│   │   │   ├── confusion_matrix_20241118-090105.png
+│   │   │   ├── feature_importance_20241118-090105.png
+│   │   │   ├── roc_curve_20241118-090105.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-090105.csv
+│   │   ├── AdaBoostClassifier_20241118-092237
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-092237.csv
+│   │   │   ├── confusion_matrix_20241118-092237.png
+│   │   │   ├── feature_importance_20241118-092237.png
+│   │   │   ├── roc_curve_20241118-092237.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092237.csv
+│   │   ├── AdaBoostClassifier_20241118-093235
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-093235.csv
+│   │   │   ├── confusion_matrix_20241118-093235.png
+│   │   │   ├── feature_importance_20241118-093235.png
+│   │   │   ├── roc_curve_20241118-093235.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093235.csv
+│   │   ├── AdaBoostClassifier_20241118-095855
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-095855.csv
+│   │   │   ├── confusion_matrix_20241118-095855.png
+│   │   │   ├── feature_importance_20241118-095855.png
+│   │   │   ├── roc_curve_20241118-095855.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095855.csv
+│   │   ├── DecisionTreeClassifier_20241116-104228
+│   │   │   ├── classification_report_20241116-104228.csv
+│   │   │   ├── confusion_matrix_20241116-104228.png
+│   │   │   ├── feature_importance_20241116-104228.csv
+│   │   │   ├── feature_importance_20241116-104228.png
+│   │   │   ├── roc_curve_20241116-104228.png
+│   │   │   └── temporal_correlation_20241116-104228.csv
+│   │   ├── DecisionTreeClassifier_20241116-105248
+│   │   │   ├── classification_report_20241116-105248.csv
+│   │   │   ├── confusion_matrix_20241116-105248.png
+│   │   │   ├── feature_importance_20241116-105248.png
+│   │   │   ├── roc_curve_20241116-105248.png
+│   │   │   └── temporal_correlation_20241116-105248.csv
+│   │   ├── DecisionTreeClassifier_20241116-110933
+│   │   │   ├── classification_report_20241116-110933.csv
+│   │   │   ├── confusion_matrix_20241116-110933.png
+│   │   │   ├── feature_importance_20241116-110933.png
+│   │   │   ├── roc_curve_20241116-110933.png
+│   │   │   └── temporal_correlation_20241116-110933.csv
+│   │   ├── DecisionTreeClassifier_20241116-111009
+│   │   │   ├── classification_report_20241116-111009.csv
+│   │   │   ├── confusion_matrix_20241116-111009.png
+│   │   │   ├── feature_importance_20241116-111009.png
+│   │   │   ├── roc_curve_20241116-111009.png
+│   │   │   └── temporal_correlation_20241116-111009.csv
+│   │   ├── DecisionTreeClassifier_20241116-111635
+│   │   │   ├── classification_report_20241116-111635.csv
+│   │   │   ├── confusion_matrix_20241116-111635.png
+│   │   │   ├── feature_importance_20241116-111635.png
+│   │   │   ├── roc_curve_20241116-111635.png
+│   │   │   └── temporal_correlation_20241116-111635.csv
+│   │   ├── DecisionTreeClassifier_20241116-111711
+│   │   │   ├── classification_report_20241116-111711.csv
+│   │   │   ├── confusion_matrix_20241116-111711.png
+│   │   │   ├── feature_importance_20241116-111711.png
+│   │   │   ├── roc_curve_20241116-111711.png
+│   │   │   └── temporal_correlation_20241116-111711.csv
+│   │   ├── DecisionTreeClassifier_20241116-113614
+│   │   │   ├── classification_report_20241116-113614.csv
+│   │   │   ├── confusion_matrix_20241116-113614.png
+│   │   │   ├── feature_importance_20241116-113614.png
+│   │   │   ├── roc_curve_20241116-113614.png
+│   │   │   └── temporal_correlation_20241116-113614.csv
+│   │   ├── DecisionTreeClassifier_20241116-115046
+│   │   │   ├── classification_report_20241116-115046.csv
+│   │   │   ├── confusion_matrix_20241116-115046.png
+│   │   │   ├── feature_importance_20241116-115046.png
+│   │   │   ├── roc_curve_20241116-115046.png
+│   │   │   └── temporal_correlation_20241116-115046.csv
+│   │   ├── DecisionTreeClassifier_20241116-124318
+│   │   │   ├── classification_report_20241116-124318.csv
+│   │   │   ├── confusion_matrix_20241116-124318.png
+│   │   │   ├── feature_importance_20241116-124318.png
+│   │   │   ├── roc_curve_20241116-124318.png
+│   │   │   └── temporal_correlation_20241116-124318.csv
+│   │   ├── DecisionTreeClassifier_20241116-140807
+│   │   │   ├── classification_report_20241116-140807.csv
+│   │   │   ├── confusion_matrix_20241116-140807.png
+│   │   │   ├── feature_importance_20241116-140807.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-140807.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-140807.csv
+│   │   ├── DecisionTreeClassifier_20241118-090052
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-090052.csv
+│   │   │   ├── confusion_matrix_20241118-090052.png
+│   │   │   ├── feature_importance_20241118-090052.png
+│   │   │   ├── roc_curve_20241118-090052.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-090052.csv
+│   │   ├── DecisionTreeClassifier_20241118-092223
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-092223.csv
+│   │   │   ├── confusion_matrix_20241118-092223.png
+│   │   │   ├── feature_importance_20241118-092223.png
+│   │   │   ├── roc_curve_20241118-092223.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092223.csv
+│   │   ├── DecisionTreeClassifier_20241118-093222
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-093222.csv
+│   │   │   ├── confusion_matrix_20241118-093222.png
+│   │   │   ├── feature_importance_20241118-093222.png
+│   │   │   ├── roc_curve_20241118-093222.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093222.csv
+│   │   ├── DecisionTreeClassifier_20241118-095842
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-095842.csv
+│   │   │   ├── confusion_matrix_20241118-095842.png
+│   │   │   ├── feature_importance_20241118-095842.png
+│   │   │   ├── roc_curve_20241118-095842.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095842.csv
+│   │   ├── feature_importance_AdaBoostClassifier_20241116-091831.png
+│   │   ├── feature_importance_AdaBoostClassifier_20241116-093532.png
+│   │   ├── feature_importance_AdaBoostClassifier_20241116-100058.png
+│   │   ├── feature_importance_DecisionTreeClassifier_20241116-091830.png
+│   │   ├── feature_importance_DecisionTreeClassifier_20241116-093531.png
+│   │   ├── feature_importance_DecisionTreeClassifier_20241116-100057.png
+│   │   ├── feature_importance_GradientBoostingClassifier_20241116-091829.png
+│   │   ├── feature_importance_GradientBoostingClassifier_20241116-093530.png
+│   │   ├── feature_importance_GradientBoostingClassifier_20241116-100057.png
+│   │   ├── feature_importance_RandomForestClassifier_20241116-091829.png
+│   │   ├── feature_importance_RandomForestClassifier_20241116-093530.png
+│   │   ├── feature_importance_RandomForestClassifier_20241116-100056.png
+│   │   ├── feature_importance_RandomForestClassifier_20241116-103735.png
+│   │   ├── feature_importance_XGBClassifier_20241116-091830.png
+│   │   ├── feature_importance_XGBClassifier_20241116-093531.png
+│   │   ├── feature_importance_XGBClassifier_20241116-100057.png
+│   │   ├── GaussianNB_20241116-104229
+│   │   │   ├── classification_report_20241116-104229.csv
+│   │   │   ├── confusion_matrix_20241116-104229.png
+│   │   │   ├── roc_curve_20241116-104229.png
+│   │   │   └── temporal_correlation_20241116-104229.csv
+│   │   ├── GaussianNB_20241116-105249
+│   │   │   ├── classification_report_20241116-105249.csv
+│   │   │   ├── confusion_matrix_20241116-105249.png
+│   │   │   ├── roc_curve_20241116-105249.png
+│   │   │   └── temporal_correlation_20241116-105249.csv
+│   │   ├── GaussianNB_20241116-110934
+│   │   │   ├── classification_report_20241116-110934.csv
+│   │   │   ├── confusion_matrix_20241116-110934.png
+│   │   │   ├── roc_curve_20241116-110934.png
+│   │   │   └── temporal_correlation_20241116-110934.csv
+│   │   ├── GaussianNB_20241116-111010
+│   │   │   ├── classification_report_20241116-111010.csv
+│   │   │   ├── confusion_matrix_20241116-111010.png
+│   │   │   ├── roc_curve_20241116-111010.png
+│   │   │   └── temporal_correlation_20241116-111010.csv
+│   │   ├── GaussianNB_20241116-111636
+│   │   │   ├── classification_report_20241116-111636.csv
+│   │   │   ├── confusion_matrix_20241116-111636.png
+│   │   │   ├── roc_curve_20241116-111636.png
+│   │   │   └── temporal_correlation_20241116-111636.csv
+│   │   ├── GaussianNB_20241116-111712
+│   │   │   ├── classification_report_20241116-111712.csv
+│   │   │   ├── confusion_matrix_20241116-111712.png
+│   │   │   ├── roc_curve_20241116-111712.png
+│   │   │   └── temporal_correlation_20241116-111712.csv
+│   │   ├── GaussianNB_20241116-113615
+│   │   │   ├── classification_report_20241116-113615.csv
+│   │   │   ├── confusion_matrix_20241116-113615.png
+│   │   │   ├── roc_curve_20241116-113615.png
+│   │   │   └── temporal_correlation_20241116-113615.csv
+│   │   ├── GaussianNB_20241116-115047
+│   │   │   ├── classification_report_20241116-115047.csv
+│   │   │   ├── confusion_matrix_20241116-115047.png
+│   │   │   ├── roc_curve_20241116-115047.png
+│   │   │   └── temporal_correlation_20241116-115047.csv
+│   │   ├── GaussianNB_20241116-124319
+│   │   │   ├── classification_report_20241116-124319.csv
+│   │   │   ├── confusion_matrix_20241116-124319.png
+│   │   │   ├── roc_curve_20241116-124319.png
+│   │   │   └── temporal_correlation_20241116-124319.csv
+│   │   ├── GaussianNB_20241116-140904
+│   │   │   ├── classification_report_20241116-140904.csv
+│   │   │   ├── confusion_matrix_20241116-140904.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-140904.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-140904.csv
+│   │   ├── GaussianNB_20241118-090059
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-090059.csv
+│   │   │   ├── confusion_matrix_20241118-090059.png
+│   │   │   ├── roc_curve_20241118-090059.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-090059.csv
+│   │   ├── GaussianNB_20241118-092230
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-092230.csv
+│   │   │   ├── confusion_matrix_20241118-092230.png
+│   │   │   ├── roc_curve_20241118-092230.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092230.csv
+│   │   ├── GaussianNB_20241118-093229
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-093229.csv
+│   │   │   ├── confusion_matrix_20241118-093229.png
+│   │   │   ├── roc_curve_20241118-093229.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093229.csv
+│   │   ├── GaussianNB_20241118-095848
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-095848.csv
+│   │   │   ├── confusion_matrix_20241118-095848.png
+│   │   │   ├── roc_curve_20241118-095848.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095848.csv
+│   │   ├── GradientBoostingClassifier_20241116-104221
+│   │   │   ├── classification_report_20241116-104221.csv
+│   │   │   ├── confusion_matrix_20241116-104221.png
+│   │   │   ├── feature_importance_20241116-104221.csv
+│   │   │   ├── feature_importance_20241116-104221.png
+│   │   │   ├── roc_curve_20241116-104221.png
+│   │   │   └── temporal_correlation_20241116-104221.csv
+│   │   ├── GradientBoostingClassifier_20241116-105241
+│   │   │   ├── classification_report_20241116-105241.csv
+│   │   │   ├── confusion_matrix_20241116-105241.png
+│   │   │   ├── feature_importance_20241116-105241.png
+│   │   │   ├── roc_curve_20241116-105241.png
+│   │   │   └── temporal_correlation_20241116-105241.csv
+│   │   ├── GradientBoostingClassifier_20241116-110927
+│   │   │   ├── classification_report_20241116-110927.csv
+│   │   │   ├── confusion_matrix_20241116-110927.png
+│   │   │   ├── feature_importance_20241116-110927.png
+│   │   │   ├── roc_curve_20241116-110927.png
+│   │   │   └── temporal_correlation_20241116-110927.csv
+│   │   ├── GradientBoostingClassifier_20241116-111003
+│   │   │   ├── classification_report_20241116-111003.csv
+│   │   │   ├── confusion_matrix_20241116-111003.png
+│   │   │   ├── feature_importance_20241116-111003.png
+│   │   │   ├── roc_curve_20241116-111003.png
+│   │   │   └── temporal_correlation_20241116-111003.csv
+│   │   ├── GradientBoostingClassifier_20241116-111629
+│   │   │   ├── classification_report_20241116-111629.csv
+│   │   │   ├── confusion_matrix_20241116-111629.png
+│   │   │   ├── feature_importance_20241116-111629.png
+│   │   │   ├── roc_curve_20241116-111629.png
+│   │   │   └── temporal_correlation_20241116-111629.csv
+│   │   ├── GradientBoostingClassifier_20241116-111705
+│   │   │   ├── classification_report_20241116-111705.csv
+│   │   │   ├── confusion_matrix_20241116-111705.png
+│   │   │   ├── feature_importance_20241116-111705.png
+│   │   │   ├── roc_curve_20241116-111705.png
+│   │   │   └── temporal_correlation_20241116-111705.csv
+│   │   ├── GradientBoostingClassifier_20241116-113608
+│   │   │   ├── classification_report_20241116-113608.csv
+│   │   │   ├── confusion_matrix_20241116-113608.png
+│   │   │   ├── feature_importance_20241116-113608.png
+│   │   │   ├── roc_curve_20241116-113608.png
+│   │   │   └── temporal_correlation_20241116-113608.csv
+│   │   ├── GradientBoostingClassifier_20241116-115040
+│   │   │   ├── classification_report_20241116-115040.csv
+│   │   │   ├── confusion_matrix_20241116-115040.png
+│   │   │   ├── feature_importance_20241116-115040.png
+│   │   │   ├── roc_curve_20241116-115040.png
+│   │   │   └── temporal_correlation_20241116-115040.csv
+│   │   ├── GradientBoostingClassifier_20241116-124312
+│   │   │   ├── classification_report_20241116-124312.csv
+│   │   │   ├── confusion_matrix_20241116-124312.png
+│   │   │   ├── feature_importance_20241116-124312.png
+│   │   │   ├── roc_curve_20241116-124312.png
+│   │   │   └── temporal_correlation_20241116-124312.csv
+│   │   ├── GradientBoostingClassifier_20241116-133602
+│   │   │   ├── classification_report_20241116-133602.csv
+│   │   │   ├── confusion_matrix_20241116-133602.png
+│   │   │   ├── feature_importance_20241116-133602.png
+│   │   │   ├── roc_curve_20241116-133602.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-133602.csv
+│   │   ├── GradientBoostingClassifier_20241116-134143
+│   │   │   ├── classification_report_20241116-134143.csv
+│   │   │   ├── confusion_matrix_20241116-134143.png
+│   │   │   ├── feature_importance_20241116-134143.png
+│   │   │   ├── roc_curve_20241116-134143.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-134143.csv
+│   │   ├── GradientBoostingClassifier_20241116-134803
+│   │   │   ├── classification_report_20241116-134803.csv
+│   │   │   ├── confusion_matrix_20241116-134803.png
+│   │   │   ├── feature_importance_20241116-134803.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-134803.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-134803.csv
+│   │   ├── GradientBoostingClassifier_20241116-145656
+│   │   │   ├── classification_report_20241116-145656.csv
+│   │   │   ├── confusion_matrix_20241116-145656.png
+│   │   │   ├── feature_importance_20241116-145656.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-145656.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-145656.csv
+│   │   ├── GradientBoostingClassifier_20241118-085840
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-085840.csv
+│   │   │   ├── confusion_matrix_20241118-085840.png
+│   │   │   ├── feature_importance_20241118-085840.png
+│   │   │   ├── force_plot_instance_0.html
+│   │   │   ├── roc_curve_20241118-085840.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-085840.csv
+│   │   ├── GradientBoostingClassifier_20241118-092006
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-092006.csv
+│   │   │   ├── confusion_matrix_20241118-092006.png
+│   │   │   ├── feature_importance_20241118-092006.png
+│   │   │   ├── force_plot_instance_0.png
+│   │   │   ├── roc_curve_20241118-092006.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092006.csv
+│   │   ├── GradientBoostingClassifier_20241118-093006
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-093006.csv
+│   │   │   ├── confusion_matrix_20241118-093006.png
+│   │   │   ├── feature_importance_20241118-093006.png
+│   │   │   ├── force_plot_instance_0.png
+│   │   │   ├── roc_curve_20241118-093006.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093006.csv
+│   │   ├── GradientBoostingClassifier_20241118-095626
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-095626.csv
+│   │   │   ├── confusion_matrix_20241118-095626.png
+│   │   │   ├── feature_importance_20241118-095626.png
+│   │   │   ├── force_plot_instance_0.png
+│   │   │   ├── roc_curve_20241118-095626.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095626.csv
+│   │   ├── KNeighborsClassifier_20241116-104227
+│   │   │   ├── classification_report_20241116-104227.csv
+│   │   │   ├── confusion_matrix_20241116-104227.png
+│   │   │   ├── roc_curve_20241116-104227.png
+│   │   │   └── temporal_correlation_20241116-104227.csv
+│   │   ├── KNeighborsClassifier_20241116-105247
+│   │   │   ├── classification_report_20241116-105247.csv
+│   │   │   ├── confusion_matrix_20241116-105247.png
+│   │   │   ├── roc_curve_20241116-105247.png
+│   │   │   └── temporal_correlation_20241116-105247.csv
+│   │   ├── KNeighborsClassifier_20241116-110932
+│   │   │   ├── classification_report_20241116-110932.csv
+│   │   │   ├── confusion_matrix_20241116-110932.png
+│   │   │   ├── roc_curve_20241116-110932.png
+│   │   │   └── temporal_correlation_20241116-110932.csv
+│   │   ├── KNeighborsClassifier_20241116-111008
+│   │   │   ├── classification_report_20241116-111008.csv
+│   │   │   ├── confusion_matrix_20241116-111008.png
+│   │   │   ├── roc_curve_20241116-111008.png
+│   │   │   └── temporal_correlation_20241116-111008.csv
+│   │   ├── KNeighborsClassifier_20241116-111634
+│   │   │   ├── classification_report_20241116-111634.csv
+│   │   │   ├── confusion_matrix_20241116-111634.png
+│   │   │   ├── roc_curve_20241116-111634.png
+│   │   │   └── temporal_correlation_20241116-111634.csv
+│   │   ├── KNeighborsClassifier_20241116-111710
+│   │   │   ├── classification_report_20241116-111710.csv
+│   │   │   ├── confusion_matrix_20241116-111710.png
+│   │   │   ├── roc_curve_20241116-111710.png
+│   │   │   └── temporal_correlation_20241116-111710.csv
+│   │   ├── KNeighborsClassifier_20241116-113613
+│   │   │   ├── classification_report_20241116-113613.csv
+│   │   │   ├── confusion_matrix_20241116-113613.png
+│   │   │   ├── roc_curve_20241116-113613.png
+│   │   │   └── temporal_correlation_20241116-113613.csv
+│   │   ├── KNeighborsClassifier_20241116-115045
+│   │   │   ├── classification_report_20241116-115045.csv
+│   │   │   ├── confusion_matrix_20241116-115045.png
+│   │   │   ├── roc_curve_20241116-115045.png
+│   │   │   └── temporal_correlation_20241116-115045.csv
+│   │   ├── KNeighborsClassifier_20241116-124317
+│   │   │   ├── classification_report_20241116-124317.csv
+│   │   │   ├── confusion_matrix_20241116-124317.png
+│   │   │   ├── roc_curve_20241116-124317.png
+│   │   │   └── temporal_correlation_20241116-124317.csv
+│   │   ├── KNeighborsClassifier_20241116-134521
+│   │   │   ├── classification_report_20241116-134521.csv
+│   │   │   ├── confusion_matrix_20241116-134521.png
+│   │   │   ├── roc_curve_20241116-134521.png
+│   │   │   └── temporal_correlation_20241116-134521.csv
+│   │   ├── KNeighborsClassifier_20241116-135125
+│   │   │   ├── classification_report_20241116-135125.csv
+│   │   │   ├── confusion_matrix_20241116-135125.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-135125.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-135125.csv
+│   │   ├── KNeighborsClassifier_20241118-043937
+│   │   │   ├── classification_report_20241118-043937.csv
+│   │   │   ├── confusion_matrix_20241118-043937.png
+│   │   │   ├── roc_curve_20241118-043937.png
+│   │   │   └── temporal_correlation_20241118-043937.csv
+│   │   ├── KNeighborsClassifier_20241118-090021
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-090021.csv
+│   │   │   ├── confusion_matrix_20241118-090021.png
+│   │   │   ├── roc_curve_20241118-090021.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-090021.csv
+│   │   ├── KNeighborsClassifier_20241118-092152
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-092152.csv
+│   │   │   ├── confusion_matrix_20241118-092152.png
+│   │   │   ├── roc_curve_20241118-092152.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092152.csv
+│   │   ├── KNeighborsClassifier_20241118-093151
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-093151.csv
+│   │   │   ├── confusion_matrix_20241118-093151.png
+│   │   │   ├── roc_curve_20241118-093151.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093151.csv
+│   │   ├── KNeighborsClassifier_20241118-095811
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-095811.csv
+│   │   │   ├── confusion_matrix_20241118-095811.png
+│   │   │   ├── roc_curve_20241118-095811.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095811.csv
+│   │   ├── LogisticRegression_20241116-104227
+│   │   │   ├── classification_report_20241116-104227.csv
+│   │   │   ├── confusion_matrix_20241116-104227.png
+│   │   │   ├── roc_curve_20241116-104227.png
+│   │   │   └── temporal_correlation_20241116-104227.csv
+│   │   ├── LogisticRegression_20241116-105247
+│   │   │   ├── classification_report_20241116-105247.csv
+│   │   │   ├── confusion_matrix_20241116-105247.png
+│   │   │   ├── roc_curve_20241116-105247.png
+│   │   │   └── temporal_correlation_20241116-105247.csv
+│   │   ├── LogisticRegression_20241116-110932
+│   │   │   ├── classification_report_20241116-110932.csv
+│   │   │   ├── confusion_matrix_20241116-110932.png
+│   │   │   ├── roc_curve_20241116-110932.png
+│   │   │   └── temporal_correlation_20241116-110932.csv
+│   │   ├── LogisticRegression_20241116-111008
+│   │   │   ├── classification_report_20241116-111008.csv
+│   │   │   ├── confusion_matrix_20241116-111008.png
+│   │   │   ├── roc_curve_20241116-111008.png
+│   │   │   └── temporal_correlation_20241116-111008.csv
+│   │   ├── LogisticRegression_20241116-111635
+│   │   │   ├── classification_report_20241116-111635.csv
+│   │   │   ├── confusion_matrix_20241116-111635.png
+│   │   │   ├── roc_curve_20241116-111635.png
+│   │   │   └── temporal_correlation_20241116-111635.csv
+│   │   ├── LogisticRegression_20241116-111711
+│   │   │   ├── classification_report_20241116-111711.csv
+│   │   │   ├── confusion_matrix_20241116-111711.png
+│   │   │   ├── roc_curve_20241116-111711.png
+│   │   │   └── temporal_correlation_20241116-111711.csv
+│   │   ├── LogisticRegression_20241116-113614
+│   │   │   ├── classification_report_20241116-113614.csv
+│   │   │   ├── confusion_matrix_20241116-113614.png
+│   │   │   ├── roc_curve_20241116-113614.png
+│   │   │   └── temporal_correlation_20241116-113614.csv
+│   │   ├── LogisticRegression_20241116-115045
+│   │   │   ├── classification_report_20241116-115045.csv
+│   │   │   ├── confusion_matrix_20241116-115045.png
+│   │   │   ├── roc_curve_20241116-115045.png
+│   │   │   └── temporal_correlation_20241116-115045.csv
+│   │   ├── LogisticRegression_20241116-124318
+│   │   │   ├── classification_report_20241116-124318.csv
+│   │   │   ├── confusion_matrix_20241116-124318.png
+│   │   │   ├── roc_curve_20241116-124318.png
+│   │   │   └── temporal_correlation_20241116-124318.csv
+│   │   ├── LogisticRegression_20241116-140503
+│   │   │   ├── classification_report_20241116-140503.csv
+│   │   │   ├── confusion_matrix_20241116-140503.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-140503.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-140503.csv
+│   │   ├── LogisticRegression_20241118-090040
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-090040.csv
+│   │   │   ├── confusion_matrix_20241118-090040.png
+│   │   │   ├── roc_curve_20241118-090040.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-090040.csv
+│   │   ├── LogisticRegression_20241118-092211
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-092211.csv
+│   │   │   ├── confusion_matrix_20241118-092211.png
+│   │   │   ├── roc_curve_20241118-092211.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092211.csv
+│   │   ├── LogisticRegression_20241118-093210
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-093210.csv
+│   │   │   ├── confusion_matrix_20241118-093210.png
+│   │   │   ├── roc_curve_20241118-093210.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093210.csv
+│   │   ├── LogisticRegression_20241118-095829
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-095829.csv
+│   │   │   ├── confusion_matrix_20241118-095829.png
+│   │   │   ├── roc_curve_20241118-095829.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095829.csv
+│   │   ├── RandomForestClassifier_20241116-104211
+│   │   │   ├── best_parameters_20241116-104211.csv
+│   │   │   ├── classification_report_20241116-104211.csv
+│   │   │   ├── confusion_matrix_20241116-104211.png
+│   │   │   ├── feature_importance_20241116-104211.csv
+│   │   │   ├── feature_importance_20241116-104211.png
+│   │   │   ├── roc_curve_20241116-104211.png
+│   │   │   └── temporal_correlation_20241116-104211.csv
+│   │   ├── RandomForestClassifier_20241116-105231
+│   │   │   ├── best_parameters_20241116-105231.csv
+│   │   │   ├── classification_report_20241116-105231.csv
+│   │   │   ├── confusion_matrix_20241116-105231.png
+│   │   │   ├── feature_importance_20241116-105231.png
+│   │   │   ├── roc_curve_20241116-105231.png
+│   │   │   └── temporal_correlation_20241116-105231.csv
+│   │   ├── RandomForestClassifier_20241116-110917
+│   │   │   ├── best_parameters_20241116-110917.csv
+│   │   │   ├── classification_report_20241116-110917.csv
+│   │   │   ├── confusion_matrix_20241116-110917.png
+│   │   │   ├── feature_importance_20241116-110917.png
+│   │   │   ├── roc_curve_20241116-110917.png
+│   │   │   └── temporal_correlation_20241116-110917.csv
+│   │   ├── RandomForestClassifier_20241116-110953
+│   │   │   ├── best_parameters_20241116-110953.csv
+│   │   │   ├── classification_report_20241116-110953.csv
+│   │   │   ├── confusion_matrix_20241116-110953.png
+│   │   │   ├── feature_importance_20241116-110953.png
+│   │   │   ├── roc_curve_20241116-110953.png
+│   │   │   └── temporal_correlation_20241116-110953.csv
+│   │   ├── RandomForestClassifier_20241116-111619
+│   │   │   ├── best_parameters_20241116-111619.csv
+│   │   │   ├── classification_report_20241116-111619.csv
+│   │   │   ├── confusion_matrix_20241116-111619.png
+│   │   │   ├── feature_importance_20241116-111619.png
+│   │   │   ├── roc_curve_20241116-111619.png
+│   │   │   └── temporal_correlation_20241116-111619.csv
+│   │   ├── RandomForestClassifier_20241116-111656
+│   │   │   ├── best_parameters_20241116-111656.csv
+│   │   │   ├── classification_report_20241116-111656.csv
+│   │   │   ├── confusion_matrix_20241116-111656.png
+│   │   │   ├── feature_importance_20241116-111656.png
+│   │   │   ├── roc_curve_20241116-111656.png
+│   │   │   └── temporal_correlation_20241116-111656.csv
+│   │   ├── RandomForestClassifier_20241116-113558
+│   │   │   ├── best_parameters_20241116-113558.csv
+│   │   │   ├── classification_report_20241116-113558.csv
+│   │   │   ├── confusion_matrix_20241116-113558.png
+│   │   │   ├── feature_importance_20241116-113558.png
+│   │   │   ├── roc_curve_20241116-113558.png
+│   │   │   └── temporal_correlation_20241116-113558.csv
+│   │   ├── RandomForestClassifier_20241116-115030
+│   │   │   ├── best_parameters_20241116-115030.csv
+│   │   │   ├── classification_report_20241116-115030.csv
+│   │   │   ├── confusion_matrix_20241116-115030.png
+│   │   │   ├── feature_importance_20241116-115030.png
+│   │   │   ├── roc_curve_20241116-115030.png
+│   │   │   └── temporal_correlation_20241116-115030.csv
+│   │   ├── RandomForestClassifier_20241116-124301
+│   │   │   ├── best_parameters_20241116-124301.csv
+│   │   │   ├── classification_report_20241116-124301.csv
+│   │   │   ├── confusion_matrix_20241116-124301.png
+│   │   │   ├── feature_importance_20241116-124301.png
+│   │   │   ├── roc_curve_20241116-124301.png
+│   │   │   └── temporal_correlation_20241116-124301.csv
+│   │   ├── RandomForestClassifier_20241116-125934
+│   │   │   ├── best_parameters_20241116-125934.csv
+│   │   │   ├── classification_report_20241116-125934.csv
+│   │   │   ├── confusion_matrix_20241116-125934.png
+│   │   │   ├── feature_importance_20241116-125934.png
+│   │   │   ├── roc_curve_20241116-125934.png
+│   │   │   └── temporal_correlation_20241116-125934.csv
+│   │   ├── RandomForestClassifier_20241116-130802
+│   │   │   ├── best_parameters_20241116-130802.csv
+│   │   │   ├── classification_report_20241116-130802.csv
+│   │   │   ├── confusion_matrix_20241116-130802.png
+│   │   │   ├── feature_importance_20241116-130802.png
+│   │   │   ├── roc_curve_20241116-130802.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-130802.csv
+│   │   ├── RandomForestClassifier_20241116-131306
+│   │   │   ├── best_parameters_20241116-131306.csv
+│   │   │   ├── classification_report_20241116-131306.csv
+│   │   │   ├── confusion_matrix_20241116-131306.png
+│   │   │   ├── feature_importance_20241116-131306.png
+│   │   │   ├── roc_curve_20241116-131306.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-131306.csv
+│   │   ├── RandomForestClassifier_20241116-131453
+│   │   │   ├── best_parameters_20241116-131453.csv
+│   │   │   ├── classification_report_20241116-131453.csv
+│   │   │   ├── confusion_matrix_20241116-131453.png
+│   │   │   ├── feature_importance_20241116-131453.png
+│   │   │   ├── roc_curve_20241116-131453.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-131453.csv
+│   │   ├── RandomForestClassifier_20241116-132500
+│   │   │   ├── best_parameters_20241116-132500.csv
+│   │   │   ├── classification_report_20241116-132500.csv
+│   │   │   ├── confusion_matrix_20241116-132500.png
+│   │   │   ├── feature_importance_20241116-132500.png
+│   │   │   ├── roc_curve_20241116-132500.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-132500.csv
+│   │   ├── RandomForestClassifier_20241116-132705
+│   │   │   ├── best_parameters_20241116-132705.csv
+│   │   │   ├── classification_report_20241116-132705.csv
+│   │   │   ├── confusion_matrix_20241116-132705.png
+│   │   │   ├── feature_importance_20241116-132705.png
+│   │   │   ├── roc_curve_20241116-132705.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-132705.csv
+│   │   ├── RandomForestClassifier_20241116-133051
+│   │   │   ├── best_parameters_20241116-133051.csv
+│   │   │   ├── classification_report_20241116-133051.csv
+│   │   │   ├── confusion_matrix_20241116-133051.png
+│   │   │   ├── feature_importance_20241116-133051.png
+│   │   │   ├── roc_curve_20241116-133051.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-133051.csv
+│   │   ├── RandomForestClassifier_20241116-133256
+│   │   │   ├── best_parameters_20241116-133256.csv
+│   │   │   ├── classification_report_20241116-133256.csv
+│   │   │   ├── confusion_matrix_20241116-133256.png
+│   │   │   ├── feature_importance_20241116-133256.png
+│   │   │   ├── roc_curve_20241116-133256.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-133256.csv
+│   │   ├── RandomForestClassifier_20241116-133551
+│   │   │   ├── best_parameters_20241116-133551.csv
+│   │   │   ├── classification_report_20241116-133551.csv
+│   │   │   ├── confusion_matrix_20241116-133551.png
+│   │   │   ├── feature_importance_20241116-133551.png
+│   │   │   ├── roc_curve_20241116-133551.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-133551.csv
+│   │   ├── RandomForestClassifier_20241116-133802
+│   │   │   ├── best_parameters_20241116-133802.csv
+│   │   │   ├── classification_report_20241116-133802.csv
+│   │   │   ├── confusion_matrix_20241116-133802.png
+│   │   │   ├── feature_importance_20241116-133802.png
+│   │   │   ├── roc_curve_20241116-133802.png
+│   │   │   └── temporal_correlation_20241116-133802.csv
+│   │   ├── RandomForestClassifier_20241116-133951
+│   │   │   ├── best_parameters_20241116-133951.csv
+│   │   │   ├── classification_report_20241116-133951.csv
+│   │   │   ├── confusion_matrix_20241116-133951.png
+│   │   │   ├── feature_importance_20241116-133951.png
+│   │   │   ├── roc_curve_20241116-133951.png
+│   │   │   └── temporal_correlation_20241116-133951.csv
+│   │   ├── RandomForestClassifier_20241116-134133
+│   │   │   ├── best_parameters_20241116-134133.csv
+│   │   │   ├── classification_report_20241116-134133.csv
+│   │   │   ├── confusion_matrix_20241116-134133.png
+│   │   │   ├── feature_importance_20241116-134133.png
+│   │   │   ├── roc_curve_20241116-134133.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-134133.csv
+│   │   ├── RandomForestClassifier_20241116-134753
+│   │   │   ├── best_parameters_20241116-134753.csv
+│   │   │   ├── classification_report_20241116-134753.csv
+│   │   │   ├── confusion_matrix_20241116-134753.png
+│   │   │   ├── feature_importance_20241116-134753.png
+│   │   │   ├── roc_curve_20241116-134753.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-134753.csv
+│   │   ├── RandomForestClassifier_20241116-145536
+│   │   │   ├── best_parameters_20241116-145536.csv
+│   │   │   ├── classification_report_20241116-145536.csv
+│   │   │   ├── confusion_matrix_20241116-145536.png
+│   │   │   ├── feature_importance_20241116-145536.png
+│   │   │   ├── roc_curve_20241116-145536.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-145536.csv
+│   │   ├── RandomForestClassifier_20241118-085751
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-085751.csv
+│   │   │   ├── classification_report_20241118-085751.csv
+│   │   │   ├── confusion_matrix_20241118-085751.png
+│   │   │   ├── feature_importance_20241118-085751.png
+│   │   │   ├── roc_curve_20241118-085751.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-085751.csv
+│   │   ├── RandomForestClassifier_20241118-091915
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-091915.csv
+│   │   │   ├── classification_report_20241118-091915.csv
+│   │   │   ├── confusion_matrix_20241118-091915.png
+│   │   │   ├── feature_importance_20241118-091915.png
+│   │   │   ├── roc_curve_20241118-091915.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-091915.csv
+│   │   ├── RandomForestClassifier_20241118-092907
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-092907.csv
+│   │   │   ├── classification_report_20241118-092907.csv
+│   │   │   ├── confusion_matrix_20241118-092907.png
+│   │   │   ├── feature_importance_20241118-092907.png
+│   │   │   ├── roc_curve_20241118-092907.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092907.csv
+│   │   ├── RandomForestClassifier_20241118-095528
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-095528.csv
+│   │   │   ├── classification_report_20241118-095528.csv
+│   │   │   ├── confusion_matrix_20241118-095528.png
+│   │   │   ├── feature_importance_20241118-095528.png
+│   │   │   ├── roc_curve_20241118-095528.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095528.csv
+│   │   ├── roc_curve_AdaBoostClassifier_20241116-091831.png
+│   │   ├── roc_curve_AdaBoostClassifier_20241116-093532.png
+│   │   ├── roc_curve_AdaBoostClassifier_20241116-100058.png
+│   │   ├── roc_curve_DecisionTreeClassifier_20241116-091830.png
+│   │   ├── roc_curve_DecisionTreeClassifier_20241116-093531.png
+│   │   ├── roc_curve_DecisionTreeClassifier_20241116-100057.png
+│   │   ├── roc_curve_GaussianNB_20241116-091831.png
+│   │   ├── roc_curve_GaussianNB_20241116-093531.png
+│   │   ├── roc_curve_GaussianNB_20241116-100058.png
+│   │   ├── roc_curve_GradientBoostingClassifier_20241116-091829.png
+│   │   ├── roc_curve_GradientBoostingClassifier_20241116-093530.png
+│   │   ├── roc_curve_GradientBoostingClassifier_20241116-100057.png
+│   │   ├── roc_curve_KNeighborsClassifier_20241116-091830.png
+│   │   ├── roc_curve_KNeighborsClassifier_20241116-093531.png
+│   │   ├── roc_curve_KNeighborsClassifier_20241116-100057.png
+│   │   ├── roc_curve_LogisticRegression_20241116-091830.png
+│   │   ├── roc_curve_LogisticRegression_20241116-093531.png
+│   │   ├── roc_curve_LogisticRegression_20241116-100057.png
+│   │   ├── roc_curve_RandomForestClassifier_20241116-091829.png
+│   │   ├── roc_curve_RandomForestClassifier_20241116-093530.png
+│   │   ├── roc_curve_RandomForestClassifier_20241116-100056.png
+│   │   ├── roc_curve_RandomForestClassifier_20241116-103735.png
+│   │   ├── roc_curve_SVC_20241116-091830.png
+│   │   ├── roc_curve_SVC_20241116-093531.png
+│   │   ├── roc_curve_SVC_20241116-100057.png
+│   │   ├── roc_curve_XGBClassifier_20241116-091830.png
+│   │   ├── roc_curve_XGBClassifier_20241116-093531.png
+│   │   ├── roc_curve_XGBClassifier_20241116-100057.png
+│   │   ├── SGDClassifier_20241116-104228
+│   │   │   ├── classification_report_20241116-104228.csv
+│   │   │   ├── confusion_matrix_20241116-104228.png
+│   │   │   └── temporal_correlation_20241116-104228.csv
+│   │   ├── SGDClassifier_20241116-105248
+│   │   │   ├── classification_report_20241116-105248.csv
+│   │   │   ├── confusion_matrix_20241116-105248.png
+│   │   │   └── temporal_correlation_20241116-105248.csv
+│   │   ├── SGDClassifier_20241116-110933
+│   │   │   ├── classification_report_20241116-110933.csv
+│   │   │   ├── confusion_matrix_20241116-110933.png
+│   │   │   └── temporal_correlation_20241116-110933.csv
+│   │   ├── SGDClassifier_20241116-111009
+│   │   │   ├── classification_report_20241116-111009.csv
+│   │   │   ├── confusion_matrix_20241116-111009.png
+│   │   │   └── temporal_correlation_20241116-111009.csv
+│   │   ├── SGDClassifier_20241116-111635
+│   │   │   ├── classification_report_20241116-111635.csv
+│   │   │   ├── confusion_matrix_20241116-111635.png
+│   │   │   └── temporal_correlation_20241116-111635.csv
+│   │   ├── SGDClassifier_20241116-111711
+│   │   │   ├── classification_report_20241116-111711.csv
+│   │   │   ├── confusion_matrix_20241116-111711.png
+│   │   │   └── temporal_correlation_20241116-111711.csv
+│   │   ├── SGDClassifier_20241116-113614
+│   │   │   ├── classification_report_20241116-113614.csv
+│   │   │   ├── confusion_matrix_20241116-113614.png
+│   │   │   └── temporal_correlation_20241116-113614.csv
+│   │   ├── SGDClassifier_20241116-115046
+│   │   │   ├── classification_report_20241116-115046.csv
+│   │   │   ├── confusion_matrix_20241116-115046.png
+│   │   │   └── temporal_correlation_20241116-115046.csv
+│   │   ├── SGDClassifier_20241116-124318
+│   │   │   ├── classification_report_20241116-124318.csv
+│   │   │   ├── confusion_matrix_20241116-124318.png
+│   │   │   └── temporal_correlation_20241116-124318.csv
+│   │   ├── SGDClassifier_20241116-140636
+│   │   │   ├── classification_report_20241116-140636.csv
+│   │   │   ├── confusion_matrix_20241116-140636.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-140636.csv
+│   │   ├── SGDClassifier_20241118-090047
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-090047.csv
+│   │   │   ├── confusion_matrix_20241118-090047.png
+│   │   │   ├── force_plot_instance_0.html
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-090047.csv
+│   │   ├── SGDClassifier_20241118-092217
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-092217.csv
+│   │   │   ├── confusion_matrix_20241118-092217.png
+│   │   │   ├── force_plot_instance_0.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092217.csv
+│   │   ├── SGDClassifier_20241118-093216
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-093216.csv
+│   │   │   ├── confusion_matrix_20241118-093216.png
+│   │   │   ├── force_plot_instance_0.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093216.csv
+│   │   ├── SGDClassifier_20241118-095836
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── classification_report_20241118-095836.csv
+│   │   │   ├── confusion_matrix_20241118-095836.png
+│   │   │   ├── force_plot_instance_0.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095836.csv
+│   │   ├── SVC_20241116-104226
+│   │   │   ├── best_parameters_20241116-104226.csv
+│   │   │   ├── classification_report_20241116-104226.csv
+│   │   │   ├── confusion_matrix_20241116-104226.png
+│   │   │   ├── roc_curve_20241116-104226.png
+│   │   │   └── temporal_correlation_20241116-104226.csv
+│   │   ├── SVC_20241116-105246
+│   │   │   ├── best_parameters_20241116-105246.csv
+│   │   │   ├── classification_report_20241116-105246.csv
+│   │   │   ├── confusion_matrix_20241116-105246.png
+│   │   │   ├── roc_curve_20241116-105246.png
+│   │   │   └── temporal_correlation_20241116-105246.csv
+│   │   ├── SVC_20241116-110931
+│   │   │   ├── best_parameters_20241116-110931.csv
+│   │   │   ├── classification_report_20241116-110931.csv
+│   │   │   ├── confusion_matrix_20241116-110931.png
+│   │   │   ├── roc_curve_20241116-110931.png
+│   │   │   └── temporal_correlation_20241116-110931.csv
+│   │   ├── SVC_20241116-111007
+│   │   │   ├── best_parameters_20241116-111007.csv
+│   │   │   ├── classification_report_20241116-111007.csv
+│   │   │   ├── confusion_matrix_20241116-111007.png
+│   │   │   ├── roc_curve_20241116-111007.png
+│   │   │   └── temporal_correlation_20241116-111007.csv
+│   │   ├── SVC_20241116-111633
+│   │   │   ├── best_parameters_20241116-111633.csv
+│   │   │   ├── classification_report_20241116-111633.csv
+│   │   │   ├── confusion_matrix_20241116-111633.png
+│   │   │   ├── roc_curve_20241116-111633.png
+│   │   │   └── temporal_correlation_20241116-111633.csv
+│   │   ├── SVC_20241116-111709
+│   │   │   ├── best_parameters_20241116-111709.csv
+│   │   │   ├── classification_report_20241116-111709.csv
+│   │   │   ├── confusion_matrix_20241116-111709.png
+│   │   │   ├── roc_curve_20241116-111709.png
+│   │   │   └── temporal_correlation_20241116-111709.csv
+│   │   ├── SVC_20241116-113612
+│   │   │   ├── best_parameters_20241116-113612.csv
+│   │   │   ├── classification_report_20241116-113612.csv
+│   │   │   ├── confusion_matrix_20241116-113612.png
+│   │   │   ├── roc_curve_20241116-113612.png
+│   │   │   └── temporal_correlation_20241116-113612.csv
+│   │   ├── SVC_20241116-115044
+│   │   │   ├── best_parameters_20241116-115044.csv
+│   │   │   ├── classification_report_20241116-115044.csv
+│   │   │   ├── confusion_matrix_20241116-115044.png
+│   │   │   ├── roc_curve_20241116-115044.png
+│   │   │   └── temporal_correlation_20241116-115044.csv
+│   │   ├── SVC_20241116-124316
+│   │   │   ├── best_parameters_20241116-124316.csv
+│   │   │   ├── classification_report_20241116-124316.csv
+│   │   │   ├── confusion_matrix_20241116-124316.png
+│   │   │   ├── roc_curve_20241116-124316.png
+│   │   │   └── temporal_correlation_20241116-124316.csv
+│   │   ├── SVC_20241116-133606
+│   │   │   ├── best_parameters_20241116-133606.csv
+│   │   │   ├── classification_report_20241116-133606.csv
+│   │   │   ├── confusion_matrix_20241116-133606.png
+│   │   │   ├── roc_curve_20241116-133606.png
+│   │   │   └── temporal_correlation_20241116-133606.csv
+│   │   ├── SVC_20241116-134147
+│   │   │   ├── best_parameters_20241116-134147.csv
+│   │   │   ├── classification_report_20241116-134147.csv
+│   │   │   ├── confusion_matrix_20241116-134147.png
+│   │   │   ├── roc_curve_20241116-134147.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-134147.csv
+│   │   ├── SVC_20241116-134807
+│   │   │   ├── best_parameters_20241116-134807.csv
+│   │   │   ├── classification_report_20241116-134807.csv
+│   │   │   ├── confusion_matrix_20241116-134807.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-134807.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-134807.csv
+│   │   ├── SVC_20241116-145706
+│   │   │   ├── best_parameters_20241116-145706.csv
+│   │   │   ├── classification_report_20241116-145706.csv
+│   │   │   ├── confusion_matrix_20241116-145706.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-145706.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-145706.csv
+│   │   ├── SVC_20241118-085850
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-085850.csv
+│   │   │   ├── classification_report_20241118-085850.csv
+│   │   │   ├── confusion_matrix_20241118-085850.png
+│   │   │   ├── roc_curve_20241118-085850.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-085850.csv
+│   │   ├── SVC_20241118-092017
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-092017.csv
+│   │   │   ├── classification_report_20241118-092017.csv
+│   │   │   ├── confusion_matrix_20241118-092017.png
+│   │   │   ├── roc_curve_20241118-092017.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092017.csv
+│   │   ├── SVC_20241118-093017
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-093017.csv
+│   │   │   ├── classification_report_20241118-093017.csv
+│   │   │   ├── confusion_matrix_20241118-093017.png
+│   │   │   ├── roc_curve_20241118-093017.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093017.csv
+│   │   ├── SVC_20241118-095637
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-095637.csv
+│   │   │   ├── classification_report_20241118-095637.csv
+│   │   │   ├── confusion_matrix_20241118-095637.png
+│   │   │   ├── roc_curve_20241118-095637.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-095637.csv
+│   │   ├── temporal_correlation_AdaBoostClassifier_20241116-091831.csv
+│   │   ├── temporal_correlation_AdaBoostClassifier_20241116-093532.csv
+│   │   ├── temporal_correlation_AdaBoostClassifier_20241116-100058.csv
+│   │   ├── temporal_correlation_DecisionTreeClassifier_20241116-091830.csv
+│   │   ├── temporal_correlation_DecisionTreeClassifier_20241116-093531.csv
+│   │   ├── temporal_correlation_DecisionTreeClassifier_20241116-100057.csv
+│   │   ├── temporal_correlation_GaussianNB_20241116-091831.csv
+│   │   ├── temporal_correlation_GaussianNB_20241116-093531.csv
+│   │   ├── temporal_correlation_GaussianNB_20241116-100058.csv
+│   │   ├── temporal_correlation_GradientBoostingClassifier_20241116-091829.csv
+│   │   ├── temporal_correlation_GradientBoostingClassifier_20241116-093530.csv
+│   │   ├── temporal_correlation_GradientBoostingClassifier_20241116-100057.csv
+│   │   ├── temporal_correlation_KNeighborsClassifier_20241116-091830.csv
+│   │   ├── temporal_correlation_KNeighborsClassifier_20241116-093531.csv
+│   │   ├── temporal_correlation_KNeighborsClassifier_20241116-100057.csv
+│   │   ├── temporal_correlation_LogisticRegression_20241116-091830.csv
+│   │   ├── temporal_correlation_LogisticRegression_20241116-093531.csv
+│   │   ├── temporal_correlation_LogisticRegression_20241116-100057.csv
+│   │   ├── temporal_correlation_RandomForestClassifier_20241116-091829.csv
+│   │   ├── temporal_correlation_RandomForestClassifier_20241116-093530.csv
+│   │   ├── temporal_correlation_RandomForestClassifier_20241116-100056.csv
+│   │   ├── temporal_correlation_RandomForestClassifier_20241116-103735.csv
+│   │   ├── temporal_correlation_SGDClassifier_20241116-091830.csv
+│   │   ├── temporal_correlation_SGDClassifier_20241116-093531.csv
+│   │   ├── temporal_correlation_SGDClassifier_20241116-100057.csv
+│   │   ├── temporal_correlation_SVC_20241116-091830.csv
+│   │   ├── temporal_correlation_SVC_20241116-093531.csv
+│   │   ├── temporal_correlation_SVC_20241116-100057.csv
+│   │   ├── temporal_correlation_XGBClassifier_20241116-091830.csv
+│   │   ├── temporal_correlation_XGBClassifier_20241116-093531.csv
+│   │   ├── temporal_correlation_XGBClassifier_20241116-100057.csv
+│   │   ├── XGBClassifier_20241116-104222
+│   │   │   ├── best_parameters_20241116-104222.csv
+│   │   │   ├── classification_report_20241116-104222.csv
+│   │   │   ├── confusion_matrix_20241116-104222.png
+│   │   │   ├── feature_importance_20241116-104222.csv
+│   │   │   ├── feature_importance_20241116-104222.png
+│   │   │   ├── roc_curve_20241116-104222.png
+│   │   │   └── temporal_correlation_20241116-104222.csv
+│   │   ├── XGBClassifier_20241116-105242
+│   │   │   ├── best_parameters_20241116-105242.csv
+│   │   │   ├── classification_report_20241116-105242.csv
+│   │   │   ├── confusion_matrix_20241116-105242.png
+│   │   │   ├── feature_importance_20241116-105242.png
+│   │   │   ├── roc_curve_20241116-105242.png
+│   │   │   └── temporal_correlation_20241116-105242.csv
+│   │   ├── XGBClassifier_20241116-110928
+│   │   │   ├── best_parameters_20241116-110928.csv
+│   │   │   ├── classification_report_20241116-110928.csv
+│   │   │   ├── confusion_matrix_20241116-110928.png
+│   │   │   ├── feature_importance_20241116-110928.png
+│   │   │   ├── roc_curve_20241116-110928.png
+│   │   │   └── temporal_correlation_20241116-110928.csv
+│   │   ├── XGBClassifier_20241116-111004
+│   │   │   ├── best_parameters_20241116-111004.csv
+│   │   │   ├── classification_report_20241116-111004.csv
+│   │   │   ├── confusion_matrix_20241116-111004.png
+│   │   │   ├── feature_importance_20241116-111004.png
+│   │   │   ├── roc_curve_20241116-111004.png
+│   │   │   └── temporal_correlation_20241116-111004.csv
+│   │   ├── XGBClassifier_20241116-111630
+│   │   │   ├── best_parameters_20241116-111630.csv
+│   │   │   ├── classification_report_20241116-111630.csv
+│   │   │   ├── confusion_matrix_20241116-111630.png
+│   │   │   ├── feature_importance_20241116-111630.png
+│   │   │   ├── roc_curve_20241116-111630.png
+│   │   │   └── temporal_correlation_20241116-111630.csv
+│   │   ├── XGBClassifier_20241116-111706
+│   │   │   ├── best_parameters_20241116-111706.csv
+│   │   │   ├── classification_report_20241116-111706.csv
+│   │   │   ├── confusion_matrix_20241116-111706.png
+│   │   │   ├── feature_importance_20241116-111706.png
+│   │   │   ├── roc_curve_20241116-111706.png
+│   │   │   └── temporal_correlation_20241116-111706.csv
+│   │   ├── XGBClassifier_20241116-113609
+│   │   │   ├── best_parameters_20241116-113609.csv
+│   │   │   ├── classification_report_20241116-113609.csv
+│   │   │   ├── confusion_matrix_20241116-113609.png
+│   │   │   ├── feature_importance_20241116-113609.png
+│   │   │   ├── roc_curve_20241116-113609.png
+│   │   │   └── temporal_correlation_20241116-113609.csv
+│   │   ├── XGBClassifier_20241116-115041
+│   │   │   ├── best_parameters_20241116-115041.csv
+│   │   │   ├── classification_report_20241116-115041.csv
+│   │   │   ├── confusion_matrix_20241116-115041.png
+│   │   │   ├── feature_importance_20241116-115041.png
+│   │   │   ├── roc_curve_20241116-115041.png
+│   │   │   └── temporal_correlation_20241116-115041.csv
+│   │   ├── XGBClassifier_20241116-124313
+│   │   │   ├── best_parameters_20241116-124313.csv
+│   │   │   ├── classification_report_20241116-124313.csv
+│   │   │   ├── confusion_matrix_20241116-124313.png
+│   │   │   ├── feature_importance_20241116-124313.png
+│   │   │   ├── roc_curve_20241116-124313.png
+│   │   │   └── temporal_correlation_20241116-124313.csv
+│   │   ├── XGBClassifier_20241116-133603
+│   │   │   ├── best_parameters_20241116-133603.csv
+│   │   │   ├── classification_report_20241116-133603.csv
+│   │   │   ├── confusion_matrix_20241116-133603.png
+│   │   │   ├── feature_importance_20241116-133603.png
+│   │   │   ├── roc_curve_20241116-133603.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-133603.csv
+│   │   ├── XGBClassifier_20241116-134144
+│   │   │   ├── best_parameters_20241116-134144.csv
+│   │   │   ├── classification_report_20241116-134144.csv
+│   │   │   ├── confusion_matrix_20241116-134144.png
+│   │   │   ├── feature_importance_20241116-134144.png
+│   │   │   ├── roc_curve_20241116-134144.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-134144.csv
+│   │   ├── XGBClassifier_20241116-134804
+│   │   │   ├── best_parameters_20241116-134804.csv
+│   │   │   ├── classification_report_20241116-134804.csv
+│   │   │   ├── confusion_matrix_20241116-134804.png
+│   │   │   ├── feature_importance_20241116-134804.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-134804.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-134804.csv
+│   │   ├── XGBClassifier_20241116-145658
+│   │   │   ├── best_parameters_20241116-145658.csv
+│   │   │   ├── classification_report_20241116-145658.csv
+│   │   │   ├── confusion_matrix_20241116-145658.png
+│   │   │   ├── feature_importance_20241116-145658.png
+│   │   │   ├── force_plot_0.html
+│   │   │   ├── roc_curve_20241116-145658.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241116-145658.csv
+│   │   ├── XGBClassifier_20241118-085842
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-085842.csv
+│   │   │   ├── classification_report_20241118-085842.csv
+│   │   │   ├── confusion_matrix_20241118-085842.png
+│   │   │   ├── feature_importance_20241118-085842.png
+│   │   │   ├── force_plot_instance_0.html
+│   │   │   ├── roc_curve_20241118-085842.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-085842.csv
+│   │   ├── XGBClassifier_20241118-092009
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-092009.csv
+│   │   │   ├── classification_report_20241118-092009.csv
+│   │   │   ├── confusion_matrix_20241118-092009.png
+│   │   │   ├── feature_importance_20241118-092009.png
+│   │   │   ├── force_plot_instance_0.png
+│   │   │   ├── roc_curve_20241118-092009.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-092009.csv
+│   │   ├── XGBClassifier_20241118-093009
+│   │   │   ├── beeswarm_plot.png
+│   │   │   ├── best_parameters_20241118-093009.csv
+│   │   │   ├── classification_report_20241118-093009.csv
+│   │   │   ├── confusion_matrix_20241118-093009.png
+│   │   │   ├── feature_importance_20241118-093009.png
+│   │   │   ├── force_plot_instance_0.png
+│   │   │   ├── roc_curve_20241118-093009.png
+│   │   │   ├── summary_bar_plot.png
+│   │   │   └── temporal_correlation_20241118-093009.csv
+│   │   └── XGBClassifier_20241118-095629
+│   │       ├── beeswarm_plot.png
+│   │       ├── best_parameters_20241118-095629.csv
+│   │       ├── classification_report_20241118-095629.csv
+│   │       ├── confusion_matrix_20241118-095629.png
+│   │       ├── feature_importance_20241118-095629.png
+│   │       ├── force_plot_instance_0.png
+│   │       ├── roc_curve_20241118-095629.png
+│   │       ├── summary_bar_plot.png
+│   │       └── temporal_correlation_20241118-095629.csv
+│   ├── data_visualizer.py
+│   ├── feature_analyzer.py
+│   ├── feature_correlations
+│   │   └── feature_correlations.png
+│   ├── feature_distributions
+│   │   └── feature_distributions.png
+│   ├── __init__.py
+│   ├── main.py
+│   ├── model_selection.py
+│   ├── nfstream_feature_extractor.py
+│   ├── nfstream_results
+│   │   ├── feature_importance_20241110-194013.csv
+│   │   ├── feature_importance_20241110-203423.csv
+│   │   ├── feature_importance_20241110-205523.csv
+│   │   ├── feature_importance_20241116-083310.csv
+│   │   ├── feature_importance_20241116-084100.csv
+│   │   ├── feature_importance_20241116-084853.csv
+│   │   ├── feature_importance_20241116-091829.csv
+│   │   ├── feature_importance_20241116-091830.csv
+│   │   ├── feature_importance_20241116-091831.csv
+│   │   ├── feature_importance_20241116-093530.csv
+│   │   ├── feature_importance_20241116-093531.csv
+│   │   ├── feature_importance_20241116-093532.csv
+│   │   ├── feature_importance_20241116-100056.csv
+│   │   ├── feature_importance_20241116-100057.csv
+│   │   ├── feature_importance_20241116-100058.csv
+│   │   ├── feature_importance_20241116-104221.csv
+│   │   ├── feature_importance_20241116-104222.csv
+│   │   ├── feature_importance_20241116-104226.csv
+│   │   ├── feature_importance_20241116-104229.csv
+│   │   ├── feature_importance_20241116-104230.csv
+│   │   ├── feature_importance_20241116-105241.csv
+│   │   ├── feature_importance_20241116-105242.csv
+│   │   ├── feature_importance_20241116-105246.csv
+│   │   ├── feature_importance_20241116-105249.csv
+│   │   ├── feature_importance_20241116-105250.csv
+│   │   ├── feature_importance_20241116-110927.csv
+│   │   ├── feature_importance_20241116-110928.csv
+│   │   ├── feature_importance_20241116-110931.csv
+│   │   ├── feature_importance_20241116-110934.csv
+│   │   ├── feature_importance_20241116-110935.csv
+│   │   ├── feature_importance_20241116-111003.csv
+│   │   ├── feature_importance_20241116-111004.csv
+│   │   ├── feature_importance_20241116-111007.csv
+│   │   ├── feature_importance_20241116-111010.csv
+│   │   ├── feature_importance_20241116-111011.csv
+│   │   ├── feature_importance_20241116-111629.csv
+│   │   ├── feature_importance_20241116-111630.csv
+│   │   ├── feature_importance_20241116-111633.csv
+│   │   ├── feature_importance_20241116-111636.csv
+│   │   ├── feature_importance_20241116-111637.csv
+│   │   ├── feature_importance_20241116-111705.csv
+│   │   ├── feature_importance_20241116-111706.csv
+│   │   ├── feature_importance_20241116-111709.csv
+│   │   ├── feature_importance_20241116-111712.csv
+│   │   ├── feature_importance_20241116-111713.csv
+│   │   ├── feature_importance_20241116-113608.csv
+│   │   ├── feature_importance_20241116-113609.csv
+│   │   ├── feature_importance_20241116-113612.csv
+│   │   ├── feature_importance_20241116-113615.csv
+│   │   ├── feature_importance_20241116-113616.csv
+│   │   ├── feature_importance_20241116-115040.csv
+│   │   ├── feature_importance_20241116-115041.csv
+│   │   ├── feature_importance_20241116-115044.csv
+│   │   ├── feature_importance_20241116-115047.csv
+│   │   ├── feature_importance_20241116-115048.csv
+│   │   ├── feature_importance_20241116-124312.csv
+│   │   ├── feature_importance_20241116-124313.csv
+│   │   ├── feature_importance_20241116-124316.csv
+│   │   ├── feature_importance_20241116-124319.csv
+│   │   ├── feature_importance_20241116-124320.csv
+│   │   ├── feature_importance_20241116-133602.csv
+│   │   ├── feature_importance_20241116-133603.csv
+│   │   ├── feature_importance_20241116-133606.csv
+│   │   ├── feature_importance_20241116-134143.csv
+│   │   ├── feature_importance_20241116-134144.csv
+│   │   ├── feature_importance_20241116-134147.csv
+│   │   ├── feature_importance_20241116-134803.csv
+│   │   ├── feature_importance_20241116-134804.csv
+│   │   ├── feature_importance_20241116-134807.csv
+│   │   ├── feature_importance_20241116-140904.csv
+│   │   ├── feature_importance_20241116-141217.csv
+│   │   ├── feature_importance_20241116-145656.csv
+│   │   ├── feature_importance_20241116-145658.csv
+│   │   ├── feature_importance_20241116-145706.csv
+│   │   ├── feature_importance_20241118-085840.csv
+│   │   ├── feature_importance_20241118-085842.csv
+│   │   ├── feature_importance_20241118-085850.csv
+│   │   ├── feature_importance_20241118-090059.csv
+│   │   ├── feature_importance_20241118-090122.csv
+│   │   ├── feature_importance_20241118-092006.csv
+│   │   ├── feature_importance_20241118-092009.csv
+│   │   ├── feature_importance_20241118-092017.csv
+│   │   ├── feature_importance_20241118-092230.csv
+│   │   ├── feature_importance_20241118-092253.csv
+│   │   ├── feature_importance_20241118-093006.csv
+│   │   ├── feature_importance_20241118-093009.csv
+│   │   ├── feature_importance_20241118-093017.csv
+│   │   ├── feature_importance_20241118-093229.csv
+│   │   ├── feature_importance_20241118-093253.csv
+│   │   ├── feature_importance_20241118-095626.csv
+│   │   ├── feature_importance_20241118-095629.csv
+│   │   ├── feature_importance_20241118-095637.csv
+│   │   ├── feature_importance_20241118-095848.csv
+│   │   ├── feature_importance_20241118-095912.csv
+│   │   ├── full_dataset_20241110-194013.csv
+│   │   ├── full_dataset_20241110-203423.csv
+│   │   ├── full_dataset_20241110-205523.csv
+│   │   ├── full_dataset_20241116-083310.csv
+│   │   ├── full_dataset_20241116-084100.csv
+│   │   ├── full_dataset_20241116-084853.csv
+│   │   ├── full_dataset_20241116-091829.csv
+│   │   ├── full_dataset_20241116-091830.csv
+│   │   ├── full_dataset_20241116-091831.csv
+│   │   ├── full_dataset_20241116-093530.csv
+│   │   ├── full_dataset_20241116-093531.csv
+│   │   ├── full_dataset_20241116-093532.csv
+│   │   ├── full_dataset_20241116-100056.csv
+│   │   ├── full_dataset_20241116-100057.csv
+│   │   ├── full_dataset_20241116-100058.csv
+│   │   ├── full_dataset_20241116-104221.csv
+│   │   ├── full_dataset_20241116-104222.csv
+│   │   ├── full_dataset_20241116-104226.csv
+│   │   ├── full_dataset_20241116-104227.csv
+│   │   ├── full_dataset_20241116-104228.csv
+│   │   ├── full_dataset_20241116-104229.csv
+│   │   ├── full_dataset_20241116-104230.csv
+│   │   ├── full_dataset_20241116-105241.csv
+│   │   ├── full_dataset_20241116-105242.csv
+│   │   ├── full_dataset_20241116-105246.csv
+│   │   ├── full_dataset_20241116-105247.csv
+│   │   ├── full_dataset_20241116-105248.csv
+│   │   ├── full_dataset_20241116-105249.csv
+│   │   ├── full_dataset_20241116-105250.csv
+│   │   ├── full_dataset_20241116-110927.csv
+│   │   ├── full_dataset_20241116-110928.csv
+│   │   ├── full_dataset_20241116-110931.csv
+│   │   ├── full_dataset_20241116-110932.csv
+│   │   ├── full_dataset_20241116-110933.csv
+│   │   ├── full_dataset_20241116-110934.csv
+│   │   ├── full_dataset_20241116-110935.csv
+│   │   ├── full_dataset_20241116-111003.csv
+│   │   ├── full_dataset_20241116-111004.csv
+│   │   ├── full_dataset_20241116-111007.csv
+│   │   ├── full_dataset_20241116-111008.csv
+│   │   ├── full_dataset_20241116-111009.csv
+│   │   ├── full_dataset_20241116-111010.csv
+│   │   ├── full_dataset_20241116-111011.csv
+│   │   ├── full_dataset_20241116-111629.csv
+│   │   ├── full_dataset_20241116-111630.csv
+│   │   ├── full_dataset_20241116-111633.csv
+│   │   ├── full_dataset_20241116-111634.csv
+│   │   ├── full_dataset_20241116-111635.csv
+│   │   ├── full_dataset_20241116-111636.csv
+│   │   ├── full_dataset_20241116-111637.csv
+│   │   ├── full_dataset_20241116-111705.csv
+│   │   ├── full_dataset_20241116-111706.csv
+│   │   ├── full_dataset_20241116-111709.csv
+│   │   ├── full_dataset_20241116-111710.csv
+│   │   ├── full_dataset_20241116-111711.csv
+│   │   ├── full_dataset_20241116-111712.csv
+│   │   ├── full_dataset_20241116-111713.csv
+│   │   ├── full_dataset_20241116-113608.csv
+│   │   ├── full_dataset_20241116-113609.csv
+│   │   ├── full_dataset_20241116-113612.csv
+│   │   ├── full_dataset_20241116-113613.csv
+│   │   ├── full_dataset_20241116-113614.csv
+│   │   ├── full_dataset_20241116-113615.csv
+│   │   ├── full_dataset_20241116-113616.csv
+│   │   ├── full_dataset_20241116-115040.csv
+│   │   ├── full_dataset_20241116-115041.csv
+│   │   ├── full_dataset_20241116-115044.csv
+│   │   ├── full_dataset_20241116-115045.csv
+│   │   ├── full_dataset_20241116-115046.csv
+│   │   ├── full_dataset_20241116-115047.csv
+│   │   ├── full_dataset_20241116-115048.csv
+│   │   ├── full_dataset_20241116-124312.csv
+│   │   ├── full_dataset_20241116-124313.csv
+│   │   ├── full_dataset_20241116-124316.csv
+│   │   ├── full_dataset_20241116-124317.csv
+│   │   ├── full_dataset_20241116-124318.csv
+│   │   ├── full_dataset_20241116-124319.csv
+│   │   ├── full_dataset_20241116-124320.csv
+│   │   ├── full_dataset_20241116-133602.csv
+│   │   ├── full_dataset_20241116-133603.csv
+│   │   ├── full_dataset_20241116-133606.csv
+│   │   ├── full_dataset_20241116-134143.csv
+│   │   ├── full_dataset_20241116-134144.csv
+│   │   ├── full_dataset_20241116-134147.csv
+│   │   ├── full_dataset_20241116-134521.csv
+│   │   ├── full_dataset_20241116-134803.csv
+│   │   ├── full_dataset_20241116-134804.csv
+│   │   ├── full_dataset_20241116-134807.csv
+│   │   ├── full_dataset_20241116-135125.csv
+│   │   ├── full_dataset_20241116-140503.csv
+│   │   ├── full_dataset_20241116-140636.csv
+│   │   ├── full_dataset_20241116-140807.csv
+│   │   ├── full_dataset_20241116-140904.csv
+│   │   ├── full_dataset_20241116-141004.csv
+│   │   ├── full_dataset_20241116-141217.csv
+│   │   ├── full_dataset_20241116-145656.csv
+│   │   ├── full_dataset_20241116-145658.csv
+│   │   ├── full_dataset_20241116-145706.csv
+│   │   ├── full_dataset_20241118-043937.csv
+│   │   ├── full_dataset_20241118-085840.csv
+│   │   ├── full_dataset_20241118-085842.csv
+│   │   ├── full_dataset_20241118-085850.csv
+│   │   ├── full_dataset_20241118-090021.csv
+│   │   ├── full_dataset_20241118-090040.csv
+│   │   ├── full_dataset_20241118-090047.csv
+│   │   ├── full_dataset_20241118-090052.csv
+│   │   ├── full_dataset_20241118-090059.csv
+│   │   ├── full_dataset_20241118-090105.csv
+│   │   ├── full_dataset_20241118-090122.csv
+│   │   ├── full_dataset_20241118-092006.csv
+│   │   ├── full_dataset_20241118-092009.csv
+│   │   ├── full_dataset_20241118-092017.csv
+│   │   ├── full_dataset_20241118-092152.csv
+│   │   ├── full_dataset_20241118-092211.csv
+│   │   ├── full_dataset_20241118-092217.csv
+│   │   ├── full_dataset_20241118-092223.csv
+│   │   ├── full_dataset_20241118-092230.csv
+│   │   ├── full_dataset_20241118-092236.csv
+│   │   ├── full_dataset_20241118-092253.csv
+│   │   ├── full_dataset_20241118-093006.csv
+│   │   ├── full_dataset_20241118-093009.csv
+│   │   ├── full_dataset_20241118-093017.csv
+│   │   ├── full_dataset_20241118-093151.csv
+│   │   ├── full_dataset_20241118-093210.csv
+│   │   ├── full_dataset_20241118-093216.csv
+│   │   ├── full_dataset_20241118-093222.csv
+│   │   ├── full_dataset_20241118-093229.csv
+│   │   ├── full_dataset_20241118-093235.csv
+│   │   ├── full_dataset_20241118-093253.csv
+│   │   ├── full_dataset_20241118-095626.csv
+│   │   ├── full_dataset_20241118-095629.csv
+│   │   ├── full_dataset_20241118-095637.csv
+│   │   ├── full_dataset_20241118-095811.csv
+│   │   ├── full_dataset_20241118-095829.csv
+│   │   ├── full_dataset_20241118-095836.csv
+│   │   ├── full_dataset_20241118-095842.csv
+│   │   ├── full_dataset_20241118-095848.csv
+│   │   ├── full_dataset_20241118-095855.csv
+│   │   └── full_dataset_20241118-095912.csv
+│   ├── __pycache__
+│   │   ├── data_visualizer.cpython-311.pyc
+│   │   ├── feature_analyzer.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── model_selection.cpython-311.pyc
+│   │   ├── nfstream_feature_extractor.cpython-311.pyc
+│   │   ├── shap_analyzer.cpython-311.pyc
+│   │   └── sklearn_classifier.cpython-311.pyc
+│   ├── shap_analyzer.py
+│   └── sklearn_classifier.py
+├── traffic_capture
+│   ├── __init__.py
+│   └── tcpdump_recorder.py
+└── traffic_data
+    ├── nov_1traffic
+    │   ├── traffic_capture_2024-11-01_21-45-25.pcap
+    │   ├── traffic_capture_2024-11-01_21-45-35.pcap
+    │   ├── traffic_capture_2024-11-01_21-45-45.pcap
+    │   ├── traffic_capture_2024-11-01_21-45-55.pcap
+    │   ├── traffic_capture_2024-11-01_21-46-05.pcap
+    │   ├── traffic_capture_2024-11-01_21-46-15.pcap
+    │   ├── traffic_capture_2024-11-01_21-46-25.pcap
+    │   ├── traffic_capture_2024-11-01_21-46-35.pcap
+    │   ├── traffic_capture_2024-11-01_21-46-45.pcap
+    │   ├── traffic_capture_2024-11-01_21-46-55.pcap
+    │   ├── traffic_capture_2024-11-01_21-47-05.pcap
+    │   ├── traffic_capture_2024-11-01_21-47-16.pcap
+    │   ├── traffic_capture_2024-11-01_21-47-26.pcap
+    │   ├── traffic_capture_2024-11-01_21-47-36.pcap
+    │   ├── traffic_capture_2024-11-01_21-47-46.pcap
+    │   ├── traffic_capture_2024-11-01_21-47-56.pcap
+    │   ├── traffic_capture_2024-11-01_21-48-06.pcap
+    │   ├── traffic_capture_2024-11-01_21-48-16.pcap
+    │   ├── traffic_capture_2024-11-01_21-48-26.pcap
+    │   ├── traffic_capture_2024-11-01_21-48-36.pcap
+    │   ├── traffic_capture_2024-11-01_21-48-46.pcap
+    │   ├── traffic_capture_2024-11-01_21-48-56.pcap
+    │   ├── traffic_capture_2024-11-01_21-49-06.pcap
+    │   ├── traffic_capture_2024-11-01_21-49-16.pcap
+    │   ├── traffic_capture_2024-11-01_21-49-26.pcap
+    │   ├── traffic_capture_2024-11-01_21-49-36.pcap
+    │   ├── traffic_capture_2024-11-01_21-49-47.pcap
+    │   ├── traffic_capture_2024-11-01_21-49-57.pcap
+    │   ├── traffic_capture_2024-11-01_21-50-07.pcap
+    │   ├── traffic_capture_2024-11-01_21-50-17.pcap
+    │   ├── traffic_capture_2024-11-01_21-50-27.pcap
+    │   ├── traffic_capture_2024-11-01_21-50-37.pcap
+    │   ├── traffic_capture_2024-11-01_21-50-47.pcap
+    │   ├── traffic_capture_2024-11-01_21-50-57.pcap
+    │   ├── traffic_capture_2024-11-01_21-51-07.pcap
+    │   ├── traffic_capture_2024-11-01_21-51-17.pcap
+    │   ├── traffic_capture_2024-11-01_21-51-27.pcap
+    │   ├── traffic_capture_2024-11-01_21-51-37.pcap
+    │   ├── traffic_capture_2024-11-01_21-51-47.pcap
+    │   ├── traffic_capture_2024-11-01_21-51-57.pcap
+    │   ├── traffic_capture_2024-11-01_21-52-07.pcap
+    │   ├── traffic_capture_2024-11-01_21-52-18.pcap
+    │   ├── traffic_capture_2024-11-01_21-52-28.pcap
+    │   ├── traffic_capture_2024-11-01_21-52-38.pcap
+    │   ├── traffic_capture_2024-11-01_21-52-48.pcap
+    │   ├── traffic_capture_2024-11-01_21-52-58.pcap
+    │   ├── traffic_capture_2024-11-01_21-53-08.pcap
+    │   ├── traffic_capture_2024-11-01_21-53-18.pcap
+    │   ├── traffic_capture_2024-11-01_21-53-28.pcap
+    │   ├── traffic_capture_2024-11-01_21-53-38.pcap
+    │   ├── traffic_capture_2024-11-01_21-53-48.pcap
+    │   ├── traffic_capture_2024-11-01_21-53-58.pcap
+    │   ├── traffic_capture_2024-11-01_21-54-08.pcap
+    │   ├── traffic_capture_2024-11-01_21-54-18.pcap
+    │   ├── traffic_capture_2024-11-01_21-54-28.pcap
+    │   ├── traffic_capture_2024-11-01_21-54-38.pcap
+    │   ├── traffic_capture_2024-11-01_21-54-49.pcap
+    │   ├── traffic_capture_2024-11-01_21-54-59.pcap
+    │   ├── traffic_capture_2024-11-01_21-55-09.pcap
+    │   ├── traffic_capture_2024-11-01_21-55-19.pcap
+    │   ├── traffic_capture_2024-11-01_21-55-29.pcap
+    │   ├── traffic_capture_2024-11-01_21-55-39.pcap
+    │   ├── traffic_capture_2024-11-01_21-55-49.pcap
+    │   ├── traffic_capture_2024-11-01_21-55-59.pcap
+    │   ├── traffic_capture_2024-11-01_21-56-09.pcap
+    │   ├── traffic_capture_2024-11-01_21-56-19.pcap
+    │   ├── traffic_capture_2024-11-01_21-56-29.pcap
+    │   ├── traffic_capture_2024-11-01_21-56-39.pcap
+    │   ├── traffic_capture_2024-11-01_21-56-49.pcap
+    │   ├── traffic_capture_2024-11-01_21-56-59.pcap
+    │   ├── traffic_capture_2024-11-01_21-57-10.pcap
+    │   ├── traffic_capture_2024-11-01_21-57-20.pcap
+    │   ├── traffic_capture_2024-11-01_21-57-30.pcap
+    │   ├── traffic_capture_2024-11-01_21-57-40.pcap
+    │   ├── traffic_capture_2024-11-01_21-57-50.pcap
+    │   ├── traffic_capture_2024-11-01_21-58-00.pcap
+    │   ├── traffic_capture_2024-11-01_21-58-10.pcap
+    │   ├── traffic_capture_2024-11-01_21-58-20.pcap
+    │   ├── traffic_capture_2024-11-01_21-58-30.pcap
+    │   ├── traffic_capture_2024-11-01_21-58-40.pcap
+    │   ├── traffic_capture_2024-11-01_21-58-50.pcap
+    │   ├── traffic_capture_2024-11-01_21-59-00.pcap
+    │   ├── traffic_capture_2024-11-01_21-59-10.pcap
+    │   ├── traffic_capture_2024-11-01_21-59-20.pcap
+    │   ├── traffic_capture_2024-11-01_21-59-30.pcap
+    │   ├── traffic_capture_2024-11-01_21-59-40.pcap
+    │   ├── traffic_capture_2024-11-01_21-59-51.pcap
+    │   ├── traffic_capture_2024-11-01_22-00-01.pcap
+    │   ├── traffic_capture_2024-11-01_22-00-11.pcap
+    │   ├── traffic_capture_2024-11-01_22-00-21.pcap
+    │   ├── traffic_capture_2024-11-01_22-00-31.pcap
+    │   ├── traffic_capture_2024-11-01_22-00-41.pcap
+    │   ├── traffic_capture_2024-11-01_22-00-51.pcap
+    │   ├── traffic_capture_2024-11-01_22-01-01.pcap
+    │   ├── traffic_capture_2024-11-01_22-01-11.pcap
+    │   ├── traffic_capture_2024-11-01_22-01-21.pcap
+    │   ├── traffic_capture_2024-11-01_22-01-31.pcap
+    │   ├── traffic_capture_2024-11-01_22-01-41.pcap
+    │   ├── traffic_capture_2024-11-01_22-01-51.pcap
+    │   ├── traffic_capture_2024-11-01_22-02-01.pcap
+    │   ├── traffic_capture_2024-11-01_22-02-12.pcap
+    │   ├── traffic_capture_2024-11-01_22-02-22.pcap
+    │   ├── traffic_capture_2024-11-01_22-02-32.pcap
+    │   ├── traffic_capture_2024-11-01_22-02-42.pcap
+    │   ├── traffic_capture_2024-11-01_22-02-52.pcap
+    │   ├── traffic_capture_2024-11-01_22-03-02.pcap
+    │   ├── traffic_capture_2024-11-01_22-03-12.pcap
+    │   ├── traffic_capture_2024-11-01_22-03-22.pcap
+    │   ├── traffic_capture_2024-11-01_22-03-32.pcap
+    │   ├── traffic_capture_2024-11-01_22-03-42.pcap
+    │   ├── traffic_capture_2024-11-01_22-03-52.pcap
+    │   ├── traffic_capture_2024-11-01_22-04-02.pcap
+    │   ├── traffic_capture_2024-11-01_22-04-12.pcap
+    │   ├── traffic_capture_2024-11-01_22-04-22.pcap
+    │   ├── traffic_capture_2024-11-01_22-04-32.pcap
+    │   ├── traffic_capture_2024-11-01_22-04-43.pcap
+    │   ├── traffic_capture_2024-11-01_22-04-53.pcap
+    │   ├── traffic_capture_2024-11-01_22-05-03.pcap
+    │   ├── traffic_capture_2024-11-01_22-05-13.pcap
+    │   ├── traffic_capture_2024-11-01_22-05-23.pcap
+    │   ├── traffic_capture_2024-11-01_22-05-33.pcap
+    │   ├── traffic_capture_2024-11-01_22-05-43.pcap
+    │   ├── traffic_capture_2024-11-01_22-05-53.pcap
+    │   ├── traffic_capture_2024-11-01_22-06-03.pcap
+    │   ├── traffic_capture_2024-11-01_22-06-13.pcap
+    │   ├── traffic_capture_2024-11-01_22-06-23.pcap
+    │   ├── traffic_capture_2024-11-01_22-06-33.pcap
+    │   ├── traffic_capture_2024-11-01_22-06-43.pcap
+    │   ├── traffic_capture_2024-11-01_22-06-53.pcap
+    │   ├── traffic_capture_2024-11-01_22-07-03.pcap
+    │   ├── traffic_capture_2024-11-01_22-07-14.pcap
+    │   ├── traffic_capture_2024-11-01_22-07-24.pcap
+    │   ├── traffic_capture_2024-11-01_22-07-34.pcap
+    │   ├── traffic_capture_2024-11-01_22-07-44.pcap
+    │   ├── traffic_capture_2024-11-01_22-07-54.pcap
+    │   ├── traffic_capture_2024-11-01_22-08-04.pcap
+    │   ├── traffic_capture_2024-11-01_22-08-14.pcap
+    │   ├── traffic_capture_2024-11-01_22-08-24.pcap
+    │   ├── traffic_capture_2024-11-01_22-08-34.pcap
+    │   ├── traffic_capture_2024-11-01_22-08-44.pcap
+    │   ├── traffic_capture_2024-11-01_22-08-54.pcap
+    │   ├── traffic_capture_2024-11-01_22-09-04.pcap
+    │   ├── traffic_capture_2024-11-01_22-09-14.pcap
+    │   ├── traffic_capture_2024-11-01_22-09-25.pcap
+    │   ├── traffic_capture_2024-11-01_22-09-35.pcap
+    │   ├── traffic_capture_2024-11-01_22-09-45.pcap
+    │   ├── traffic_capture_2024-11-01_22-09-55.pcap
+    │   ├── traffic_capture_2024-11-01_22-10-05.pcap
+    │   ├── traffic_capture_2024-11-01_22-10-15.pcap
+    │   ├── traffic_capture_2024-11-01_22-10-25.pcap
+    │   ├── traffic_capture_2024-11-01_22-10-35.pcap
+    │   ├── traffic_capture_2024-11-01_22-10-45.pcap
+    │   ├── traffic_capture_2024-11-01_22-10-55.pcap
+    │   ├── traffic_capture_2024-11-01_22-11-05.pcap
+    │   ├── traffic_capture_2024-11-01_22-11-15.pcap
+    │   ├── traffic_capture_2024-11-01_22-11-25.pcap
+    │   ├── traffic_capture_2024-11-01_22-11-35.pcap
+    │   ├── traffic_capture_2024-11-01_22-11-45.pcap
+    │   ├── traffic_capture_2024-11-01_22-11-56.pcap
+    │   ├── traffic_capture_2024-11-01_22-12-06.pcap
+    │   ├── traffic_capture_2024-11-01_22-12-16.pcap
+    │   ├── traffic_capture_2024-11-01_22-12-26.pcap
+    │   ├── traffic_capture_2024-11-01_22-12-36.pcap
+    │   ├── traffic_capture_2024-11-01_22-12-46.pcap
+    │   ├── traffic_capture_2024-11-01_22-12-56.pcap
+    │   ├── traffic_capture_2024-11-01_22-13-06.pcap
+    │   ├── traffic_capture_2024-11-01_22-13-16.pcap
+    │   ├── traffic_capture_2024-11-01_22-13-26.pcap
+    │   ├── traffic_capture_2024-11-01_22-13-36.pcap
+    │   ├── traffic_capture_2024-11-01_22-13-46.pcap
+    │   ├── traffic_capture_2024-11-01_22-13-56.pcap
+    │   ├── traffic_capture_2024-11-01_22-14-06.pcap
+    │   ├── traffic_capture_2024-11-01_22-14-17.pcap
+    │   ├── traffic_capture_2024-11-01_22-14-27.pcap
+    │   ├── traffic_capture_2024-11-01_22-14-37.pcap
+    │   ├── traffic_capture_2024-11-01_22-14-47.pcap
+    │   ├── traffic_capture_2024-11-01_22-14-57.pcap
+    │   ├── traffic_capture_2024-11-01_22-15-07.pcap
+    │   ├── traffic_capture_2024-11-01_22-15-17.pcap
+    │   ├── traffic_capture_2024-11-01_22-15-27.pcap
+    │   ├── traffic_capture_2024-11-01_22-15-37.pcap
+    │   ├── traffic_capture_2024-11-01_22-15-47.pcap
+    │   ├── traffic_capture_2024-11-01_22-15-57.pcap
+    │   ├── traffic_capture_2024-11-01_22-16-07.pcap
+    │   ├── traffic_capture_2024-11-01_22-16-17.pcap
+    │   ├── traffic_capture_2024-11-01_22-16-27.pcap
+    │   ├── traffic_capture_2024-11-01_22-16-38.pcap
+    │   ├── traffic_capture_2024-11-01_22-16-48.pcap
+    │   ├── traffic_capture_2024-11-01_22-16-58.pcap
+    │   ├── traffic_capture_2024-11-01_22-17-08.pcap
+    │   ├── traffic_capture_2024-11-01_22-17-18.pcap
+    │   ├── traffic_capture_2024-11-01_22-17-28.pcap
+    │   ├── traffic_capture_2024-11-01_22-17-38.pcap
+    │   ├── traffic_capture_2024-11-01_22-17-48.pcap
+    │   ├── traffic_capture_2024-11-01_22-17-58.pcap
+    │   ├── traffic_capture_2024-11-01_22-18-08.pcap
+    │   ├── traffic_capture_2024-11-01_22-18-18.pcap
+    │   ├── traffic_capture_2024-11-01_22-18-28.pcap
+    │   ├── traffic_capture_2024-11-01_22-18-38.pcap
+    │   └── traffic_capture_2024-11-01_22-18-48.pcap
+    ├── nov_1_traffic_PROXY
+    │   ├── traffic_capture_2024-11-01_13-03-00.pcap
+    │   ├── traffic_capture_2024-11-01_13-03-10.pcap
+    │   ├── traffic_capture_2024-11-01_13-03-20.pcap
+    │   ├── traffic_capture_2024-11-01_13-03-31.pcap
+    │   ├── traffic_capture_2024-11-01_13-03-41.pcap
+    │   ├── traffic_capture_2024-11-01_13-03-51.pcap
+    │   ├── traffic_capture_2024-11-01_13-04-01.pcap
+    │   ├── traffic_capture_2024-11-01_13-04-11.pcap
+    │   ├── traffic_capture_2024-11-01_13-04-21.pcap
+    │   ├── traffic_capture_2024-11-01_13-04-31.pcap
+    │   ├── traffic_capture_2024-11-01_13-04-41.pcap
+    │   ├── traffic_capture_2024-11-01_13-04-51.pcap
+    │   ├── traffic_capture_2024-11-01_13-05-01.pcap
+    │   ├── traffic_capture_2024-11-01_13-05-11.pcap
+    │   ├── traffic_capture_2024-11-01_13-05-21.pcap
+    │   ├── traffic_capture_2024-11-01_13-05-31.pcap
+    │   ├── traffic_capture_2024-11-01_13-05-41.pcap
+    │   ├── traffic_capture_2024-11-01_13-05-51.pcap
+    │   ├── traffic_capture_2024-11-01_13-06-02.pcap
+    │   ├── traffic_capture_2024-11-01_13-06-12.pcap
+    │   ├── traffic_capture_2024-11-01_13-06-22.pcap
+    │   ├── traffic_capture_2024-11-01_13-06-32.pcap
+    │   ├── traffic_capture_2024-11-01_13-06-42.pcap
+    │   ├── traffic_capture_2024-11-01_13-06-52.pcap
+    │   ├── traffic_capture_2024-11-01_13-07-02.pcap
+    │   ├── traffic_capture_2024-11-01_13-07-12.pcap
+    │   ├── traffic_capture_2024-11-01_13-07-22.pcap
+    │   ├── traffic_capture_2024-11-01_13-07-32.pcap
+    │   ├── traffic_capture_2024-11-01_13-07-42.pcap
+    │   ├── traffic_capture_2024-11-01_13-07-52.pcap
+    │   ├── traffic_capture_2024-11-01_13-08-02.pcap
+    │   ├── traffic_capture_2024-11-01_13-08-12.pcap
+    │   ├── traffic_capture_2024-11-01_13-08-23.pcap
+    │   ├── traffic_capture_2024-11-01_13-08-33.pcap
+    │   ├── traffic_capture_2024-11-01_13-08-43.pcap
+    │   ├── traffic_capture_2024-11-01_13-08-53.pcap
+    │   ├── traffic_capture_2024-11-01_13-09-03.pcap
+    │   ├── traffic_capture_2024-11-01_13-09-13.pcap
+    │   ├── traffic_capture_2024-11-01_13-09-23.pcap
+    │   ├── traffic_capture_2024-11-01_13-09-33.pcap
+    │   ├── traffic_capture_2024-11-01_13-09-43.pcap
+    │   ├── traffic_capture_2024-11-01_13-09-53.pcap
+    │   ├── traffic_capture_2024-11-01_13-10-03.pcap
+    │   ├── traffic_capture_2024-11-01_13-10-13.pcap
+    │   ├── traffic_capture_2024-11-01_13-10-23.pcap
+    │   ├── traffic_capture_2024-11-01_13-10-34.pcap
+    │   ├── traffic_capture_2024-11-01_13-10-44.pcap
+    │   ├── traffic_capture_2024-11-01_13-10-54.pcap
+    │   ├── traffic_capture_2024-11-01_13-11-04.pcap
+    │   ├── traffic_capture_2024-11-01_13-11-14.pcap
+    │   ├── traffic_capture_2024-11-01_13-11-24.pcap
+    │   ├── traffic_capture_2024-11-01_13-11-34.pcap
+    │   ├── traffic_capture_2024-11-01_13-11-44.pcap
+    │   ├── traffic_capture_2024-11-01_13-11-54.pcap
+    │   ├── traffic_capture_2024-11-01_13-12-04.pcap
+    │   ├── traffic_capture_2024-11-01_13-12-14.pcap
+    │   ├── traffic_capture_2024-11-01_13-12-24.pcap
+    │   ├── traffic_capture_2024-11-01_13-12-34.pcap
+    │   ├── traffic_capture_2024-11-01_13-12-45.pcap
+    │   ├── traffic_capture_2024-11-01_13-12-55.pcap
+    │   ├── traffic_capture_2024-11-01_13-13-05.pcap
+    │   ├── traffic_capture_2024-11-01_13-13-15.pcap
+    │   ├── traffic_capture_2024-11-01_13-13-25.pcap
+    │   ├── traffic_capture_2024-11-01_13-13-35.pcap
+    │   ├── traffic_capture_2024-11-01_13-13-45.pcap
+    │   ├── traffic_capture_2024-11-01_13-13-55.pcap
+    │   ├── traffic_capture_2024-11-01_13-14-05.pcap
+    │   ├── traffic_capture_2024-11-01_13-14-15.pcap
+    │   ├── traffic_capture_2024-11-01_13-14-25.pcap
+    │   ├── traffic_capture_2024-11-01_13-14-35.pcap
+    │   ├── traffic_capture_2024-11-01_13-14-45.pcap
+    │   ├── traffic_capture_2024-11-01_13-14-55.pcap
+    │   ├── traffic_capture_2024-11-01_13-15-06.pcap
+    │   ├── traffic_capture_2024-11-01_13-15-16.pcap
+    │   ├── traffic_capture_2024-11-01_13-15-26.pcap
+    │   ├── traffic_capture_2024-11-01_13-15-36.pcap
+    │   ├── traffic_capture_2024-11-01_13-15-46.pcap
+    │   ├── traffic_capture_2024-11-01_13-15-56.pcap
+    │   ├── traffic_capture_2024-11-01_13-16-06.pcap
+    │   ├── traffic_capture_2024-11-01_13-16-16.pcap
+    │   ├── traffic_capture_2024-11-01_13-16-26.pcap
+    │   ├── traffic_capture_2024-11-01_13-16-36.pcap
+    │   ├── traffic_capture_2024-11-01_13-16-46.pcap
+    │   ├── traffic_capture_2024-11-01_13-16-56.pcap
+    │   ├── traffic_capture_2024-11-01_13-17-06.pcap
+    │   ├── traffic_capture_2024-11-01_13-17-16.pcap
+    │   ├── traffic_capture_2024-11-01_13-17-26.pcap
+    │   ├── traffic_capture_2024-11-01_13-17-37.pcap
+    │   ├── traffic_capture_2024-11-01_13-17-47.pcap
+    │   ├── traffic_capture_2024-11-01_13-17-57.pcap
+    │   ├── traffic_capture_2024-11-01_13-18-07.pcap
+    │   ├── traffic_capture_2024-11-01_13-18-17.pcap
+    │   ├── traffic_capture_2024-11-01_13-18-27.pcap
+    │   ├── traffic_capture_2024-11-01_13-18-37.pcap
+    │   ├── traffic_capture_2024-11-01_13-18-47.pcap
+    │   ├── traffic_capture_2024-11-01_13-18-57.pcap
+    │   ├── traffic_capture_2024-11-01_13-19-07.pcap
+    │   ├── traffic_capture_2024-11-01_13-19-17.pcap
+    │   ├── traffic_capture_2024-11-01_13-19-27.pcap
+    │   ├── traffic_capture_2024-11-01_13-19-37.pcap
+    │   ├── traffic_capture_2024-11-01_13-19-47.pcap
+    │   ├── traffic_capture_2024-11-01_13-19-57.pcap
+    │   ├── traffic_capture_2024-11-01_13-20-08.pcap
+    │   ├── traffic_capture_2024-11-01_13-20-18.pcap
+    │   ├── traffic_capture_2024-11-01_13-20-28.pcap
+    │   ├── traffic_capture_2024-11-01_13-20-38.pcap
+    │   ├── traffic_capture_2024-11-01_13-20-48.pcap
+    │   ├── traffic_capture_2024-11-01_13-20-58.pcap
+    │   ├── traffic_capture_2024-11-01_13-21-08.pcap
+    │   ├── traffic_capture_2024-11-01_13-21-18.pcap
+    │   ├── traffic_capture_2024-11-01_13-21-28.pcap
+    │   ├── traffic_capture_2024-11-01_13-21-38.pcap
+    │   ├── traffic_capture_2024-11-01_13-21-48.pcap
+    │   ├── traffic_capture_2024-11-01_13-21-58.pcap
+    │   ├── traffic_capture_2024-11-01_13-22-08.pcap
+    │   ├── traffic_capture_2024-11-01_13-22-18.pcap
+    │   ├── traffic_capture_2024-11-01_13-22-29.pcap
+    │   ├── traffic_capture_2024-11-01_13-22-39.pcap
+    │   ├── traffic_capture_2024-11-01_13-22-49.pcap
+    │   ├── traffic_capture_2024-11-01_13-22-59.pcap
+    │   ├── traffic_capture_2024-11-01_13-23-09.pcap
+    │   ├── traffic_capture_2024-11-01_13-23-19.pcap
+    │   ├── traffic_capture_2024-11-01_13-23-29.pcap
+    │   ├── traffic_capture_2024-11-01_13-23-39.pcap
+    │   ├── traffic_capture_2024-11-01_13-23-49.pcap
+    │   ├── traffic_capture_2024-11-01_13-23-59.pcap
+    │   ├── traffic_capture_2024-11-01_13-24-09.pcap
+    │   ├── traffic_capture_2024-11-01_13-24-19.pcap
+    │   ├── traffic_capture_2024-11-01_13-24-29.pcap
+    │   ├── traffic_capture_2024-11-01_13-24-39.pcap
+    │   ├── traffic_capture_2024-11-01_13-24-50.pcap
+    │   ├── traffic_capture_2024-11-01_13-25-00.pcap
+    │   ├── traffic_capture_2024-11-01_13-25-10.pcap
+    │   ├── traffic_capture_2024-11-01_13-25-20.pcap
+    │   ├── traffic_capture_2024-11-01_13-25-30.pcap
+    │   ├── traffic_capture_2024-11-01_13-25-40.pcap
+    │   ├── traffic_capture_2024-11-01_13-25-50.pcap
+    │   ├── traffic_capture_2024-11-01_13-26-00.pcap
+    │   ├── traffic_capture_2024-11-01_13-26-10.pcap
+    │   ├── traffic_capture_2024-11-01_13-26-20.pcap
+    │   ├── traffic_capture_2024-11-01_13-26-30.pcap
+    │   ├── traffic_capture_2024-11-01_13-26-40.pcap
+    │   ├── traffic_capture_2024-11-01_13-26-50.pcap
+    │   ├── traffic_capture_2024-11-01_13-27-00.pcap
+    │   ├── traffic_capture_2024-11-01_13-27-11.pcap
+    │   ├── traffic_capture_2024-11-01_13-27-21.pcap
+    │   ├── traffic_capture_2024-11-01_13-27-31.pcap
+    │   ├── traffic_capture_2024-11-01_13-27-41.pcap
+    │   ├── traffic_capture_2024-11-01_13-27-51.pcap
+    │   ├── traffic_capture_2024-11-01_13-28-01.pcap
+    │   ├── traffic_capture_2024-11-01_13-28-11.pcap
+    │   ├── traffic_capture_2024-11-01_13-28-21.pcap
+    │   ├── traffic_capture_2024-11-01_13-28-31.pcap
+    │   ├── traffic_capture_2024-11-01_13-28-41.pcap
+    │   ├── traffic_capture_2024-11-01_13-28-51.pcap
+    │   ├── traffic_capture_2024-11-01_13-29-01.pcap
+    │   ├── traffic_capture_2024-11-01_13-29-11.pcap
+    │   ├── traffic_capture_2024-11-01_13-29-21.pcap
+    │   ├── traffic_capture_2024-11-01_13-29-32.pcap
+    │   ├── traffic_capture_2024-11-01_13-29-42.pcap
+    │   ├── traffic_capture_2024-11-01_13-29-52.pcap
+    │   ├── traffic_capture_2024-11-01_13-30-02.pcap
+    │   ├── traffic_capture_2024-11-01_13-30-12.pcap
+    │   ├── traffic_capture_2024-11-01_13-30-22.pcap
+    │   ├── traffic_capture_2024-11-01_13-30-32.pcap
+    │   ├── traffic_capture_2024-11-01_13-30-42.pcap
+    │   ├── traffic_capture_2024-11-01_13-30-52.pcap
+    │   ├── traffic_capture_2024-11-01_13-31-02.pcap
+    │   ├── traffic_capture_2024-11-01_13-31-12.pcap
+    │   ├── traffic_capture_2024-11-01_13-31-22.pcap
+    │   ├── traffic_capture_2024-11-01_13-31-32.pcap
+    │   ├── traffic_capture_2024-11-01_13-31-43.pcap
+    │   ├── traffic_capture_2024-11-01_13-31-53.pcap
+    │   ├── traffic_capture_2024-11-01_13-32-03.pcap
+    │   ├── traffic_capture_2024-11-01_13-32-13.pcap
+    │   ├── traffic_capture_2024-11-01_13-32-23.pcap
+    │   ├── traffic_capture_2024-11-01_13-32-33.pcap
+    │   ├── traffic_capture_2024-11-01_13-32-43.pcap
+    │   ├── traffic_capture_2024-11-01_13-32-53.pcap
+    │   ├── traffic_capture_2024-11-01_13-33-03.pcap
+    │   ├── traffic_capture_2024-11-01_13-33-13.pcap
+    │   ├── traffic_capture_2024-11-01_13-33-23.pcap
+    │   ├── traffic_capture_2024-11-01_13-33-33.pcap
+    │   ├── traffic_capture_2024-11-01_13-33-43.pcap
+    │   ├── traffic_capture_2024-11-01_13-33-53.pcap
+    │   ├── traffic_capture_2024-11-01_13-34-03.pcap
+    │   ├── traffic_capture_2024-11-01_13-34-14.pcap
+    │   ├── traffic_capture_2024-11-01_13-34-24.pcap
+    │   ├── traffic_capture_2024-11-01_13-34-34.pcap
+    │   ├── traffic_capture_2024-11-01_13-34-44.pcap
+    │   ├── traffic_capture_2024-11-01_13-34-54.pcap
+    │   ├── traffic_capture_2024-11-01_13-35-04.pcap
+    │   ├── traffic_capture_2024-11-01_13-35-14.pcap
+    │   ├── traffic_capture_2024-11-01_13-35-24.pcap
+    │   ├── traffic_capture_2024-11-01_13-35-34.pcap
+    │   ├── traffic_capture_2024-11-01_13-35-44.pcap
+    │   ├── traffic_capture_2024-11-01_13-35-54.pcap
+    │   ├── traffic_capture_2024-11-01_13-36-04.pcap
+    │   ├── traffic_capture_2024-11-01_13-36-14.pcap
+    │   └── traffic_capture_2024-11-01_13-36-24.pcap
+    ├── nov_2_proton_traffic
+    │   ├── traffic_capture_2024-11-02_16-36-37.pcap
+    │   ├── traffic_capture_2024-11-02_16-36-47.pcap
+    │   ├── traffic_capture_2024-11-02_16-36-57.pcap
+    │   ├── traffic_capture_2024-11-02_16-37-07.pcap
+    │   ├── traffic_capture_2024-11-02_16-37-17.pcap
+    │   ├── traffic_capture_2024-11-02_16-37-27.pcap
+    │   ├── traffic_capture_2024-11-02_16-37-37.pcap
+    │   ├── traffic_capture_2024-11-02_16-37-47.pcap
+    │   ├── traffic_capture_2024-11-02_16-37-57.pcap
+    │   ├── traffic_capture_2024-11-02_16-38-07.pcap
+    │   ├── traffic_capture_2024-11-02_16-38-17.pcap
+    │   ├── traffic_capture_2024-11-02_16-38-27.pcap
+    │   ├── traffic_capture_2024-11-02_16-38-37.pcap
+    │   ├── traffic_capture_2024-11-02_16-38-47.pcap
+    │   ├── traffic_capture_2024-11-02_16-38-58.pcap
+    │   ├── traffic_capture_2024-11-02_16-39-08.pcap
+    │   ├── traffic_capture_2024-11-02_16-39-18.pcap
+    │   ├── traffic_capture_2024-11-02_16-39-28.pcap
+    │   ├── traffic_capture_2024-11-02_16-39-38.pcap
+    │   ├── traffic_capture_2024-11-02_16-39-48.pcap
+    │   ├── traffic_capture_2024-11-02_16-39-58.pcap
+    │   ├── traffic_capture_2024-11-02_16-40-08.pcap
+    │   ├── traffic_capture_2024-11-02_16-40-18.pcap
+    │   ├── traffic_capture_2024-11-02_16-40-28.pcap
+    │   ├── traffic_capture_2024-11-02_16-40-38.pcap
+    │   ├── traffic_capture_2024-11-02_16-40-48.pcap
+    │   ├── traffic_capture_2024-11-02_16-40-58.pcap
+    │   ├── traffic_capture_2024-11-02_16-41-08.pcap
+    │   ├── traffic_capture_2024-11-02_16-41-18.pcap
+    │   ├── traffic_capture_2024-11-02_16-41-28.pcap
+    │   ├── traffic_capture_2024-11-02_16-41-39.pcap
+    │   ├── traffic_capture_2024-11-02_16-41-49.pcap
+    │   ├── traffic_capture_2024-11-02_16-41-59.pcap
+    │   ├── traffic_capture_2024-11-02_16-42-09.pcap
+    │   ├── traffic_capture_2024-11-02_16-42-19.pcap
+    │   ├── traffic_capture_2024-11-02_16-42-29.pcap
+    │   ├── traffic_capture_2024-11-02_16-42-39.pcap
+    │   ├── traffic_capture_2024-11-02_16-42-49.pcap
+    │   ├── traffic_capture_2024-11-02_16-42-59.pcap
+    │   ├── traffic_capture_2024-11-02_16-43-09.pcap
+    │   ├── traffic_capture_2024-11-02_16-43-19.pcap
+    │   ├── traffic_capture_2024-11-02_16-43-29.pcap
+    │   ├── traffic_capture_2024-11-02_16-43-39.pcap
+    │   ├── traffic_capture_2024-11-02_16-43-49.pcap
+    │   ├── traffic_capture_2024-11-02_16-43-59.pcap
+    │   ├── traffic_capture_2024-11-02_16-44-10.pcap
+    │   ├── traffic_capture_2024-11-02_16-44-20.pcap
+    │   ├── traffic_capture_2024-11-02_16-44-30.pcap
+    │   ├── traffic_capture_2024-11-02_16-44-40.pcap
+    │   ├── traffic_capture_2024-11-02_16-44-50.pcap
+    │   ├── traffic_capture_2024-11-02_16-45-00.pcap
+    │   ├── traffic_capture_2024-11-02_16-45-10.pcap
+    │   ├── traffic_capture_2024-11-02_16-45-20.pcap
+    │   ├── traffic_capture_2024-11-02_16-45-30.pcap
+    │   ├── traffic_capture_2024-11-02_16-45-40.pcap
+    │   ├── traffic_capture_2024-11-02_16-45-50.pcap
+    │   ├── traffic_capture_2024-11-02_16-46-00.pcap
+    │   ├── traffic_capture_2024-11-02_16-46-10.pcap
+    │   ├── traffic_capture_2024-11-02_16-46-20.pcap
+    │   ├── traffic_capture_2024-11-02_16-46-30.pcap
+    │   ├── traffic_capture_2024-11-02_16-46-40.pcap
+    │   ├── traffic_capture_2024-11-02_16-46-51.pcap
+    │   ├── traffic_capture_2024-11-02_16-47-01.pcap
+    │   ├── traffic_capture_2024-11-02_16-47-11.pcap
+    │   ├── traffic_capture_2024-11-02_16-47-21.pcap
+    │   ├── traffic_capture_2024-11-02_16-47-31.pcap
+    │   ├── traffic_capture_2024-11-02_16-47-41.pcap
+    │   ├── traffic_capture_2024-11-02_16-47-51.pcap
+    │   ├── traffic_capture_2024-11-02_16-48-01.pcap
+    │   ├── traffic_capture_2024-11-02_16-48-11.pcap
+    │   ├── traffic_capture_2024-11-02_16-48-21.pcap
+    │   ├── traffic_capture_2024-11-02_16-48-31.pcap
+    │   ├── traffic_capture_2024-11-02_16-48-41.pcap
+    │   ├── traffic_capture_2024-11-02_16-48-51.pcap
+    │   ├── traffic_capture_2024-11-02_16-49-01.pcap
+    │   ├── traffic_capture_2024-11-02_16-49-11.pcap
+    │   ├── traffic_capture_2024-11-02_16-49-22.pcap
+    │   ├── traffic_capture_2024-11-02_16-49-32.pcap
+    │   ├── traffic_capture_2024-11-02_16-49-42.pcap
+    │   ├── traffic_capture_2024-11-02_16-49-52.pcap
+    │   ├── traffic_capture_2024-11-02_16-50-02.pcap
+    │   ├── traffic_capture_2024-11-02_16-50-12.pcap
+    │   ├── traffic_capture_2024-11-02_16-50-22.pcap
+    │   ├── traffic_capture_2024-11-02_16-50-32.pcap
+    │   ├── traffic_capture_2024-11-02_16-50-42.pcap
+    │   ├── traffic_capture_2024-11-02_16-50-52.pcap
+    │   ├── traffic_capture_2024-11-02_16-51-02.pcap
+    │   ├── traffic_capture_2024-11-02_16-51-12.pcap
+    │   ├── traffic_capture_2024-11-02_16-51-22.pcap
+    │   ├── traffic_capture_2024-11-02_16-51-32.pcap
+    │   ├── traffic_capture_2024-11-02_16-51-43.pcap
+    │   ├── traffic_capture_2024-11-02_16-51-53.pcap
+    │   ├── traffic_capture_2024-11-02_16-52-03.pcap
+    │   ├── traffic_capture_2024-11-02_16-52-13.pcap
+    │   ├── traffic_capture_2024-11-02_16-52-23.pcap
+    │   ├── traffic_capture_2024-11-02_16-52-33.pcap
+    │   ├── traffic_capture_2024-11-02_16-52-43.pcap
+    │   ├── traffic_capture_2024-11-02_16-52-53.pcap
+    │   ├── traffic_capture_2024-11-02_16-53-03.pcap
+    │   ├── traffic_capture_2024-11-02_16-53-13.pcap
+    │   ├── traffic_capture_2024-11-02_16-53-23.pcap
+    │   ├── traffic_capture_2024-11-02_16-53-33.pcap
+    │   ├── traffic_capture_2024-11-02_16-53-43.pcap
+    │   ├── traffic_capture_2024-11-02_16-53-54.pcap
+    │   ├── traffic_capture_2024-11-02_16-54-04.pcap
+    │   ├── traffic_capture_2024-11-02_16-54-14.pcap
+    │   ├── traffic_capture_2024-11-02_16-54-24.pcap
+    │   ├── traffic_capture_2024-11-02_16-54-34.pcap
+    │   ├── traffic_capture_2024-11-02_16-54-44.pcap
+    │   ├── traffic_capture_2024-11-02_16-54-54.pcap
+    │   ├── traffic_capture_2024-11-02_16-55-04.pcap
+    │   ├── traffic_capture_2024-11-02_16-55-14.pcap
+    │   ├── traffic_capture_2024-11-02_16-55-24.pcap
+    │   ├── traffic_capture_2024-11-02_16-55-34.pcap
+    │   ├── traffic_capture_2024-11-02_16-55-44.pcap
+    │   ├── traffic_capture_2024-11-02_16-55-54.pcap
+    │   ├── traffic_capture_2024-11-02_16-56-04.pcap
+    │   ├── traffic_capture_2024-11-02_16-56-14.pcap
+    │   ├── traffic_capture_2024-11-02_16-56-25.pcap
+    │   ├── traffic_capture_2024-11-02_16-56-35.pcap
+    │   ├── traffic_capture_2024-11-02_16-56-45.pcap
+    │   ├── traffic_capture_2024-11-02_16-56-55.pcap
+    │   ├── traffic_capture_2024-11-02_16-57-05.pcap
+    │   ├── traffic_capture_2024-11-02_16-57-15.pcap
+    │   ├── traffic_capture_2024-11-02_16-57-25.pcap
+    │   ├── traffic_capture_2024-11-02_16-57-35.pcap
+    │   ├── traffic_capture_2024-11-02_16-57-45.pcap
+    │   ├── traffic_capture_2024-11-02_16-57-55.pcap
+    │   ├── traffic_capture_2024-11-02_16-58-05.pcap
+    │   ├── traffic_capture_2024-11-02_16-58-15.pcap
+    │   ├── traffic_capture_2024-11-02_16-58-25.pcap
+    │   ├── traffic_capture_2024-11-02_16-58-35.pcap
+    │   ├── traffic_capture_2024-11-02_16-58-46.pcap
+    │   ├── traffic_capture_2024-11-02_16-58-56.pcap
+    │   ├── traffic_capture_2024-11-02_16-59-06.pcap
+    │   ├── traffic_capture_2024-11-02_16-59-16.pcap
+    │   ├── traffic_capture_2024-11-02_16-59-26.pcap
+    │   ├── traffic_capture_2024-11-02_16-59-36.pcap
+    │   ├── traffic_capture_2024-11-02_16-59-46.pcap
+    │   ├── traffic_capture_2024-11-02_16-59-56.pcap
+    │   ├── traffic_capture_2024-11-02_17-00-06.pcap
+    │   ├── traffic_capture_2024-11-02_17-00-16.pcap
+    │   ├── traffic_capture_2024-11-02_17-00-26.pcap
+    │   ├── traffic_capture_2024-11-02_17-00-36.pcap
+    │   ├── traffic_capture_2024-11-02_17-00-46.pcap
+    │   ├── traffic_capture_2024-11-02_17-00-56.pcap
+    │   ├── traffic_capture_2024-11-02_17-01-07.pcap
+    │   ├── traffic_capture_2024-11-02_17-01-17.pcap
+    │   ├── traffic_capture_2024-11-02_17-01-27.pcap
+    │   ├── traffic_capture_2024-11-02_17-01-37.pcap
+    │   ├── traffic_capture_2024-11-02_17-01-47.pcap
+    │   ├── traffic_capture_2024-11-02_17-01-57.pcap
+    │   ├── traffic_capture_2024-11-02_17-02-07.pcap
+    │   ├── traffic_capture_2024-11-02_17-02-17.pcap
+    │   ├── traffic_capture_2024-11-02_17-02-27.pcap
+    │   ├── traffic_capture_2024-11-02_17-02-37.pcap
+    │   ├── traffic_capture_2024-11-02_17-02-47.pcap
+    │   ├── traffic_capture_2024-11-02_17-02-57.pcap
+    │   ├── traffic_capture_2024-11-02_17-03-07.pcap
+    │   ├── traffic_capture_2024-11-02_17-03-17.pcap
+    │   ├── traffic_capture_2024-11-02_17-03-28.pcap
+    │   ├── traffic_capture_2024-11-02_17-03-38.pcap
+    │   ├── traffic_capture_2024-11-02_17-03-48.pcap
+    │   ├── traffic_capture_2024-11-02_17-03-58.pcap
+    │   ├── traffic_capture_2024-11-02_17-04-08.pcap
+    │   ├── traffic_capture_2024-11-02_17-04-18.pcap
+    │   ├── traffic_capture_2024-11-02_17-04-28.pcap
+    │   ├── traffic_capture_2024-11-02_17-04-38.pcap
+    │   ├── traffic_capture_2024-11-02_17-04-48.pcap
+    │   ├── traffic_capture_2024-11-02_17-04-58.pcap
+    │   ├── traffic_capture_2024-11-02_17-05-08.pcap
+    │   ├── traffic_capture_2024-11-02_17-05-18.pcap
+    │   ├── traffic_capture_2024-11-02_17-05-28.pcap
+    │   ├── traffic_capture_2024-11-02_17-05-38.pcap
+    │   ├── traffic_capture_2024-11-02_17-05-48.pcap
+    │   ├── traffic_capture_2024-11-02_17-05-59.pcap
+    │   ├── traffic_capture_2024-11-02_17-06-09.pcap
+    │   ├── traffic_capture_2024-11-02_17-06-19.pcap
+    │   ├── traffic_capture_2024-11-02_17-06-29.pcap
+    │   ├── traffic_capture_2024-11-02_17-06-39.pcap
+    │   ├── traffic_capture_2024-11-02_17-06-49.pcap
+    │   ├── traffic_capture_2024-11-02_17-06-59.pcap
+    │   ├── traffic_capture_2024-11-02_17-07-09.pcap
+    │   ├── traffic_capture_2024-11-02_17-07-19.pcap
+    │   ├── traffic_capture_2024-11-02_17-07-29.pcap
+    │   ├── traffic_capture_2024-11-02_17-07-39.pcap
+    │   ├── traffic_capture_2024-11-02_17-07-49.pcap
+    │   ├── traffic_capture_2024-11-02_17-07-59.pcap
+    │   ├── traffic_capture_2024-11-02_17-08-09.pcap
+    │   ├── traffic_capture_2024-11-02_17-08-19.pcap
+    │   ├── traffic_capture_2024-11-02_17-08-30.pcap
+    │   ├── traffic_capture_2024-11-02_17-08-40.pcap
+    │   ├── traffic_capture_2024-11-02_17-08-50.pcap
+    │   ├── traffic_capture_2024-11-02_17-09-00.pcap
+    │   ├── traffic_capture_2024-11-02_17-09-10.pcap
+    │   ├── traffic_capture_2024-11-02_17-09-20.pcap
+    │   ├── traffic_capture_2024-11-02_17-09-30.pcap
+    │   ├── traffic_capture_2024-11-02_17-09-40.pcap
+    │   ├── traffic_capture_2024-11-02_17-09-50.pcap
+    │   └── traffic_capture_2024-11-02_17-10-00.pcap
+    ├── oct_26_ss_PROXY_traffic_sel
+    │   ├── traffic_capture_2024-10-27_00-16-43.pcap
+    │   ├── traffic_capture_2024-10-27_00-16-53.pcap
+    │   ├── traffic_capture_2024-10-27_00-17-03.pcap
+    │   ├── traffic_capture_2024-10-27_00-17-13.pcap
+    │   ├── traffic_capture_2024-10-27_00-17-23.pcap
+    │   ├── traffic_capture_2024-10-27_00-17-33.pcap
+    │   ├── traffic_capture_2024-10-27_00-17-43.pcap
+    │   ├── traffic_capture_2024-10-27_00-17-53.pcap
+    │   ├── traffic_capture_2024-10-27_00-18-03.pcap
+    │   ├── traffic_capture_2024-10-27_00-18-13.pcap
+    │   ├── traffic_capture_2024-10-27_00-18-23.pcap
+    │   ├── traffic_capture_2024-10-27_00-18-33.pcap
+    │   ├── traffic_capture_2024-10-27_00-18-43.pcap
+    │   ├── traffic_capture_2024-10-27_00-18-53.pcap
+    │   ├── traffic_capture_2024-10-27_00-19-03.pcap
+    │   ├── traffic_capture_2024-10-27_00-19-13.pcap
+    │   ├── traffic_capture_2024-10-27_00-19-23.pcap
+    │   ├── traffic_capture_2024-10-27_00-19-33.pcap
+    │   ├── traffic_capture_2024-10-27_00-19-43.pcap
+    │   ├── traffic_capture_2024-10-27_00-19-53.pcap
+    │   ├── traffic_capture_2024-10-27_00-20-03.pcap
+    │   ├── traffic_capture_2024-10-27_00-20-13.pcap
+    │   ├── traffic_capture_2024-10-27_00-20-23.pcap
+    │   ├── traffic_capture_2024-10-27_00-20-33.pcap
+    │   ├── traffic_capture_2024-10-27_00-20-43.pcap
+    │   ├── traffic_capture_2024-10-27_00-20-53.pcap
+    │   ├── traffic_capture_2024-10-27_00-21-03.pcap
+    │   ├── traffic_capture_2024-10-27_00-21-13.pcap
+    │   ├── traffic_capture_2024-10-27_00-21-23.pcap
+    │   ├── traffic_capture_2024-10-27_00-21-33.pcap
+    │   ├── traffic_capture_2024-10-27_00-21-43.pcap
+    │   ├── traffic_capture_2024-10-27_00-21-53.pcap
+    │   ├── traffic_capture_2024-10-27_00-22-03.pcap
+    │   ├── traffic_capture_2024-10-27_00-22-13.pcap
+    │   ├── traffic_capture_2024-10-27_00-22-23.pcap
+    │   ├── traffic_capture_2024-10-27_00-22-33.pcap
+    │   ├── traffic_capture_2024-10-27_00-22-43.pcap
+    │   ├── traffic_capture_2024-10-27_00-22-53.pcap
+    │   ├── traffic_capture_2024-10-27_00-23-03.pcap
+    │   ├── traffic_capture_2024-10-27_00-23-13.pcap
+    │   ├── traffic_capture_2024-10-27_00-23-23.pcap
+    │   ├── traffic_capture_2024-10-27_00-23-34.pcap
+    │   ├── traffic_capture_2024-10-27_00-23-44.pcap
+    │   ├── traffic_capture_2024-10-27_00-23-54.pcap
+    │   ├── traffic_capture_2024-10-27_00-24-04.pcap
+    │   ├── traffic_capture_2024-10-27_00-24-14.pcap
+    │   ├── traffic_capture_2024-10-27_00-24-24.pcap
+    │   ├── traffic_capture_2024-10-27_00-24-34.pcap
+    │   ├── traffic_capture_2024-10-27_00-24-44.pcap
+    │   ├── traffic_capture_2024-10-27_00-24-54.pcap
+    │   ├── traffic_capture_2024-10-27_00-25-04.pcap
+    │   ├── traffic_capture_2024-10-27_00-25-14.pcap
+    │   ├── traffic_capture_2024-10-27_00-25-24.pcap
+    │   ├── traffic_capture_2024-10-27_00-25-34.pcap
+    │   ├── traffic_capture_2024-10-27_00-25-44.pcap
+    │   ├── traffic_capture_2024-10-27_00-25-54.pcap
+    │   ├── traffic_capture_2024-10-27_00-26-04.pcap
+    │   ├── traffic_capture_2024-10-27_00-26-14.pcap
+    │   ├── traffic_capture_2024-10-27_00-26-24.pcap
+    │   ├── traffic_capture_2024-10-27_00-26-34.pcap
+    │   ├── traffic_capture_2024-10-27_00-26-44.pcap
+    │   ├── traffic_capture_2024-10-27_00-26-54.pcap
+    │   ├── traffic_capture_2024-10-27_00-27-04.pcap
+    │   ├── traffic_capture_2024-10-27_00-27-14.pcap
+    │   ├── traffic_capture_2024-10-27_00-27-24.pcap
+    │   ├── traffic_capture_2024-10-27_00-27-34.pcap
+    │   ├── traffic_capture_2024-10-27_00-27-44.pcap
+    │   ├── traffic_capture_2024-10-27_00-27-54.pcap
+    │   ├── traffic_capture_2024-10-27_00-28-04.pcap
+    │   ├── traffic_capture_2024-10-27_00-28-14.pcap
+    │   ├── traffic_capture_2024-10-27_00-28-24.pcap
+    │   ├── traffic_capture_2024-10-27_00-28-34.pcap
+    │   ├── traffic_capture_2024-10-27_00-28-44.pcap
+    │   ├── traffic_capture_2024-10-27_00-28-54.pcap
+    │   ├── traffic_capture_2024-10-27_00-29-04.pcap
+    │   ├── traffic_capture_2024-10-27_00-29-14.pcap
+    │   ├── traffic_capture_2024-10-27_00-29-24.pcap
+    │   ├── traffic_capture_2024-10-27_00-29-34.pcap
+    │   ├── traffic_capture_2024-10-27_00-29-44.pcap
+    │   ├── traffic_capture_2024-10-27_00-29-54.pcap
+    │   ├── traffic_capture_2024-10-27_00-30-05.pcap
+    │   ├── traffic_capture_2024-10-27_00-30-15.pcap
+    │   ├── traffic_capture_2024-10-27_00-30-25.pcap
+    │   ├── traffic_capture_2024-10-27_00-30-35.pcap
+    │   ├── traffic_capture_2024-10-27_00-30-45.pcap
+    │   ├── traffic_capture_2024-10-27_00-30-55.pcap
+    │   ├── traffic_capture_2024-10-27_00-31-05.pcap
+    │   ├── traffic_capture_2024-10-27_00-31-15.pcap
+    │   ├── traffic_capture_2024-10-27_00-31-25.pcap
+    │   ├── traffic_capture_2024-10-27_00-31-35.pcap
+    │   ├── traffic_capture_2024-10-27_00-31-45.pcap
+    │   ├── traffic_capture_2024-10-27_00-31-55.pcap
+    │   ├── traffic_capture_2024-10-27_00-32-05.pcap
+    │   ├── traffic_capture_2024-10-27_00-32-15.pcap
+    │   ├── traffic_capture_2024-10-27_00-32-25.pcap
+    │   ├── traffic_capture_2024-10-27_00-32-35.pcap
+    │   ├── traffic_capture_2024-10-27_00-32-45.pcap
+    │   ├── traffic_capture_2024-10-27_00-32-55.pcap
+    │   ├── traffic_capture_2024-10-27_00-33-05.pcap
+    │   ├── traffic_capture_2024-10-27_00-33-15.pcap
+    │   ├── traffic_capture_2024-10-27_00-33-25.pcap
+    │   ├── traffic_capture_2024-10-27_00-33-35.pcap
+    │   ├── traffic_capture_2024-10-27_00-33-45.pcap
+    │   ├── traffic_capture_2024-10-27_00-33-55.pcap
+    │   ├── traffic_capture_2024-10-27_00-34-05.pcap
+    │   ├── traffic_capture_2024-10-27_00-34-15.pcap
+    │   ├── traffic_capture_2024-10-27_00-34-25.pcap
+    │   ├── traffic_capture_2024-10-27_00-34-35.pcap
+    │   ├── traffic_capture_2024-10-27_00-34-45.pcap
+    │   ├── traffic_capture_2024-10-27_00-34-55.pcap
+    │   ├── traffic_capture_2024-10-27_00-35-05.pcap
+    │   ├── traffic_capture_2024-10-27_00-35-15.pcap
+    │   ├── traffic_capture_2024-10-27_00-35-25.pcap
+    │   ├── traffic_capture_2024-10-27_00-35-35.pcap
+    │   ├── traffic_capture_2024-10-27_00-35-45.pcap
+    │   ├── traffic_capture_2024-10-27_00-35-55.pcap
+    │   ├── traffic_capture_2024-10-27_00-36-05.pcap
+    │   ├── traffic_capture_2024-10-27_00-36-15.pcap
+    │   ├── traffic_capture_2024-10-27_00-36-25.pcap
+    │   ├── traffic_capture_2024-10-27_00-36-35.pcap
+    │   ├── traffic_capture_2024-10-27_00-36-45.pcap
+    │   ├── traffic_capture_2024-10-27_00-36-56.pcap
+    │   ├── traffic_capture_2024-10-27_00-37-06.pcap
+    │   ├── traffic_capture_2024-10-27_00-37-16.pcap
+    │   ├── traffic_capture_2024-10-27_00-37-26.pcap
+    │   ├── traffic_capture_2024-10-27_00-37-36.pcap
+    │   ├── traffic_capture_2024-10-27_00-37-46.pcap
+    │   ├── traffic_capture_2024-10-27_00-37-56.pcap
+    │   ├── traffic_capture_2024-10-27_00-38-06.pcap
+    │   ├── traffic_capture_2024-10-27_00-38-16.pcap
+    │   ├── traffic_capture_2024-10-27_00-38-26.pcap
+    │   ├── traffic_capture_2024-10-27_00-38-36.pcap
+    │   ├── traffic_capture_2024-10-27_00-38-46.pcap
+    │   ├── traffic_capture_2024-10-27_00-38-56.pcap
+    │   ├── traffic_capture_2024-10-27_00-39-06.pcap
+    │   ├── traffic_capture_2024-10-27_00-39-16.pcap
+    │   ├── traffic_capture_2024-10-27_00-39-26.pcap
+    │   ├── traffic_capture_2024-10-27_00-39-36.pcap
+    │   ├── traffic_capture_2024-10-27_00-39-46.pcap
+    │   ├── traffic_capture_2024-10-27_00-39-56.pcap
+    │   ├── traffic_capture_2024-10-27_00-40-06.pcap
+    │   ├── traffic_capture_2024-10-27_00-40-16.pcap
+    │   ├── traffic_capture_2024-10-27_00-40-26.pcap
+    │   ├── traffic_capture_2024-10-27_00-40-36.pcap
+    │   ├── traffic_capture_2024-10-27_00-40-46.pcap
+    │   ├── traffic_capture_2024-10-27_00-40-56.pcap
+    │   ├── traffic_capture_2024-10-27_00-41-07.pcap
+    │   ├── traffic_capture_2024-10-27_00-41-17.pcap
+    │   ├── traffic_capture_2024-10-27_00-41-27.pcap
+    │   ├── traffic_capture_2024-10-27_00-41-37.pcap
+    │   ├── traffic_capture_2024-10-27_00-41-47.pcap
+    │   ├── traffic_capture_2024-10-27_00-41-57.pcap
+    │   ├── traffic_capture_2024-10-27_00-42-07.pcap
+    │   ├── traffic_capture_2024-10-27_00-42-17.pcap
+    │   ├── traffic_capture_2024-10-27_00-42-27.pcap
+    │   ├── traffic_capture_2024-10-27_00-42-37.pcap
+    │   ├── traffic_capture_2024-10-27_00-42-47.pcap
+    │   ├── traffic_capture_2024-10-27_00-42-57.pcap
+    │   ├── traffic_capture_2024-10-27_00-43-07.pcap
+    │   ├── traffic_capture_2024-10-27_00-43-17.pcap
+    │   ├── traffic_capture_2024-10-27_00-43-27.pcap
+    │   ├── traffic_capture_2024-10-27_00-43-37.pcap
+    │   ├── traffic_capture_2024-10-27_00-43-47.pcap
+    │   ├── traffic_capture_2024-10-27_00-43-57.pcap
+    │   ├── traffic_capture_2024-10-27_00-44-07.pcap
+    │   ├── traffic_capture_2024-10-27_00-44-17.pcap
+    │   ├── traffic_capture_2024-10-27_00-44-27.pcap
+    │   ├── traffic_capture_2024-10-27_00-44-37.pcap
+    │   ├── traffic_capture_2024-10-27_00-44-47.pcap
+    │   ├── traffic_capture_2024-10-27_00-44-57.pcap
+    │   ├── traffic_capture_2024-10-27_00-45-07.pcap
+    │   ├── traffic_capture_2024-10-27_00-45-17.pcap
+    │   ├── traffic_capture_2024-10-27_00-45-27.pcap
+    │   ├── traffic_capture_2024-10-27_00-45-37.pcap
+    │   ├── traffic_capture_2024-10-27_00-45-47.pcap
+    │   ├── traffic_capture_2024-10-27_00-45-57.pcap
+    │   ├── traffic_capture_2024-10-27_00-46-07.pcap
+    │   ├── traffic_capture_2024-10-27_00-46-17.pcap
+    │   ├── traffic_capture_2024-10-27_00-46-27.pcap
+    │   ├── traffic_capture_2024-10-27_00-46-37.pcap
+    │   ├── traffic_capture_2024-10-27_00-46-47.pcap
+    │   ├── traffic_capture_2024-10-27_00-46-57.pcap
+    │   ├── traffic_capture_2024-10-27_00-47-07.pcap
+    │   ├── traffic_capture_2024-10-27_00-47-17.pcap
+    │   ├── traffic_capture_2024-10-27_00-47-28.pcap
+    │   ├── traffic_capture_2024-10-27_00-47-38.pcap
+    │   ├── traffic_capture_2024-10-27_00-47-48.pcap
+    │   ├── traffic_capture_2024-10-27_00-47-58.pcap
+    │   ├── traffic_capture_2024-10-27_00-48-08.pcap
+    │   ├── traffic_capture_2024-10-27_00-48-18.pcap
+    │   ├── traffic_capture_2024-10-27_00-48-28.pcap
+    │   ├── traffic_capture_2024-10-27_00-48-38.pcap
+    │   ├── traffic_capture_2024-10-27_00-48-48.pcap
+    │   ├── traffic_capture_2024-10-27_00-48-58.pcap
+    │   ├── traffic_capture_2024-10-27_00-49-08.pcap
+    │   ├── traffic_capture_2024-10-27_00-49-18.pcap
+    │   ├── traffic_capture_2024-10-27_00-49-28.pcap
+    │   ├── traffic_capture_2024-10-27_00-49-38.pcap
+    │   ├── traffic_capture_2024-10-27_00-49-48.pcap
+    │   └── traffic_capture_2024-10-27_00-49-58.pcap
+    └── oct_26_ss_traffic_sel
+        ├── traffic_capture_2024-10-26_22-08-08.pcap
+        ├── traffic_capture_2024-10-26_22-08-18.pcap
+        ├── traffic_capture_2024-10-26_22-08-28.pcap
+        ├── traffic_capture_2024-10-26_22-08-38.pcap
+        ├── traffic_capture_2024-10-26_22-08-48.pcap
+        ├── traffic_capture_2024-10-26_22-08-58.pcap
+        ├── traffic_capture_2024-10-26_22-09-08.pcap
+        ├── traffic_capture_2024-10-26_22-09-18.pcap
+        ├── traffic_capture_2024-10-26_22-09-28.pcap
+        ├── traffic_capture_2024-10-26_22-09-38.pcap
+        ├── traffic_capture_2024-10-26_22-09-48.pcap
+        ├── traffic_capture_2024-10-26_22-09-58.pcap
+        ├── traffic_capture_2024-10-26_22-10-08.pcap
+        ├── traffic_capture_2024-10-26_22-10-18.pcap
+        ├── traffic_capture_2024-10-26_22-10-28.pcap
+        ├── traffic_capture_2024-10-26_22-10-38.pcap
+        ├── traffic_capture_2024-10-26_22-10-48.pcap
+        ├── traffic_capture_2024-10-26_22-10-58.pcap
+        ├── traffic_capture_2024-10-26_22-11-08.pcap
+        ├── traffic_capture_2024-10-26_22-11-18.pcap
+        ├── traffic_capture_2024-10-26_22-11-28.pcap
+        ├── traffic_capture_2024-10-26_22-11-38.pcap
+        ├── traffic_capture_2024-10-26_22-11-48.pcap
+        ├── traffic_capture_2024-10-26_22-11-58.pcap
+        ├── traffic_capture_2024-10-26_22-12-08.pcap
+        ├── traffic_capture_2024-10-26_22-12-18.pcap
+        ├── traffic_capture_2024-10-26_22-12-28.pcap
+        ├── traffic_capture_2024-10-26_22-12-38.pcap
+        ├── traffic_capture_2024-10-26_22-12-48.pcap
+        ├── traffic_capture_2024-10-26_22-12-58.pcap
+        ├── traffic_capture_2024-10-26_22-13-08.pcap
+        ├── traffic_capture_2024-10-26_22-13-19.pcap
+        ├── traffic_capture_2024-10-26_22-13-29.pcap
+        ├── traffic_capture_2024-10-26_22-13-39.pcap
+        ├── traffic_capture_2024-10-26_22-13-49.pcap
+        ├── traffic_capture_2024-10-26_22-13-59.pcap
+        ├── traffic_capture_2024-10-26_22-14-09.pcap
+        ├── traffic_capture_2024-10-26_22-14-19.pcap
+        ├── traffic_capture_2024-10-26_22-14-29.pcap
+        ├── traffic_capture_2024-10-26_22-14-39.pcap
+        ├── traffic_capture_2024-10-26_22-14-49.pcap
+        ├── traffic_capture_2024-10-26_22-14-59.pcap
+        ├── traffic_capture_2024-10-26_22-15-09.pcap
+        ├── traffic_capture_2024-10-26_22-15-19.pcap
+        ├── traffic_capture_2024-10-26_22-15-29.pcap
+        ├── traffic_capture_2024-10-26_22-15-39.pcap
+        ├── traffic_capture_2024-10-26_22-15-49.pcap
+        ├── traffic_capture_2024-10-26_22-15-59.pcap
+        ├── traffic_capture_2024-10-26_22-16-09.pcap
+        ├── traffic_capture_2024-10-26_22-16-19.pcap
+        ├── traffic_capture_2024-10-26_22-16-29.pcap
+        ├── traffic_capture_2024-10-26_22-16-39.pcap
+        ├── traffic_capture_2024-10-26_22-16-49.pcap
+        ├── traffic_capture_2024-10-26_22-16-59.pcap
+        ├── traffic_capture_2024-10-26_22-17-09.pcap
+        ├── traffic_capture_2024-10-26_22-17-19.pcap
+        ├── traffic_capture_2024-10-26_22-17-29.pcap
+        ├── traffic_capture_2024-10-26_22-17-39.pcap
+        ├── traffic_capture_2024-10-26_22-17-49.pcap
+        ├── traffic_capture_2024-10-26_22-17-59.pcap
+        ├── traffic_capture_2024-10-26_22-18-09.pcap
+        ├── traffic_capture_2024-10-26_22-18-19.pcap
+        ├── traffic_capture_2024-10-26_22-18-29.pcap
+        ├── traffic_capture_2024-10-26_22-18-39.pcap
+        ├── traffic_capture_2024-10-26_22-18-49.pcap
+        ├── traffic_capture_2024-10-26_22-18-59.pcap
+        ├── traffic_capture_2024-10-26_22-19-09.pcap
+        ├── traffic_capture_2024-10-26_22-19-19.pcap
+        ├── traffic_capture_2024-10-26_22-19-29.pcap
+        ├── traffic_capture_2024-10-26_22-19-39.pcap
+        ├── traffic_capture_2024-10-26_22-19-49.pcap
+        ├── traffic_capture_2024-10-26_22-19-59.pcap
+        ├── traffic_capture_2024-10-26_22-20-09.pcap
+        ├── traffic_capture_2024-10-26_22-20-19.pcap
+        ├── traffic_capture_2024-10-26_22-20-29.pcap
+        ├── traffic_capture_2024-10-26_22-20-39.pcap
+        ├── traffic_capture_2024-10-26_22-20-49.pcap
+        ├── traffic_capture_2024-10-26_22-20-59.pcap
+        ├── traffic_capture_2024-10-26_22-21-09.pcap
+        ├── traffic_capture_2024-10-26_22-21-19.pcap
+        ├── traffic_capture_2024-10-26_22-21-29.pcap
+        ├── traffic_capture_2024-10-26_22-21-39.pcap
+        ├── traffic_capture_2024-10-26_22-21-49.pcap
+        ├── traffic_capture_2024-10-26_22-21-59.pcap
+        ├── traffic_capture_2024-10-26_22-22-09.pcap
+        ├── traffic_capture_2024-10-26_22-22-19.pcap
+        ├── traffic_capture_2024-10-26_22-22-29.pcap
+        ├── traffic_capture_2024-10-26_22-22-39.pcap
+        ├── traffic_capture_2024-10-26_22-22-49.pcap
+        ├── traffic_capture_2024-10-26_22-22-59.pcap
+        ├── traffic_capture_2024-10-26_22-23-09.pcap
+        ├── traffic_capture_2024-10-26_22-23-19.pcap
+        ├── traffic_capture_2024-10-26_22-23-29.pcap
+        ├── traffic_capture_2024-10-26_22-23-39.pcap
+        ├── traffic_capture_2024-10-26_22-23-49.pcap
+        ├── traffic_capture_2024-10-26_22-23-59.pcap
+        ├── traffic_capture_2024-10-26_22-24-09.pcap
+        ├── traffic_capture_2024-10-26_22-24-19.pcap
+        ├── traffic_capture_2024-10-26_22-24-29.pcap
+        ├── traffic_capture_2024-10-26_22-24-39.pcap
+        ├── traffic_capture_2024-10-26_22-24-49.pcap
+        ├── traffic_capture_2024-10-26_22-24-59.pcap
+        ├── traffic_capture_2024-10-26_22-25-09.pcap
+        ├── traffic_capture_2024-10-26_22-25-19.pcap
+        ├── traffic_capture_2024-10-26_22-25-29.pcap
+        ├── traffic_capture_2024-10-26_22-25-39.pcap
+        ├── traffic_capture_2024-10-26_22-25-49.pcap
+        ├── traffic_capture_2024-10-26_22-25-59.pcap
+        ├── traffic_capture_2024-10-26_22-26-09.pcap
+        ├── traffic_capture_2024-10-26_22-26-19.pcap
+        ├── traffic_capture_2024-10-26_22-26-29.pcap
+        ├── traffic_capture_2024-10-26_22-26-39.pcap
+        ├── traffic_capture_2024-10-26_22-26-49.pcap
+        ├── traffic_capture_2024-10-26_22-26-59.pcap
+        ├── traffic_capture_2024-10-26_22-27-09.pcap
+        ├── traffic_capture_2024-10-26_22-27-19.pcap
+        ├── traffic_capture_2024-10-26_22-27-29.pcap
+        ├── traffic_capture_2024-10-26_22-27-39.pcap
+        ├── traffic_capture_2024-10-26_22-27-49.pcap
+        ├── traffic_capture_2024-10-26_22-27-59.pcap
+        ├── traffic_capture_2024-10-26_22-28-09.pcap
+        ├── traffic_capture_2024-10-26_22-28-19.pcap
+        ├── traffic_capture_2024-10-26_22-28-29.pcap
+        ├── traffic_capture_2024-10-26_22-28-40.pcap
+        ├── traffic_capture_2024-10-26_22-28-50.pcap
+        ├── traffic_capture_2024-10-26_22-29-00.pcap
+        ├── traffic_capture_2024-10-26_22-29-10.pcap
+        ├── traffic_capture_2024-10-26_22-29-20.pcap
+        ├── traffic_capture_2024-10-26_22-29-30.pcap
+        ├── traffic_capture_2024-10-26_22-29-40.pcap
+        ├── traffic_capture_2024-10-26_22-29-50.pcap
+        ├── traffic_capture_2024-10-26_22-30-00.pcap
+        ├── traffic_capture_2024-10-26_22-30-10.pcap
+        ├── traffic_capture_2024-10-26_22-30-20.pcap
+        ├── traffic_capture_2024-10-26_22-30-30.pcap
+        ├── traffic_capture_2024-10-26_22-30-40.pcap
+        ├── traffic_capture_2024-10-26_22-30-50.pcap
+        ├── traffic_capture_2024-10-26_22-31-00.pcap
+        ├── traffic_capture_2024-10-26_22-31-10.pcap
+        ├── traffic_capture_2024-10-26_22-31-20.pcap
+        ├── traffic_capture_2024-10-26_22-31-30.pcap
+        ├── traffic_capture_2024-10-26_22-31-40.pcap
+        ├── traffic_capture_2024-10-26_22-31-50.pcap
+        ├── traffic_capture_2024-10-26_22-32-00.pcap
+        ├── traffic_capture_2024-10-26_22-32-10.pcap
+        ├── traffic_capture_2024-10-26_22-32-20.pcap
+        ├── traffic_capture_2024-10-26_22-32-30.pcap
+        ├── traffic_capture_2024-10-26_22-32-40.pcap
+        ├── traffic_capture_2024-10-26_22-32-50.pcap
+        ├── traffic_capture_2024-10-26_22-33-00.pcap
+        ├── traffic_capture_2024-10-26_22-33-10.pcap
+        ├── traffic_capture_2024-10-26_22-33-21.pcap
+        ├── traffic_capture_2024-10-26_22-33-31.pcap
+        ├── traffic_capture_2024-10-26_22-33-41.pcap
+        ├── traffic_capture_2024-10-26_22-33-51.pcap
+        ├── traffic_capture_2024-10-26_22-34-01.pcap
+        ├── traffic_capture_2024-10-26_22-34-11.pcap
+        ├── traffic_capture_2024-10-26_22-34-21.pcap
+        ├── traffic_capture_2024-10-26_22-34-31.pcap
+        ├── traffic_capture_2024-10-26_22-34-41.pcap
+        ├── traffic_capture_2024-10-26_22-34-51.pcap
+        ├── traffic_capture_2024-10-26_22-35-01.pcap
+        ├── traffic_capture_2024-10-26_22-35-11.pcap
+        ├── traffic_capture_2024-10-26_22-35-21.pcap
+        ├── traffic_capture_2024-10-26_22-35-31.pcap
+        ├── traffic_capture_2024-10-26_22-35-41.pcap
+        ├── traffic_capture_2024-10-26_22-35-51.pcap
+        ├── traffic_capture_2024-10-26_22-36-01.pcap
+        ├── traffic_capture_2024-10-26_22-36-11.pcap
+        ├── traffic_capture_2024-10-26_22-36-21.pcap
+        ├── traffic_capture_2024-10-26_22-36-31.pcap
+        ├── traffic_capture_2024-10-26_22-36-41.pcap
+        ├── traffic_capture_2024-10-26_22-36-51.pcap
+        ├── traffic_capture_2024-10-26_22-37-01.pcap
+        ├── traffic_capture_2024-10-26_22-37-11.pcap
+        ├── traffic_capture_2024-10-26_22-37-21.pcap
+        ├── traffic_capture_2024-10-26_22-37-31.pcap
+        ├── traffic_capture_2024-10-26_22-37-41.pcap
+        ├── traffic_capture_2024-10-26_22-37-51.pcap
+        ├── traffic_capture_2024-10-26_22-38-01.pcap
+        ├── traffic_capture_2024-10-26_22-38-11.pcap
+        ├── traffic_capture_2024-10-26_22-38-21.pcap
+        ├── traffic_capture_2024-10-26_22-38-31.pcap
+        ├── traffic_capture_2024-10-26_22-38-41.pcap
+        ├── traffic_capture_2024-10-26_22-38-51.pcap
+        ├── traffic_capture_2024-10-26_22-39-01.pcap
+        ├── traffic_capture_2024-10-26_22-39-11.pcap
+        ├── traffic_capture_2024-10-26_22-39-21.pcap
+        ├── traffic_capture_2024-10-26_22-39-31.pcap
+        ├── traffic_capture_2024-10-26_22-39-41.pcap
+        ├── traffic_capture_2024-10-26_22-39-51.pcap
+        ├── traffic_capture_2024-10-26_22-40-01.pcap
+        ├── traffic_capture_2024-10-26_22-40-11.pcap
+        ├── traffic_capture_2024-10-26_22-40-21.pcap
+        ├── traffic_capture_2024-10-26_22-40-31.pcap
+        ├── traffic_capture_2024-10-26_22-40-41.pcap
+        ├── traffic_capture_2024-10-26_22-40-51.pcap
+        ├── traffic_capture_2024-10-26_22-41-01.pcap
+        ├── traffic_capture_2024-10-26_22-41-11.pcap
+        └── traffic_capture_2024-10-26_22-41-21.pcap
+
+181 directories, 2268 files
