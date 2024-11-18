@@ -7,6 +7,7 @@ from datetime import datetime
 import os
 import time
 from .data_visualizer import DataVisualizer
+from .shap_analyzer import SHAPAnalyzer
 
 
 class ScikitLearnTrafficClassifier:
@@ -109,6 +110,20 @@ class ScikitLearnTrafficClassifier:
             self.visualizer.plot_confusion_matrix(
                 y_test_original, y_pred_original, output_dir, timestamp
             )
+
+            # SHAP-Analyse mit optimiertem Analyzer
+            print("\nFühre optimierte SHAP-Analyse durch...")
+            shap_analyzer = SHAPAnalyzer(
+                model=self.model,
+                output_dir=output_dir,
+                max_samples=200  # Begrenzt auf 200 Samples für schnellere Analyse
+            )
+
+            # Globale SHAP-Analyse
+            shap_analyzer.explain_global(X_test)
+
+            # Lokale SHAP-Analyse für die erste Instanz
+            shap_analyzer.explain_local(X_test, instance_index=0)
 
             # Ergebnisse speichern
             report = classification_report(y_test_original, y_pred_original, output_dict=True)

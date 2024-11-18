@@ -4,6 +4,7 @@ import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
 import pandas as pd
+import os
 
 
 class FeatureAnalyzer:
@@ -93,11 +94,15 @@ class FeatureAnalyzer:
 
     def _plot_correlation_matrix(self, correlation_matrix, filename):
         """Erstellt eine Korrelationsmatrix-Visualisierung"""
+        output_dir = "feature_correlations"  # Neuer Ordner für Korrelationen
+        os.makedirs(output_dir, exist_ok=True)  # Ordner erstellen, falls nicht vorhanden
+        filepath = os.path.join(output_dir, filename)
+
         plt.figure(figsize=(12, 8))
         sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
         plt.title('Feature Korrelationsmatrix')
         plt.tight_layout()
-        plt.savefig(filename)
+        plt.savefig(filepath)  # Speichere im neuen Pfad
         plt.close()
 
     def _calculate_feature_importance(self, X, y):
@@ -130,6 +135,10 @@ class FeatureAnalyzer:
 
     def _plot_feature_distributions(self, df, features, target):
         """Plottet Verteilungen für die wichtigsten Features"""
+        output_dir = "feature_distributions"  # Neuer Ordner für Verteilungen
+        os.makedirs(output_dir, exist_ok=True)  # Ordner erstellen, falls nicht vorhanden
+        filepath = os.path.join(output_dir, 'feature_distributions.png')
+
         top_features = features[:5]  # Nur die ersten 5 Features
 
         plt.figure(figsize=(15, 10))
@@ -141,7 +150,7 @@ class FeatureAnalyzer:
             plt.legend()
 
         plt.tight_layout()
-        plt.savefig('feature_distributions.png')
+        plt.savefig(filepath)  # Speichere im neuen Pfad
         plt.close()
 
     def analyze_feature_contribution(self, df, target='label'):
