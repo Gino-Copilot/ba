@@ -10,12 +10,12 @@ from sklearn.model_selection import train_test_split
 class SHAPAnalyzer:
     def __init__(self, model, output_dir="shap_results", max_samples=200):
         """
-        Initialize SHAP Analyzer.
+        Initialize the SHAP Analyzer.
 
         Args:
-            model: the trainer model
-            output_dir: place for SHAP plots
-            max_samples: max sample for shap-analyze (otherwise the code runs forever - no it is around 5 min)
+            model: The trained model
+            output_dir: Directory for saving SHAP plots
+            max_samples: Maximum number of samples for SHAP analysis
         """
         self.model = model
         self.output_dir = output_dir
@@ -24,20 +24,20 @@ class SHAPAnalyzer:
 
     def _sample_data(self, X, random_state=42):
         """
-        Reduziert den Datensatz auf eine handhabbare Größe.
+        Reduces dataset to a manageable size.
         """
         if len(X) <= self.max_samples:
             return X
 
         if hasattr(X, 'iloc'):
-            # Für pandas DataFrames
+            # For pandas DataFrames
             _, X_sampled = train_test_split(
                 X,
                 train_size=self.max_samples,
                 random_state=random_state
             )
         else:
-            # for numpy arrays
+            # For numpy arrays
             indices = np.random.RandomState(random_state).choice(
                 len(X),
                 self.max_samples,
@@ -49,20 +49,20 @@ class SHAPAnalyzer:
 
     def explain_global(self, X):
         """
-        Erstellt globale Erklärungen mit Summary Plots.
+        Creates global explanations with summary plots.
         """
-        print(f"\nBeginne SHAP-Analyse mit maximal {self.max_samples} Samples...")
+        print(f"\nStarting SHAP analysis with maximum {self.max_samples} samples...")
 
-        # reduced data
+        # Reduce dataset
         X_sampled = self._sample_data(X)
 
         try:
-            # choose explainer
+            # Choose appropriate explainer
             if isinstance(self.model, (RandomForestClassifier, GradientBoostingClassifier, XGBClassifier)):
                 explainer = shap.TreeExplainer(self.model)
                 shap_values = explainer.shap_values(X_sampled)
             else:
-                # optimize kernel explainer for models that are not tree
+                # Optimize KernelExplainer for non-tree models
                 background = shap.kmeans(X_sampled, 10)
                 explainer = shap.KernelExplainer(
                     self.model.predict_proba if hasattr(self.model, 'predict_proba')
@@ -71,8 +71,8 @@ class SHAPAnalyzer:
                 )
                 shap_values = explainer.shap_values(X_sampled, nsamples=100)
 
-            # make and safe plots
-            if isinstance(shap_values, list):  # multi class problem
+            # Create and save plots
+            if isinstance(shap_values, list):  # Multi-class problem
                 for i, class_shap_values in enumerate(shap_values):
                     # Summary Bar Plot
                     summary_bar_path = os.path.join(self.output_dir, f"summary_bar_plot_class_{i}.png")
@@ -101,7 +101,7 @@ class SHAPAnalyzer:
                     plt.tight_layout()
                     plt.savefig(beeswarm_path, bbox_inches="tight", dpi=300)
                     plt.close()
-            else:  # binary or regression
+            else:  # Binary or regression
                 # Summary Bar Plot
                 summary_bar_path = os.path.join(self.output_dir, "summary_bar_plot.png")
                 plt.figure(figsize=(10, 6))
@@ -130,19 +130,19 @@ class SHAPAnalyzer:
                 plt.savefig(beeswarm_path, bbox_inches="tight", dpi=300)
                 plt.close()
 
-            print("Globale SHAP-Analyse erfolgreich abgeschlossen!")
+            print("Global SHAP analysis completed successfully!")
             return explainer, shap_values
 
         except Exception as e:
-            print(f"Fehler während der globalen SHAP-Analyse: {str(e)}")
+            print(f"Error during global SHAP analysis: {str(e)}")
             return None, None
 
     def explain_local(self, X, instance_index):
         """
-        Erstellt lokale Erklärungen für eine einzelne Instanz.
+        Creates local explanations for a single instance.
         """
         try:
-            # reduce data for kernel explainer if necessary
+            # Sample data for KernelExplainer if needed
             X_background = self._sample_data(X)
 
             if isinstance(self.model, (RandomForestClassifier, GradientBoostingClassifier, XGBClassifier)):
@@ -155,21 +155,21 @@ class SHAPAnalyzer:
                     background
                 )
 
-            # calculate shap values only for choosen instance
+            # Get SHAP values for selected instance only
             instance = X.iloc[[instance_index]] if hasattr(X, 'iloc') else X[[instance_index]]
             shap_values = explainer.shap_values(instance)
 
-            if isinstance(shap_values, list):  # multi clas problem
+            if isinstance(shap_values, list):  # Multi-class problem
                 for i, class_shap_values in enumerate(shap_values):
                     force_plot_path = os.path.join(
                         self.output_dir,
                         f"force_plot_class_{i}_instance_{instance_index}.png"
                     )
-                    # adjusted force_plot call
+                    # Create force plot
                     plt.figure(figsize=(12, 4))
                     shap.plots.force(
                         base_value=explainer.expected_value[i],
-                        shap_values=class_shap_values[0],  # Erste Dimension extrahieren
+                        shap_values=class_shap_values[0],  # Get first dimension
                         features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0],
                         matplotlib=True,
                         show=False
@@ -177,18 +177,18 @@ class SHAPAnalyzer:
                     plt.tight_layout()
                     plt.savefig(force_plot_path, bbox_inches='tight', dpi=300)
                     plt.close()
-            else:  # binary or regression
+            else:  # Binary classification or regression
                 force_plot_path = os.path.join(
                     self.output_dir,
                     f"force_plot_instance_{instance_index}.png"
                 )
-                # adjusted force_plot call
+                # Create force plot
                 plt.figure(figsize=(12, 4))
                 shap.plots.force(
                     base_value=explainer.expected_value if not isinstance(explainer.expected_value, np.ndarray)
                     else explainer.expected_value[0],
                     shap_values=shap_values[0] if shap_values.ndim > 1 else shap_values,
-                    # extract first dimension only if necessary
+                    # Get first dimension if needed
                     features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0],
                     matplotlib=True,
                     show=False
@@ -197,11 +197,11 @@ class SHAPAnalyzer:
                 plt.savefig(force_plot_path, bbox_inches='tight', dpi=300)
                 plt.close()
 
-            print(f"Lokale SHAP-Analyse für Instanz {instance_index} gespeichert in: {self.output_dir}")
+            print(f"Local SHAP analysis for instance {instance_index} saved to: {self.output_dir}")
 
         except Exception as e:
-            print(f"Fehler während der lokalen SHAP-Analyse für Instanz {instance_index}: {str(e)}")
-            print(f"SHAP expected_value Typ: {type(explainer.expected_value)}")
-            print(f"SHAP values Typ: {type(shap_values)}")
+            print(f"Error during local SHAP analysis for instance {instance_index}: {str(e)}")
+            print(f"SHAP expected_value type: {type(explainer.expected_value)}")
+            print(f"SHAP values type: {type(shap_values)}")
             if isinstance(shap_values, (list, np.ndarray)):
-                print(f"SHAP values Shape: {np.array(shap_values).shape}")
+                print(f"SHAP values shape: {np.array(shap_values).shape}")

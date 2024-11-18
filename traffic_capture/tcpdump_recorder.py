@@ -5,9 +5,10 @@ import os
 import signal
 import psutil
 
+
 class TrafficCapture:
     def __init__(self, traffic_type="default_traffic", interval=10, file_count=200, interface="wlp0s20f3"):
-        # Spezifischer Unterordner für die Art des Traffics im traffic_data-Verzeichnis
+        # Specific subfolder for traffic type in traffic_data directory
         base_output_dir = os.path.join(os.path.dirname(__file__), '..', 'traffic_data')
         self.output_dir = os.path.join(base_output_dir, traffic_type)
         self.interval = interval
@@ -16,18 +17,18 @@ class TrafficCapture:
         self._ensure_output_dir()
 
     def _ensure_output_dir(self):
-        """Stellt sicher, dass das Ausgabe-Verzeichnis existiert."""
+        """Make sure output directory exists."""
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
     def _check_disk_space(self):
-        """Überprüft den verfügbaren Speicherplatz im Ausgabe-Verzeichnis."""
+        """Check available disk space in output directory."""
         disk = psutil.disk_usage(self.output_dir)
         if disk.percent > 80:
-            print(f"Warnung: Nur noch {disk.free / (1024 * 1024 * 1024):.2f} GB freier Speicherplatz")
+            print(f"Warning: Only {disk.free / (1024 * 1024 * 1024):.2f} GB free disk space left")
 
     def capture_traffic(self):
-        """Startet die Traffic-Erfassung."""
+        """Start traffic capture."""
         self._check_disk_space()
 
         for i in range(self.file_count):
@@ -59,7 +60,7 @@ class TrafficCapture:
 
                 if process.poll() is not None:
                     _, stderr = process.communicate()
-                    print(f"tcpdump beendet mit Fehler: {stderr.decode()}")
+                    print(f"tcpdump terminated with error: {stderr.decode()}")
                     continue
 
                 process.send_signal(signal.SIGINT)
@@ -69,28 +70,31 @@ class TrafficCapture:
                 print(f"Saved traffic to {output_file} ({file_size:.2f} MB)")
 
             except subprocess.TimeoutExpired:
-                print("Timeout beim Beenden von tcpdump")
+                print("Timeout while stopping tcpdump")
                 process.kill()
             except Exception as e:
                 print(f"Error during capturing: {e}")
                 break
 
     def cleanup(self):
-        """Beendet alle tcpdump-Prozesse, um das System sauber zu halten."""
+        """Stop all tcpdump processes to keep the system clean."""
         for proc in psutil.process_iter(['name']):
             if proc.info['name'] == 'tcpdump':
                 proc.kill()
 
+
 def main():
-    # Beispiel: ProtonVPN-Traffic speichern
-    traffic_capture = TrafficCapture(traffic_type="protonvpn_traffic", interval=10, file_count=200, interface="wlp0s20f3")
+    # Example: Save ProtonVPN traffic
+    traffic_capture = TrafficCapture(traffic_type="protonvpn_traffic", interval=10, file_count=200,
+                                     interface="wlp0s20f3")
 
     try:
         traffic_capture.capture_traffic()
     except KeyboardInterrupt:
-        print("\nProgramm wird beendet...")
+        print("\nProgram is shutting down...")
     finally:
         traffic_capture.cleanup()
+
 
 if __name__ == "__main__":
     main()

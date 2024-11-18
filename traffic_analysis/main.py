@@ -3,7 +3,7 @@ import sys
 from traffic_analysis.nfstream_feature_extractor import NFStreamFeatureExtractor
 from traffic_analysis.sklearn_classifier import ScikitLearnTrafficClassifier
 from traffic_analysis.model_selection import MODELS
-from traffic_analysis.feature_analyzer import FeatureAnalyzer  # Neue Import-Zeile
+from traffic_analysis.feature_analyzer import FeatureAnalyzer
 
 
 def main():
@@ -12,30 +12,30 @@ def main():
         proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/oct_26_ss_PROXY_traffic_sel"
         normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/oct_26_ss_traffic_sel"
 
-        # Feature-Extraktion
+        # Extract features
         extractor = NFStreamFeatureExtractor()
         df = extractor.prepare_dataset(proxy_dir, normal_dir)
 
-        # Feature-Analyse durchführen
-        print("\nStarte Feature-Analyse...")
+        # Run feature analysis
+        print("\nStarting feature analysis...")
         analyzer = FeatureAnalyzer()
         analysis_results = analyzer.analyze_features(df)
 
-        # Optional: Detaillierte Feature-Beitragsanalyse
+        # Optional: Detailed feature contribution analysis
         contribution_results = analyzer.analyze_feature_contribution(df)
 
-        # Modell-Training wie gehabt
+        # Train all models
         for model_name, model in MODELS.items():
             print(f"\n===== Testing {model_name} =====")
             classifier = ScikitLearnTrafficClassifier(model)
             classifier.train(df)
             classifier.save_results(df)
 
-        print(f"\nAnalyse abgeschlossen in {time.time() - start_time:.2f} Sekunden")
-        print("\nErgebnisse wurden in den Verzeichnissen 'analysis_results' und 'nfstream_results' gespeichert.")
+        print(f"\nAnalysis completed in {time.time() - start_time:.2f} seconds")
+        print("\nResults have been saved in directories 'analysis_results' and 'nfstream_results'")
 
     except Exception as e:
-        print(f"Fehler aufgetreten: {str(e)}")
+        print(f"Error occurred: {str(e)}")
         sys.exit(1)
 
 
