@@ -9,8 +9,8 @@ from traffic_analysis.feature_analyzer import FeatureAnalyzer
 def main():
     try:
         start_time = time.time()
-        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/oct_26_ss_PROXY_traffic_sel"
-        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/oct_26_ss_traffic_sel"
+        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/nov_1_traffic_PROXY"
+        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/nov_2_proton_traffic"
 
         # Extract features
         extractor = NFStreamFeatureExtractor()

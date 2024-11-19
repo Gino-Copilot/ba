@@ -1,35 +1,36 @@
-# Ausschließen von Traffic-Daten
+# Traffic data
 traffic_data/
+tests/test_data/
 
-# Ausschließen von Ergebnissen und temporären Dateien
+# Results and temp files
 traffic_analysis/nfstream_results/
 analysis_results/
 nfstream_results/
 results/
 *.csv
 *.log
-*.png  # für die generierten Plots
-*.pdf  # falls Plots auch als PDF exportiert werden
-*.svg  # falls Plots auch als SVG exportiert werden
+*.png  # plot files
+*.pdf  # pdf plots
+*.svg  # svg plots
 
-# Ausschließen von Mock-PCAP-Dateien für Tests
+# Test mock data
 tests/mock_pcap_files/
 
-# Python virtuelle Umgebungen
+# Python virtual environments
 .venv/
 myenv/
 venv/
 env/
 .env/
 
-# IDE-spezifische Dateien
+# IDE files
 .idea/
 .idea/workspace.xml
 *.iml
 .vscode/
 *.code-workspace
 
-# Python-Bytecode-Dateien
+# Python bytecode files
 __pycache__/
 *.pyc
 *.pyo
@@ -37,10 +38,10 @@ __pycache__/
 .Python
 *.so
 
-# Jupyter Notebook
+# Jupyter Notebook files
 .ipynb_checkpoints/
 
-# Distribution / packaging
+# Package files
 build/
 develop-eggs/
 dist/
@@ -57,7 +58,7 @@ wheels/
 .installed.cfg
 *.egg
 
-# Unittest / Coverage reports
+# Test reports
 htmlcov/
 .tox/
 .coverage
@@ -68,7 +69,7 @@ coverage.xml
 *.cover
 .hypothesis/
 
-# System-spezifische Dateien
+# System files
 *.swp
 .DS_Store
 Thumbs.db
