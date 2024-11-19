@@ -30,14 +30,12 @@ class SHAPAnalyzer:
             return X
 
         if hasattr(X, 'iloc'):
-            # For pandas DataFrames
             _, X_sampled = train_test_split(
                 X,
                 train_size=self.max_samples,
                 random_state=random_state
             )
         else:
-            # For numpy arrays
             indices = np.random.RandomState(random_state).choice(
                 len(X),
                 self.max_samples,
@@ -62,7 +60,6 @@ class SHAPAnalyzer:
                 explainer = shap.TreeExplainer(self.model)
                 shap_values = explainer.shap_values(X_sampled)
             else:
-                # Optimize KernelExplainer for non-tree models
                 background = shap.kmeans(X_sampled, 10)
                 explainer = shap.KernelExplainer(
                     self.model.predict_proba if hasattr(self.model, 'predict_proba')
@@ -142,7 +139,7 @@ class SHAPAnalyzer:
         Creates local explanations for a single instance.
         """
         try:
-            # Sample data for KernelExplainer if needed
+            # Background data for KernelExplainer if needed
             X_background = self._sample_data(X)
 
             if isinstance(self.model, (RandomForestClassifier, GradientBoostingClassifier, XGBClassifier)):
@@ -155,36 +152,74 @@ class SHAPAnalyzer:
                     background
                 )
 
-            # Get SHAP values for selected instance only
-            instance = X.iloc[[instance_index]] if hasattr(X, 'iloc') else X[[instance_index]]
+            # Select instance and ensure proper dimensionality
+            instance = X.iloc[[instance_index]] if hasattr(X, 'iloc') else X[instance_index:instance_index + 1]
             shap_values = explainer.shap_values(instance)
 
-            if isinstance(shap_values, list):  # Multi-class problem
-                for i, class_shap_values in enumerate(shap_values):
+            # Handle different types of SHAP values
+            if isinstance(shap_values, list):  # Multi-class
+                for class_index, class_shap_values in enumerate(shap_values):
                     force_plot_path = os.path.join(
                         self.output_dir,
-                        f"force_plot_class_{i}_instance_{instance_index}.html"
+                        f"force_plot_class_{class_index}_instance_{instance_index}.html"
                     )
-                    # Create force plot
-                    force_plot = shap.plots.force(
-                        base_value=explainer.expected_value[i],
-                        shap_values=class_shap_values[0],
-                        features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0]
+
+                    base_value = (explainer.expected_value[class_index]
+                                  if isinstance(explainer.expected_value, (list, np.ndarray))
+                                  else explainer.expected_value)
+
+                    force_plot = shap.force_plot(
+                        base_value=base_value,
+                        shap_values=class_shap_values[0] if class_shap_values.ndim > 1 else class_shap_values,
+                        features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0],
+                        show=False
                     )
                     shap.save_html(force_plot_path, force_plot)
+
+            elif isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:  # Shape (1, features, classes)
+                n_features = shap_values.shape[1]
+                n_classes = shap_values.shape[2]
+
+                for class_index in range(n_classes):
+                    force_plot_path = os.path.join(
+                        self.output_dir,
+                        f"force_plot_class_{class_index}_instance_{instance_index}.html"
+                    )
+
+                    # Extract values for this class
+                    class_values = shap_values[0, :, class_index]
+                    base_value = explainer.expected_value[class_index] if isinstance(explainer.expected_value,
+                                                                                     np.ndarray) else explainer.expected_value
+
+                    force_plot = shap.force_plot(
+                        base_value=base_value,
+                        shap_values=class_values,
+                        features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0],
+                        show=False
+                    )
+                    shap.save_html(force_plot_path, force_plot)
+
             else:  # Binary classification or regression
                 force_plot_path = os.path.join(
                     self.output_dir,
                     f"force_plot_instance_{instance_index}.html"
                 )
-                # Adjust indexing based on shap_values shape
-                shap_value_instance = shap_values[0] if len(shap_values.shape) > 1 else shap_values
-                expected_value = explainer.expected_value if len(np.shape(explainer.expected_value)) == 1 else explainer.expected_value[0]
-                # Create force plot
-                force_plot = shap.plots.force(
-                    base_value=expected_value,
-                    shap_values=shap_value_instance,
-                    features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0]
+
+                base_value = (explainer.expected_value[0]
+                              if isinstance(explainer.expected_value, (list, np.ndarray))
+                              else explainer.expected_value)
+
+                if isinstance(shap_values, np.ndarray):
+                    if shap_values.ndim > 2:
+                        shap_values = shap_values[0]
+                    elif shap_values.ndim == 2:
+                        shap_values = shap_values[0]
+
+                force_plot = shap.force_plot(
+                    base_value=base_value,
+                    shap_values=shap_values,
+                    features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0],
+                    show=False
                 )
                 shap.save_html(force_plot_path, force_plot)
 
