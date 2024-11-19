@@ -163,39 +163,30 @@ class SHAPAnalyzer:
                 for i, class_shap_values in enumerate(shap_values):
                     force_plot_path = os.path.join(
                         self.output_dir,
-                        f"force_plot_class_{i}_instance_{instance_index}.png"
+                        f"force_plot_class_{i}_instance_{instance_index}.html"
                     )
                     # Create force plot
-                    plt.figure(figsize=(12, 4))
-                    shap.plots.force(
+                    force_plot = shap.plots.force(
                         base_value=explainer.expected_value[i],
-                        shap_values=class_shap_values[0],  # Get first dimension
-                        features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0],
-                        matplotlib=True,
-                        show=False
+                        shap_values=class_shap_values[0],
+                        features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0]
                     )
-                    plt.tight_layout()
-                    plt.savefig(force_plot_path, bbox_inches='tight', dpi=300)
-                    plt.close()
+                    shap.save_html(force_plot_path, force_plot)
             else:  # Binary classification or regression
                 force_plot_path = os.path.join(
                     self.output_dir,
-                    f"force_plot_instance_{instance_index}.png"
+                    f"force_plot_instance_{instance_index}.html"
                 )
+                # Adjust indexing based on shap_values shape
+                shap_value_instance = shap_values[0] if len(shap_values.shape) > 1 else shap_values
+                expected_value = explainer.expected_value if len(np.shape(explainer.expected_value)) == 1 else explainer.expected_value[0]
                 # Create force plot
-                plt.figure(figsize=(12, 4))
-                shap.plots.force(
-                    base_value=explainer.expected_value if not isinstance(explainer.expected_value, np.ndarray)
-                    else explainer.expected_value[0],
-                    shap_values=shap_values[0] if shap_values.ndim > 1 else shap_values,
-                    # Get first dimension if needed
-                    features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0],
-                    matplotlib=True,
-                    show=False
+                force_plot = shap.plots.force(
+                    base_value=expected_value,
+                    shap_values=shap_value_instance,
+                    features=instance.iloc[0] if hasattr(instance, 'iloc') else instance[0]
                 )
-                plt.tight_layout()
-                plt.savefig(force_plot_path, bbox_inches='tight', dpi=300)
-                plt.close()
+                shap.save_html(force_plot_path, force_plot)
 
             print(f"Local SHAP analysis for instance {instance_index} saved to: {self.output_dir}")
 
