@@ -5,23 +5,100 @@ import pandas as pd
 
 
 class FeatureAnalyzer:
-    def __init__(self, visualizer=None):
+    def __init__(self, output_manager):
         """
-        Initialize Feature Analyzer
+        Initialize Feature Analyzer with output management
+
         Args:
-            visualizer: DataVisualizer instance for plotting results
+            output_manager: Instance of OutputManager for handling output paths
         """
-        self.visualizer = visualizer
+        self.output_manager = output_manager
 
     def analyze_features(self, df, target='label'):
-        """Complete feature analysis"""
+        """
+        Complete feature analysis including correlations, importance, and group statistics
+
+        Args:
+            df: DataFrame with features and target
+            target: Name of target column (default: 'label')
+
+        Returns:
+            dict: Results of all analyses
+        """
         results = {}
         features = [col for col in df.columns if col != target]
 
         print("\n=== Complete Feature Analysis ===")
 
         # 1. Group features by type
-        feature_groups = {
+        feature_groups = self._create_feature_groups(features)
+
+        # 2. Analyze each group
+        print("\n=== Feature Group Statistics ===")
+        group_stats = self._analyze_feature_groups(df, feature_groups, target)
+
+        # Save group statistics
+        group_stats_path = self.output_manager.get_path(
+            "features", "importance", "group_statistics.csv"
+        )
+        pd.DataFrame(group_stats).to_csv(group_stats_path)
+
+        # 3. Calculate correlations
+        print("\n=== Feature Correlations ===")
+        correlation_matrix = df[features].corr()
+
+        # Save correlation matrix
+        corr_path = self.output_manager.get_path(
+            "features", "correlations", "correlation_matrix.csv"
+        )
+        correlation_matrix.to_csv(corr_path)
+
+        # 4. Calculate importance
+        print("\n=== Feature Importance Ranking ===")
+        importance_scores = self._calculate_feature_importance(df[features], df[target])
+
+        # Save importance scores
+        importance_path = self.output_manager.get_path(
+            "features", "importance", "feature_importance.csv"
+        )
+        importance_scores.to_csv(importance_path)
+
+        # 5. Calculate mutual information
+        print("\n=== Mutual Information Scores ===")
+        mi_scores = self._calculate_mutual_information(df[features], df[target])
+
+        # Save mutual information scores
+        mi_path = self.output_manager.get_path(
+            "features", "importance", "mutual_information.csv"
+        )
+        mi_scores.to_csv(mi_path)
+
+        results = {
+            'group_stats': group_stats,
+            'correlation_matrix': correlation_matrix,
+            'feature_importance': importance_scores,
+            'mutual_information': mi_scores
+        }
+
+        # Save complete analysis results
+        results_path = self.output_manager.get_path(
+            "features", "summaries", "complete_analysis.txt"
+        )
+        self._save_analysis_summary(results, results_path)
+
+        return results
+
+    def _create_feature_groups(self, features):
+        """
+        Group features by their type based on name patterns
+
+        Args:
+            features: List of feature names
+
+        Returns:
+            dict: Groups of features
+        """
+        return {
             'timing': [f for f in features if any(x in f.lower() for x in ['time', 'duration', 'iat'])],
             'packet': [f for f in features if 'packet' in f.lower()],
             'byte': [f for f in features if 'byte' in f.lower()],
@@ -29,33 +106,18 @@ class FeatureAnalyzer:
             'ratio': [f for f in features if 'ratio' in f.lower()]
         }
 
-        # 2. Analyze each group
-        print("\n=== Feature Group Statistics ===")
-        group_stats = self._analyze_feature_groups(df, feature_groups, target)
-
-        # 3. Calculate correlations
-        correlation_matrix = df[features].corr()
-
-        # 4. Calculate importance
-        importance_scores = self._calculate_feature_importance(df[features], df[target])
-
-        # 5. Calculate mutual information
-        mi_scores = self._calculate_mutual_information(df[features], df[target])
-
-        # If visualizer is provided, create plots
-        if self.visualizer:
-            self.visualizer.plot_correlation_matrix(correlation_matrix)
-            self.visualizer.plot_feature_distributions(df, features, target)
-
-        return {
-            'group_stats': group_stats,
-            'correlation_matrix': correlation_matrix,
-            'feature_importance': importance_scores,
-            'mutual_information': mi_scores
-        }
-
     def _analyze_feature_groups(self, df, feature_groups, target):
-        """Analyze features by their groups"""
+        """
+        Analyze each feature group using Random Forest
+
+        Args:
+            df: DataFrame with features
+            feature_groups: Dictionary of feature groups
+            target: Target variable name
+
+        Returns:
+            dict: Statistics for each group
+        """
         group_stats = {}
 
         for group_name, features in feature_groups.items():
@@ -66,10 +128,12 @@ class FeatureAnalyzer:
             X_group = df[features]
             y = df[target]
 
+            # Train Random Forest with group features
             rf = RandomForestClassifier(random_state=42)
             rf.fit(X_group, y)
             acc = rf.score(X_group, y)
 
+            # Calculate group statistics
             stats = {
                 'accuracy': acc,
                 'feature_count': len(features),
@@ -79,6 +143,13 @@ class FeatureAnalyzer:
                     reverse=True
                 ))
             }
+
+            # Save group-specific results
+            group_path = self.output_manager.get_path(
+                "features", "groups", f"group_{group_name}.csv"
+            )
+            pd.DataFrame(list(stats['top_features'].items()),
+                         columns=['Feature', 'Importance']).to_csv(group_path)
 
             print(f"Accuracy using only {group_name} features: {acc:.4f}")
             print("Top 3 features in this group:")
@@ -90,7 +161,16 @@ class FeatureAnalyzer:
         return group_stats
 
     def _calculate_feature_importance(self, X, y):
-        """Calculate feature importance using Random Forest"""
+        """
+        Calculate feature importance using Random Forest
+
+        Args:
+            X: Feature DataFrame
+            y: Target series
+
+        Returns:
+            DataFrame: Feature importance scores
+        """
         rf = RandomForestClassifier(random_state=42)
         rf.fit(X, y)
 
@@ -105,7 +185,16 @@ class FeatureAnalyzer:
         return importance_df
 
     def _calculate_mutual_information(self, X, y):
-        """Calculate mutual information scores"""
+        """
+        Calculate mutual information between features and target
+
+        Args:
+            X: Feature DataFrame
+            y: Target series
+
+        Returns:
+            DataFrame: Mutual information scores
+        """
         mi_scores = mutual_info_classif(X, y)
         mi_df = pd.DataFrame({
             'feature': X.columns,
@@ -117,13 +206,53 @@ class FeatureAnalyzer:
 
         return mi_df
 
+    def _save_analysis_summary(self, results, path):
+        """
+        Save complete analysis summary to file
+
+        Args:
+            results: Dictionary with all analysis results
+            path: Output file path
+        """
+        with open(path, 'w') as f:
+            f.write("=== Feature Analysis Summary ===\n\n")
+
+            # Group statistics summary
+            f.write("Feature Group Performance:\n")
+            for group, stats in results['group_stats'].items():
+                f.write(f"\n{group.upper()}:\n")
+                f.write(f"Number of features: {stats['feature_count']}\n")
+                f.write(f"Group accuracy: {stats['accuracy']:.4f}\n")
+                f.write("Top 3 features:\n")
+                for feat, imp in list(stats['top_features'].items())[:3]:
+                    f.write(f"  {feat}: {imp:.4f}\n")
+
+            # Top features by different metrics
+            f.write("\nTop 10 Features by Importance:\n")
+            for _, row in results['feature_importance'].head(10).iterrows():
+                f.write(f"  {row['feature']}: {row['importance']:.4f}\n")
+
+            f.write("\nTop 10 Features by Mutual Information:\n")
+            for _, row in results['mutual_information'].head(10).iterrows():
+                f.write(f"  {row['feature']}: {row['mutual_info']:.4f}\n")
+
     def analyze_feature_contribution(self, df, target='label'):
-        """Analyze how each feature contributes to classification"""
+        """
+        Analyze how each feature contributes to classification
+
+        Args:
+            df: DataFrame with features and target
+            target: Target column name
+
+        Returns:
+            dict: Impact of each feature on model performance
+        """
         features = [col for col in df.columns if col != target]
         results = {}
 
         print("\n=== Feature Contribution Analysis ===")
 
+        # Train baseline model with all features
         rf_all = RandomForestClassifier(random_state=42)
         X_all = df[features]
         y = df[target]
@@ -131,6 +260,7 @@ class FeatureAnalyzer:
         baseline_acc = rf_all.score(X_all, y)
         print(f"Baseline accuracy (all features): {baseline_acc:.4f}")
 
+        # Test removing each feature
         for feature in features:
             features_without = [f for f in features if f != feature]
             rf = RandomForestClassifier(random_state=42)
@@ -144,5 +274,11 @@ class FeatureAnalyzer:
             print(f"\nWithout feature '{feature}':")
             print(f"  Accuracy: {acc:.4f}")
             print(f"  Impact: {impact:.4f}")
+
+        # Save contribution analysis results
+        contrib_path = self.output_manager.get_path(
+            "features", "importance", "feature_contributions.csv"
+        )
+        pd.DataFrame(results).transpose().to_csv(contrib_path)
 
         return results
