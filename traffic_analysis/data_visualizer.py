@@ -213,3 +213,59 @@ class DataVisualizer:
             plt.grid(True, alpha=0.3)
             plt.tight_layout()
             plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+
+
+def plot_correlation_matrix(self, correlation_matrix, filename="correlation_matrix.png"):
+    """Create correlation matrix visualization"""
+    output_dir = "feature_correlations"
+    os.makedirs(output_dir, exist_ok=True)
+    filepath = os.path.join(output_dir, filename)
+
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
+    plt.title('Feature Correlation Matrix')
+    plt.tight_layout()
+    plt.savefig(filepath)
+    plt.close()
+
+
+def plot_feature_distributions(self, df, features, target, n_features=5):
+    """Plot distributions for the most important features"""
+    output_dir = "feature_distributions"
+    os.makedirs(output_dir, exist_ok=True)
+    filepath = os.path.join(output_dir, 'feature_distributions.png')
+
+    selected_features = features[:n_features]
+
+    plt.figure(figsize=(15, 10))
+    for i, feature in enumerate(selected_features, 1):
+        plt.subplot(2, 3, i)
+        for label in df[target].unique():
+            sns.kdeplot(df[df[target] == label][feature], label=label)
+        plt.title(f'Distribution: {feature}')
+        plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(filepath)
+    plt.close()
+
+    # Add new method for group statistics visualization
+
+
+def plot_group_statistics(self, group_stats, filename="group_statistics.png"):
+    """Visualize feature group statistics"""
+    output_dir = "feature_analysis"
+    os.makedirs(output_dir, exist_ok=True)
+    filepath = os.path.join(output_dir, filename)
+
+    group_accuracies = {group: stats['accuracy']
+                        for group, stats in group_stats.items()}
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(group_accuracies.keys(), group_accuracies.values())
+    plt.title('Feature Group Performance')
+    plt.ylabel('Accuracy')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(filepath)
+    plt.close()

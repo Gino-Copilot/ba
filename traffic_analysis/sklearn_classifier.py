@@ -196,3 +196,4 @@ class ScikitLearnTrafficClassifier:
         # This method is now handled within the train method
         # Keeping it for backward compatibility
         pass
+
