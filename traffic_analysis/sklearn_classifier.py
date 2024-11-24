@@ -2,8 +2,15 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    roc_auc_score,
+    roc_curve,
+    auc
+)
 import os
+import matplotlib.pyplot as plt
 from .shap_analyzer import SHAPAnalyzer
 
 
@@ -29,12 +36,11 @@ class ScikitLearnTrafficClassifier:
         self.y_train = None
         self.y_test = None
         self.y_pred = None
-        self.accuracy = None
-        self.precision_weighted = None
-        self.recall_weighted = None
-        self.f1_weighted = None
         self.roc_auc = None
         self.report = None
+
+        # Performance summary for multiple models
+        self.performance_summary = []
 
     def perform_grid_search(self, X, y):
         """
@@ -47,7 +53,6 @@ class ScikitLearnTrafficClassifier:
         Returns:
             Model with best parameters
         """
-        # Define parameter grids for different models
         param_grids = {
             "RandomForestClassifier": {
                 'n_estimators': [50, 100, 200],
@@ -90,29 +95,6 @@ class ScikitLearnTrafficClassifier:
             return grid_search.best_estimator_
         return self.model
 
-    def evaluate_temporal_independence(self, df):
-        """
-        Check temporal independence of features
-
-        Args:
-            df: Input DataFrame
-
-        Returns:
-            Series: Temporal correlations
-        """
-        temporal_correlations = {}
-        for column in df.drop('label', axis=1).columns:
-            if df[column].dtype in [np.float64, np.int64]:
-                temporal_correlations[column] = df[column].autocorr()
-
-        # Save temporal correlations
-        corr_path = self.output_manager.get_path(
-            "models", "metrics", "temporal_correlations.csv"
-        )
-        pd.Series(temporal_correlations).to_csv(corr_path)
-
-        return pd.Series(temporal_correlations)
-
     def train(self, df):
         """
         Train and evaluate the model
@@ -121,7 +103,6 @@ class ScikitLearnTrafficClassifier:
             df: Input DataFrame with features and target
         """
         try:
-            # Get model name for clear output
             model_name = self.model.__class__.__name__
             print(f"\n{'=' * 50}")
             print(f"Training model: {model_name}")
@@ -131,37 +112,26 @@ class ScikitLearnTrafficClassifier:
             X = df.drop('label', axis=1)
             y = df['label']
 
-            # Encode labels and scale features
             y_encoded = self.label_encoder.fit_transform(y)
             X_scaled = self.scaler.fit_transform(X)
             X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
 
-            # Split data into train and test sets
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
                 X_scaled, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
             )
 
-            print(f"\nPerforming grid search for {model_name}...")
             # Train model with grid search
             self.model = self.perform_grid_search(self.X_train, self.y_train)
             self.model.fit(self.X_train, self.y_train)
             self.y_pred = self.model.predict(self.X_test)
 
-            # Convert labels back to original format
             y_test_original = self.label_encoder.inverse_transform(self.y_test)
             y_pred_original = self.label_encoder.inverse_transform(self.y_pred)
 
-            # Calculate metrics
+            # Metrics
             self.report = classification_report(y_test_original, y_pred_original, output_dict=True)
-            self.accuracy = self.report['accuracy']
-            self.precision_weighted = self.report['weighted avg']['precision']
-            self.recall_weighted = self.report['weighted avg']['recall']
-            self.f1_weighted = self.report['weighted avg']['f1-score']
-
-            # Calculate ROC AUC if possible
-            if hasattr(self.model, 'predict_proba'):
-                self.roc_auc = roc_auc_score(self.y_test,
-                                             self.model.predict_proba(self.X_test)[:, 1])
+            self.roc_auc = roc_auc_score(self.y_test, self.model.predict_proba(self.X_test)[:, 1]) if hasattr(
+                self.model, 'predict_proba') else None
 
             # Save classification report
             report_path = self.output_manager.get_path(
@@ -169,121 +139,114 @@ class ScikitLearnTrafficClassifier:
             )
             pd.DataFrame(self.report).transpose().to_csv(report_path)
 
-            # Save best parameters if available
-            if self.best_params:
-                params_path = self.output_manager.get_path(
-                    "models", "metrics", f"{model_name}_best_parameters.csv"
-                )
-                pd.DataFrame([self.best_params]).to_csv(params_path)
+            # Add model performance to summary
+            self.performance_summary.append({
+                "Model": model_name,
+                "Accuracy": self.report['accuracy'],
+                "F1-Score": self.report['weighted avg']['f1-score'],
+                "Precision": self.report['weighted avg']['precision'],
+                "Recall": self.report['weighted avg']['recall'],
+                "AUC": self.roc_auc,
+                "Best Parameters": self.best_params
+            })
 
-            # Save confusion matrix
-            conf_matrix = confusion_matrix(y_test_original, y_pred_original)
-            matrix_path = self.output_manager.get_path(
-                "models", "metrics", f"{model_name}_confusion_matrix.csv"
-            )
-            pd.DataFrame(conf_matrix).to_csv(matrix_path)
-
-            # Save complete model summary
-            self._save_complete_summary(y_test_original, y_pred_original)
-
-            # Perform SHAP analysis
-            print(f"\nPerforming SHAP analysis for {model_name}...")
-            shap_analyzer = SHAPAnalyzer(
-                model=self.model,
-                output_manager=self.output_manager,
-                max_samples=200
-            )
-            shap_analyzer.explain_global(self.X_test)
-
-            # Only analyze a few examples for local explanations
-            n_examples = min(5, len(self.X_test))
-            example_indices = np.random.choice(len(self.X_test), n_examples, replace=False)
-            for idx in example_indices:
-                shap_analyzer.explain_local(self.X_test, idx)
-
-            # Print results with model name
-            print(f"\nResults for {model_name}:")
-            self._print_results(y_test_original, y_pred_original)
-
-            print(f"\nAll results for {model_name} have been saved in the results directory")
-            print(f"{'=' * 50}\n")
+            # Visualizations
+            self._plot_roc_curve(y_test_original)
+            self._save_model_summary()
 
         except Exception as e:
             print(f"Error during training of {model_name}: {str(e)}")
             raise
 
-    def _save_complete_summary(self, y_test_original, y_pred_original):
+    def _save_model_summary(self):
         """
-        Save complete summary of model performance
-
-        Args:
-            y_test_original: Original test labels
-            y_pred_original: Original prediction labels
+        Save a detailed summary report for all models
         """
-        summary_path = self.output_manager.get_path(
-            "models", "summaries", "complete_summary.txt"
-        )
+        try:
+            # Create a DataFrame from performance_summary
+            summary_df = pd.DataFrame(self.performance_summary)
 
-        with open(summary_path, 'w') as f:
-            f.write("=== Model Performance Summary ===\n\n")
+            # Handle missing values for AUC or Best Parameters
+            summary_df['AUC'] = summary_df['AUC'].fillna('N/A')
+            summary_df['Best Parameters'] = summary_df['Best Parameters'].apply(
+                lambda x: x if x else 'Not Available'
+            )
 
-            # Basic metrics
-            f.write("Basic Metrics:\n")
-            f.write(f"Accuracy: {self.accuracy:.4f}\n")
-            f.write(f"Weighted Precision: {self.precision_weighted:.4f}\n")
-            f.write(f"Weighted Recall: {self.recall_weighted:.4f}\n")
-            f.write(f"Weighted F1-Score: {self.f1_weighted:.4f}\n")
-            if self.roc_auc:
-                f.write(f"ROC AUC: {self.roc_auc:.4f}\n")
+            # Save as CSV
+            summary_path = self.output_manager.get_path("reports", "summaries", "performance_summary.csv")
+            summary_df.to_csv(summary_path, index=False)
+            print(f"Saved performance summary to {summary_path}")
 
-            # Classification Report
-            f.write("\nDetailed Classification Report:\n")
-            f.write(classification_report(y_test_original, y_pred_original))
+            # Save as text
+            text_summary_path = self.output_manager.get_path("reports", "summaries", "performance_summary.txt")
+            with open(text_summary_path, "w") as f:
+                f.write("=== Model Performance Summary ===\n\n")
+                for _, row in summary_df.iterrows():
+                    f.write(f"Model: {row['Model']}\n")
+                    f.write(f"  - Accuracy: {row['Accuracy']:.4f}\n")
+                    f.write(f"  - F1-Score: {row['F1-Score']:.4f}\n")
+                    f.write(f"  - Precision: {row['Precision']:.4f}\n")
+                    f.write(f"  - Recall: {row['Recall']:.4f}\n")
+                    f.write(f"  - AUC: {row['AUC']}\n")
+                    f.write(f"  - Best Parameters: {row['Best Parameters']}\n")
+                    f.write("-" * 40 + "\n")
+            print(f"Saved detailed text summary to {text_summary_path}")
 
-            # Model Parameters
-            f.write("\nModel Parameters:\n")
-            for param, value in self.model.get_params().items():
-                f.write(f"{param}: {value}\n")
+        except Exception as e:
+            print(f"Error saving model summary: {str(e)}")
 
-    def _print_results(self, y_test_original, y_pred_original):
+    def _plot_roc_curve(self, y_test_original):
         """
-        Print model results to console
-
-        Args:
-            y_test_original: Original test labels
-            y_pred_original: Original prediction labels
+        Plot ROC curve for the model
         """
-        print("\nClassification Report:")
-        print(classification_report(y_test_original, y_pred_original))
+        try:
+            if not hasattr(self.model, 'predict_proba'):
+                print(f"Skipping ROC curve for {self.model.__class__.__name__}: No predict_proba method.")
+                return
 
-        print("\nConfusion Matrix:")
-        print(confusion_matrix(y_test_original, y_pred_original))
+            y_prob = self.model.predict_proba(self.X_test)[:, 1]
+            fpr, tpr, _ = roc_curve(self.y_test, y_prob)
+            roc_auc = auc(fpr, tpr)
 
-        if self.roc_auc:
-            print(f"\nROC AUC Score: {self.roc_auc:.4f}")
+            plt.figure(figsize=(8, 6))
+            plt.plot(fpr, tpr, label=f'{self.model.__class__.__name__} (AUC = {roc_auc:.2f})')
+            plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title('ROC Curve')
+            plt.legend(loc='lower right')
 
-    def get_metrics(self):
+            plot_path = self.output_manager.get_path(
+                "reports", "visualizations", f"{self.model.__class__.__name__}_roc_curve.png"
+            )
+            plt.savefig(plot_path, bbox_inches='tight')
+            plt.close()
+            print(f"Saved ROC curve to {plot_path}")
+        except Exception as e:
+            print(f"Error while plotting ROC curve: {str(e)}")
+
+    def visualize_comparisons(self):
         """
-        Get all classification metrics
-
-        Returns:
-            dict: Dictionary containing all metrics
+        Create comparison visualizations for all models
         """
-        return {
-            'accuracy': self.accuracy,
-            'weighted avg': {
-                'precision': self.precision_weighted,
-                'recall': self.recall_weighted,
-                'f1-score': self.f1_weighted
-            },
-            'roc_auc': self.roc_auc if hasattr(self, 'roc_auc') else None
-        }
+        try:
+            summary_df = pd.DataFrame(self.performance_summary)
+            if summary_df.empty:
+                print("No models to compare.")
+                return
 
-    def save_results(self, df):
-        """
-        Legacy method kept for backwards compatibility
+            # F1-Score comparison
+            plt.figure(figsize=(10, 6))
+            summary_df.plot.bar(x="Model", y=["Accuracy", "F1-Score"], rot=45)
+            plt.title("Model Comparison: Accuracy and F1-Score")
+            plt.ylabel("Score")
+            plt.tight_layout()
 
-        Args:
-            df: Input DataFrame
-        """
-        pass  # All saving is now handled in the train method
+            comparison_path = self.output_manager.get_path(
+                "reports", "visualizations", "model_comparison.png"
+            )
+            plt.savefig(comparison_path, bbox_inches='tight')
+            plt.close()
+            print(f"Saved model comparison plot to {comparison_path}")
+        except Exception as e:
+            print(f"Error while creating comparison visualization: {str(e)}")
