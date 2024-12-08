@@ -6,6 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from webdriver_manager.firefox import GeckoDriverManager
+from configure_proxy import configure_proxy  # Importiere die Proxy-Konfiguration
 
 
 def ensure_non_root():
@@ -58,14 +59,13 @@ def random_browsing(driver):
         "https://www.cfr.org",
         "https://www.freetibet.org",
         "https://www.savetibet.org",
-        "https://www.hrw.org",
         "https://www.un.org",
         "https://www.greenpeace.org",
         "https://www.icrc.org"
     ]
 
     print("Starting random browsing...")
-    for _ in range(20):  # Visits 20 pages (can be adjusted)
+    for _ in range(20):  # Visits 20 pages
         url = random.choice(urls)
         print(f"Visiting: {url}")
         driver.get(url)
@@ -81,10 +81,14 @@ def main():
     # Ensure script is not running as root
     ensure_non_root()
 
+    # Configure Proxy
+    proxy = configure_proxy()
+
     # Configuration for Firefox WebDriver
     options = Options()
     options.headless = False  # Make browser visible
     options.binary_location = "/usr/bin/firefox"  # Adjust binary location if needed
+    options.proxy = proxy  # Apply proxy configuration
 
     # Initialize WebDriver with GeckoDriverManager
     driver = webdriver.Firefox(service=Service(GeckoDriverManager().install()), options=options)

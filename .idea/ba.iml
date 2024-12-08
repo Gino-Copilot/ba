@@ -8,6 +8,7 @@
       <excludeFolder url="file://$MODULE_DIR$/traffic_analysis/analysis_results" />
       <excludeFolder url="file://$MODULE_DIR$/traffic_analysis/nfstream_results" />
       <excludeFolder url="file://$MODULE_DIR$/tests/test_data" />
+      <excludeFolder url="file://$MODULE_DIR$/traffic_analysis/results" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

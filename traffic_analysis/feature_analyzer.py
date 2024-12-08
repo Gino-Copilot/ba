@@ -1,284 +1,285 @@
+# feature_analyzer.py
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
-import pandas as pd
 
 
 class FeatureAnalyzer:
     def __init__(self, output_manager):
         """
-        Initialize Feature Analyzer with output management
+        Initialisiert den FeatureAnalyzer
 
         Args:
-            output_manager: Instance of OutputManager for handling output paths
+            output_manager: Instance des OutputManagers für das Handling von Ausgabepfaden
         """
         self.output_manager = output_manager
+        self.results = {}
 
     def analyze_features(self, df, target='label'):
         """
-        Complete feature analysis including correlations, importance, and group statistics
+        Führt eine vollständige Feature-Analyse durch
 
         Args:
-            df: DataFrame with features and target
-            target: Name of target column (default: 'label')
+            df: DataFrame mit den zu analysierenden Daten
+            target: Name der Zielvariable (default: 'label')
 
         Returns:
-            dict: Results of all analyses
+            dict: Dictionary mit allen Analyseergebnissen
         """
-        results = {}
-        features = [col for col in df.columns if col != target]
+        try:
+            print("\nStarting feature analysis...")
+            features = [col for col in df.columns if col != target]
 
-        print("\n=== Complete Feature Analysis ===")
+            # Grundlegende Validierung
+            if len(features) == 0:
+                raise ValueError("No features found in DataFrame")
+            if target not in df.columns:
+                raise ValueError(f"Target column '{target}' not found in DataFrame")
 
-        # 1. Group features by type
-        feature_groups = self._create_feature_groups(features)
+            # Analyse durchführen
+            feature_groups = self._create_feature_groups(features)
+            group_stats = self._analyze_feature_groups(df, feature_groups, target)
+            correlation_matrix = self._calculate_correlations(df[features])
+            importance_scores = self._calculate_feature_importance(df[features], df[target])
+            mi_scores = self._calculate_mutual_information(df[features], df[target])
 
-        # 2. Analyze each group
-        print("\n=== Feature Group Statistics ===")
-        group_stats = self._analyze_feature_groups(df, feature_groups, target)
+            # Ergebnisse speichern
+            self._save_correlation_matrix(correlation_matrix)
+            self._save_importance_scores(importance_scores)
+            self._save_mutual_information_scores(mi_scores)
 
-        # Save group statistics
-        group_stats_path = self.output_manager.get_path(
-            "features", "importance", "group_statistics.csv"
-        )
-        pd.DataFrame(group_stats).to_csv(group_stats_path)
+            # Visualisierungen erstellen
+            self._create_visualizations(correlation_matrix, importance_scores, mi_scores)
 
-        # 3. Calculate correlations
-        print("\n=== Feature Correlations ===")
-        correlation_matrix = df[features].corr()
+            # Gesamtergebnisse zusammenstellen
+            self.results = {
+                'group_stats': group_stats,
+                'correlation_matrix': correlation_matrix,
+                'feature_importance': importance_scores,
+                'mutual_information': mi_scores,
+                'feature_groups': feature_groups
+            }
 
-        # Save correlation matrix
-        corr_path = self.output_manager.get_path(
-            "features", "correlations", "correlation_matrix.csv"
-        )
-        correlation_matrix.to_csv(corr_path)
+            self._save_analysis_summary()
+            print("Feature analysis completed successfully!")
+            return self.results
 
-        # 4. Calculate importance
-        print("\n=== Feature Importance Ranking ===")
-        importance_scores = self._calculate_feature_importance(df[features], df[target])
-
-        # Save importance scores
-        importance_path = self.output_manager.get_path(
-            "features", "importance", "feature_importance.csv"
-        )
-        importance_scores.to_csv(importance_path)
-
-        # 5. Calculate mutual information
-        print("\n=== Mutual Information Scores ===")
-        mi_scores = self._calculate_mutual_information(df[features], df[target])
-
-        # Save mutual information scores
-        mi_path = self.output_manager.get_path(
-            "features", "importance", "mutual_information.csv"
-        )
-        mi_scores.to_csv(mi_path)
-
-        results = {
-            'group_stats': group_stats,
-            'correlation_matrix': correlation_matrix,
-            'feature_importance': importance_scores,
-            'mutual_information': mi_scores
-        }
-
-        # Save complete analysis results
-        results_path = self.output_manager.get_path(
-            "features", "summaries", "complete_analysis.txt"
-        )
-        self._save_analysis_summary(results, results_path)
-
-        return results
+        except Exception as e:
+            print(f"Error during feature analysis: {str(e)}")
+            raise
 
     def _create_feature_groups(self, features):
-        """
-        Group features by their type based on name patterns
+        """Gruppiert Features nach ihren Charakteristiken"""
+        try:
+            groups = {
+                'timing': [f for f in features if any(x in f.lower() for x in ['time', 'duration', 'iat'])],
+                'packet': [f for f in features if 'packet' in f.lower()],
+                'byte': [f for f in features if 'byte' in f.lower()],
+                'ratio': [f for f in features if 'ratio' in f.lower()],
+                'other': []
+            }
 
-        Args:
-            features: List of feature names
+            # Füge Features zur 'other' Gruppe hinzu, die noch nicht kategorisiert wurden
+            categorized = set(sum(groups.values(), []))
+            groups['other'] = [f for f in features if f not in categorized]
 
-        Returns:
-            dict: Groups of features
-        """
-        return {
-            'timing': [f for f in features if any(x in f.lower() for x in ['time', 'duration', 'iat'])],
-            'packet': [f for f in features if 'packet' in f.lower()],
-            'byte': [f for f in features if 'byte' in f.lower()],
-            'entropy': [f for f in features if 'entropy' in f.lower()],
-            'ratio': [f for f in features if 'ratio' in f.lower()]
-        }
+            return groups
+        except Exception as e:
+            print(f"Error in feature grouping: {str(e)}")
+            return {}
 
     def _analyze_feature_groups(self, df, feature_groups, target):
-        """
-        Analyze each feature group using Random Forest
-
-        Args:
-            df: DataFrame with features
-            feature_groups: Dictionary of feature groups
-            target: Target variable name
-
-        Returns:
-            dict: Statistics for each group
-        """
+        """Analysiert jede Feature-Gruppe einzeln"""
         group_stats = {}
 
         for group_name, features in feature_groups.items():
             if not features:
                 continue
 
-            print(f"\nGroup: {group_name}")
-            X_group = df[features]
-            y = df[target]
+            try:
+                X_group = df[features]
+                y = df[target]
 
-            # Train Random Forest with group features
-            rf = RandomForestClassifier(random_state=42)
-            rf.fit(X_group, y)
-            acc = rf.score(X_group, y)
+                rf = RandomForestClassifier(n_estimators=50, random_state=42)
+                rf.fit(X_group, y)
 
-            # Calculate group statistics
-            stats = {
-                'accuracy': acc,
-                'feature_count': len(features),
-                'top_features': dict(sorted(
-                    zip(features, rf.feature_importances_),
-                    key=lambda x: x[1],
-                    reverse=True
-                ))
-            }
+                stats = {
+                    'accuracy': rf.score(X_group, y),
+                    'feature_count': len(features),
+                    'top_features': dict(sorted(
+                        zip(features, rf.feature_importances_),
+                        key=lambda x: x[1],
+                        reverse=True
+                    )),
+                    'mean_importance': np.mean(rf.feature_importances_)
+                }
 
-            # Save group-specific results
-            group_path = self.output_manager.get_path(
-                "features", "groups", f"group_{group_name}.csv"
-            )
-            pd.DataFrame(list(stats['top_features'].items()),
-                         columns=['Feature', 'Importance']).to_csv(group_path)
+                # Speichere detaillierte Gruppen-Statistiken
+                self._save_group_stats(group_name, stats)
+                group_stats[group_name] = stats
 
-            print(f"Accuracy using only {group_name} features: {acc:.4f}")
-            print("Top 3 features in this group:")
-            for feat, imp in list(stats['top_features'].items())[:3]:
-                print(f"  {feat}: {imp:.4f}")
-
-            group_stats[group_name] = stats
+            except Exception as e:
+                print(f"Error analyzing feature group {group_name}: {str(e)}")
+                continue
 
         return group_stats
 
+    def _calculate_correlations(self, features_df):
+        """Berechnet die Korrelationsmatrix"""
+        try:
+            return features_df.corr()
+        except Exception as e:
+            print(f"Error calculating correlations: {str(e)}")
+            return pd.DataFrame()
+
     def _calculate_feature_importance(self, X, y):
-        """
-        Calculate feature importance using Random Forest
+        """Berechnet Feature Importance mit Random Forest"""
+        try:
+            rf = RandomForestClassifier(n_estimators=50, random_state=42)
+            rf.fit(X, y)
 
-        Args:
-            X: Feature DataFrame
-            y: Target series
-
-        Returns:
-            DataFrame: Feature importance scores
-        """
-        rf = RandomForestClassifier(random_state=42)
-        rf.fit(X, y)
-
-        importance_df = pd.DataFrame({
-            'feature': X.columns,
-            'importance': rf.feature_importances_
-        }).sort_values('importance', ascending=False)
-
-        print("\nTop 10 most important features:")
-        print(importance_df.head(10))
-
-        return importance_df
+            return pd.DataFrame({
+                'feature': X.columns,
+                'importance': rf.feature_importances_
+            }).sort_values('importance', ascending=False)
+        except Exception as e:
+            print(f"Error calculating feature importance: {str(e)}")
+            return pd.DataFrame()
 
     def _calculate_mutual_information(self, X, y):
-        """
-        Calculate mutual information between features and target
+        """Berechnet Mutual Information zwischen Features und Target"""
+        try:
+            mi_scores = mutual_info_classif(X, y)
+            return pd.DataFrame({
+                'feature': X.columns,
+                'mutual_info': mi_scores
+            }).sort_values('mutual_info', ascending=False)
+        except Exception as e:
+            print(f"Error calculating mutual information: {str(e)}")
+            return pd.DataFrame()
 
-        Args:
-            X: Feature DataFrame
-            y: Target series
+    def _create_visualizations(self, correlation_matrix, importance_df, mi_df):
+        """Erstellt alle Visualisierungen"""
+        try:
+            self._plot_correlation_heatmap(correlation_matrix)
+            self._plot_feature_importance(importance_df)
+            self._plot_mutual_information(mi_df)
+        except Exception as e:
+            print(f"Error creating visualizations: {str(e)}")
 
-        Returns:
-            DataFrame: Mutual information scores
-        """
-        mi_scores = mutual_info_classif(X, y)
-        mi_df = pd.DataFrame({
-            'feature': X.columns,
-            'mutual_info': mi_scores
-        }).sort_values('mutual_info', ascending=False)
+    def _plot_correlation_heatmap(self, correlation_matrix):
+        """Erstellt Heatmap der Feature-Korrelationen"""
+        try:
+            plt.figure(figsize=(12, 10))
+            sns.heatmap(correlation_matrix, annot=True, cmap='RdBu', center=0)
+            plt.title('Feature Correlation Heatmap')
+            plt.tight_layout()
+            plt.savefig(self.output_manager.get_path(
+                "features", "correlations", "correlation_heatmap.png"
+            ))
+            plt.close()
+        except Exception as e:
+            print(f"Error plotting correlation heatmap: {str(e)}")
 
-        print("\nTop 10 features by mutual information:")
-        print(mi_df.head(10))
+    def _plot_feature_importance(self, importance_df):
+        """Visualisiert Feature Importance"""
+        try:
+            plt.figure(figsize=(12, 8))
+            sns.barplot(data=importance_df, x='importance', y='feature')
+            plt.title('Feature Importance')
+            plt.tight_layout()
+            plt.savefig(self.output_manager.get_path(
+                "features", "importance", "feature_importance.png"
+            ))
+            plt.close()
+        except Exception as e:
+            print(f"Error plotting feature importance: {str(e)}")
 
-        return mi_df
+    def _plot_mutual_information(self, mi_df):
+        """Visualisiert Mutual Information Scores"""
+        try:
+            plt.figure(figsize=(12, 8))
+            sns.barplot(data=mi_df, x='mutual_info', y='feature')
+            plt.title('Mutual Information with Target')
+            plt.tight_layout()
+            plt.savefig(self.output_manager.get_path(
+                "features", "importance", "mutual_information.png"
+            ))
+            plt.close()
+        except Exception as e:
+            print(f"Error plotting mutual information: {str(e)}")
 
-    def _save_analysis_summary(self, results, path):
-        """
-        Save complete analysis summary to file
+    def _save_correlation_matrix(self, correlation_matrix):
+        """Speichert die Korrelationsmatrix"""
+        try:
+            correlation_matrix.to_csv(self.output_manager.get_path(
+                "features", "correlations", "correlation_matrix.csv"
+            ))
+        except Exception as e:
+            print(f"Error saving correlation matrix: {str(e)}")
 
-        Args:
-            results: Dictionary with all analysis results
-            path: Output file path
-        """
-        with open(path, 'w') as f:
-            f.write("=== Feature Analysis Summary ===\n\n")
+    def _save_importance_scores(self, importance_df):
+        """Speichert die Feature Importance Scores"""
+        try:
+            importance_df.to_csv(self.output_manager.get_path(
+                "features", "importance", "feature_importance.csv"
+            ))
+        except Exception as e:
+            print(f"Error saving importance scores: {str(e)}")
 
-            # Group statistics summary
-            f.write("Feature Group Performance:\n")
-            for group, stats in results['group_stats'].items():
-                f.write(f"\n{group.upper()}:\n")
-                f.write(f"Number of features: {stats['feature_count']}\n")
-                f.write(f"Group accuracy: {stats['accuracy']:.4f}\n")
-                f.write("Top 3 features:\n")
-                for feat, imp in list(stats['top_features'].items())[:3]:
-                    f.write(f"  {feat}: {imp:.4f}\n")
+    def _save_mutual_information_scores(self, mi_df):
+        """Speichert die Mutual Information Scores"""
+        try:
+            mi_df.to_csv(self.output_manager.get_path(
+                "features", "importance", "mutual_information.csv"
+            ))
+        except Exception as e:
+            print(f"Error saving mutual information scores: {str(e)}")
 
-            # Top features by different metrics
-            f.write("\nTop 10 Features by Importance:\n")
-            for _, row in results['feature_importance'].head(10).iterrows():
-                f.write(f"  {row['feature']}: {row['importance']:.4f}\n")
+    def _save_group_stats(self, group_name, stats):
+        """Speichert die Statistiken für eine Feature-Gruppe"""
+        try:
+            pd.DataFrame(list(stats['top_features'].items()),
+                         columns=['Feature', 'Importance']).to_csv(
+                self.output_manager.get_path(
+                    "features", "groups", f"group_{group_name}.csv"
+                )
+            )
+        except Exception as e:
+            print(f"Error saving group stats for {group_name}: {str(e)}")
 
-            f.write("\nTop 10 Features by Mutual Information:\n")
-            for _, row in results['mutual_information'].head(10).iterrows():
-                f.write(f"  {row['feature']}: {row['mutual_info']:.4f}\n")
+    def _save_analysis_summary(self):
+        """Speichert eine vollständige Analyse-Zusammenfassung"""
+        try:
+            summary_path = self.output_manager.get_path(
+                "features", "summaries", "complete_analysis.txt"
+            )
 
-    def analyze_feature_contribution(self, df, target='label'):
-        """
-        Analyze how each feature contributes to classification
+            with open(summary_path, 'w') as f:
+                f.write("=== Feature Analysis Summary ===\n\n")
 
-        Args:
-            df: DataFrame with features and target
-            target: Target column name
+                # Gruppen-Statistiken
+                f.write("Feature Groups:\n")
+                for group, stats in self.results['group_stats'].items():
+                    f.write(f"\n{group.upper()}:\n")
+                    f.write(f"Features: {stats['feature_count']}\n")
+                    f.write(f"Accuracy: {stats['accuracy']:.4f}\n")
+                    f.write(f"Mean Importance: {stats['mean_importance']:.4f}\n")
+                    f.write("Top 3 features:\n")
+                    for feat, imp in list(stats['top_features'].items())[:3]:
+                        f.write(f"  {feat}: {imp:.4f}\n")
 
-        Returns:
-            dict: Impact of each feature on model performance
-        """
-        features = [col for col in df.columns if col != target]
-        results = {}
+                # Top Features nach verschiedenen Metriken
+                f.write("\nTop 10 Features by Importance:\n")
+                for _, row in self.results['feature_importance'].head(10).iterrows():
+                    f.write(f"  {row['feature']}: {row['importance']:.4f}\n")
 
-        print("\n=== Feature Contribution Analysis ===")
+                f.write("\nTop 10 Features by Mutual Information:\n")
+                for _, row in self.results['mutual_information'].head(10).iterrows():
+                    f.write(f"  {row['feature']}: {row['mutual_info']:.4f}\n")
 
-        # Train baseline model with all features
-        rf_all = RandomForestClassifier(random_state=42)
-        X_all = df[features]
-        y = df[target]
-        rf_all.fit(X_all, y)
-        baseline_acc = rf_all.score(X_all, y)
-        print(f"Baseline accuracy (all features): {baseline_acc:.4f}")
-
-        # Test removing each feature
-        for feature in features:
-            features_without = [f for f in features if f != feature]
-            rf = RandomForestClassifier(random_state=42)
-            rf.fit(df[features_without], y)
-            acc = rf.score(df[features_without], y)
-            impact = baseline_acc - acc
-            results[feature] = {
-                'accuracy_without': acc,
-                'impact': impact
-            }
-            print(f"\nWithout feature '{feature}':")
-            print(f"  Accuracy: {acc:.4f}")
-            print(f"  Impact: {impact:.4f}")
-
-        # Save contribution analysis results
-        contrib_path = self.output_manager.get_path(
-            "features", "importance", "feature_contributions.csv"
-        )
-        pd.DataFrame(results).transpose().to_csv(contrib_path)
-
-        return results
+        except Exception as e:
+            print(f"Error saving analysis summary: {str(e)}")

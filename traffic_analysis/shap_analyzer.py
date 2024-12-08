@@ -1,6 +1,5 @@
 import shap
 import matplotlib.pyplot as plt
-import os
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -8,213 +7,283 @@ from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 import warnings
 
-warnings.filterwarnings('ignore')  # Suppress warnings that might occur with SHAP
-
 
 class SHAPAnalyzer:
-    def __init__(self, model, output_manager, max_samples=100, background_sample_size=20):
+    def __init__(self, model, output_manager, max_display=20, max_samples=500):
         """
-        Initialize SHAP Analyzer
+        Initialisiert den SHAP Analyzer
 
         Args:
-            model: The trained model to analyze
-            output_manager: Instance of OutputManager for handling output paths
-            max_samples: Maximum number of samples for SHAP analysis (default: 100 for speed)
-            background_sample_size: Number of background samples for KernelExplainer (default: 20 for speed)
+            model: Trainiertes Modell für die Analyse
+            output_manager: Instance des OutputManagers
+            max_display: Maximale Anzahl der anzuzeigenden Features in Plots
+            max_samples: Maximale Anzahl der Samples für SHAP-Analyse
         """
         self.model = model
         self.output_manager = output_manager
+        self.max_display = max_display
         self.max_samples = max_samples
-        self.background_sample_size = background_sample_size
         self.model_name = self.model.__class__.__name__
-        self.output_manager.set_current_model(self.model_name)
+        self.explainer = None
+        self.shap_values = None
+
+        # Konfiguration
+        warnings.filterwarnings('ignore')
+        plt.style.use('seaborn-v0_8-darkgrid')  # Änderung vorgenommen
         print(f"Initialized SHAP Analyzer for model: {self.model_name}")
 
-    def _is_tree_based_model(self):
+    def explain_global(self, X, y=None):
         """
-        Check if the model is tree-based and supported by TreeExplainer
-        """
-        tree_based_models = (
-            RandomForestClassifier,
-            GradientBoostingClassifier,
-            XGBClassifier,
-        )
-        return isinstance(self.model, tree_based_models)
-
-    def _sample_data(self, X, random_state=42):
-        """
-        Reduce dataset to manageable size for SHAP analysis
+        Erstellt globale Modellerklärungen mit SHAP
 
         Args:
-            X: Input features
-            random_state: Random seed for reproducibility
+            X: Feature-Matrix
+            y: Labels (optional)
 
         Returns:
-            Reduced dataset
+            tuple: (explainer, shap_values) oder (None, None) bei Fehler
         """
-        if len(X) <= self.max_samples:
-            return X
-
-        if isinstance(X, pd.DataFrame):
-            # Optimized: Use fewer samples during development
-            _, X_sampled = train_test_split(X, train_size=self.max_samples, random_state=random_state)
-        else:
-            indices = np.random.RandomState(random_state).choice(len(X), self.max_samples, replace=False)
-            X_sampled = X[indices]
-
-        return X_sampled
-
-    def _prepare_background_data(self, X):
-        """
-        Prepare background data for KernelExplainer
-
-        Args:
-            X: Input features
-
-        Returns:
-            Array or DataFrame with reduced background data
-        """
-        if isinstance(X, pd.DataFrame):
-            # Optimized: Use shap.sample for background data
-            background_data = shap.sample(X, self.background_sample_size)
-        else:
-            indices = np.random.choice(len(X), self.background_sample_size, replace=False)
-            background_data = X[indices]
-
-        print(f"Using {len(background_data)} background data samples for KernelExplainer.")
-        return background_data
-
-    def explain_global(self, X):
-        """
-        Create unified global model explanations using SHAP
-
-        Args:
-            X: Input features to explain
-        """
-        print(f"\nStarting SHAP analysis with maximum {self.max_samples} samples...")
-        self.output_manager.set_current_model(self.model_name)
-
-        # Reduce dataset size
-        X_sampled = self._sample_data(X)
-        n_features = X_sampled.shape[1]
-
         try:
-            # Choose appropriate explainer
-            if self._is_tree_based_model():
-                # Optimized: Use approximate=True for faster TreeExplainer
-                explainer = shap.TreeExplainer(self.model, approximate=True)
-                # Original:
-                # explainer = shap.TreeExplainer(self.model)
-            else:
-                print(f"Model {self.model_name} is not tree-based. Using KernelExplainer.")
-                background_data = self._prepare_background_data(X_sampled)
-                explainer = shap.KernelExplainer(self.model.predict, background_data)
+            print(f"\nStarting SHAP analysis for {self.model_name}...")
 
-            shap_values = explainer.shap_values(X_sampled)
-            print("SHAP values calculated successfully")
+            # Validierung
+            if X is None or len(X) == 0:
+                raise ValueError("Empty or invalid input data")
 
-            # For binary classification or single output
-            if not isinstance(shap_values, list):
-                shap_values = [shap_values]
+            # Reduziere Datensatz auf handhabbare Größe
+            X_sampled = self._sample_data(X)
 
-            # Create plots for each class
-            for i, class_shap_values in enumerate(shap_values):
-                print(f"Creating plots for class {i}")
+            # Initialisiere explainer
+            self.explainer = self._initialize_explainer(X_sampled)
+            if self.explainer is None:
+                return None, None
 
-                # Optimized: Limit features and reduce plot detail for speed
-                max_display = 10  # Only show the top 10 features
-                # Original: max_display = n_features
+            # Berechne SHAP-Werte
+            self.shap_values = self._calculate_shap_values(X_sampled)
+            if self.shap_values is None:
+                return None, None
 
-                # Summary Bar Plot
-                plt.figure(figsize=(12, max(8, n_features * 0.3)))
-                shap.summary_plot(
-                    class_shap_values,
-                    X_sampled,
-                    plot_type="bar",
-                    max_display=max_display,
-                    show=False
-                )
-                plt.title(f'{self.model_name} - Feature Importance (Class {i})')
-                plt.tight_layout()
+            # Erstelle Visualisierungen
+            self._create_visualizations(X_sampled)
 
-                bar_plot_path = self.output_manager.get_path(
-                    "models", "shap", f"summary_bar_plot_class_{i}.png"
-                )
-                plt.savefig(bar_plot_path, bbox_inches="tight", dpi=150)  # Optimized: Reduce DPI for faster saving
-                # Original: plt.savefig(bar_plot_path, bbox_inches="tight", dpi=300)
-                plt.close()
-                print(f"Saved bar plot to: {bar_plot_path}")
-
-                # Beeswarm Plot
-                plt.figure(figsize=(12, max(8, n_features * 0.3)))
-                shap.summary_plot(
-                    class_shap_values,
-                    X_sampled,
-                    plot_type="dot",
-                    max_display=max_display,
-                    show=False
-                )
-                plt.title(f'{self.model_name} - Feature Impact Distribution (Class {i})')
-                plt.tight_layout()
-
-                beeswarm_path = self.output_manager.get_path(
-                    "models", "shap", f"beeswarm_plot_class_{i}.png"
-                )
-                plt.savefig(beeswarm_path, bbox_inches="tight", dpi=150)  # Optimized: Reduce DPI
-                # Original: plt.savefig(beeswarm_path, bbox_inches="tight", dpi=300)
-                plt.close()
-                print(f"Saved beeswarm plot to: {beeswarm_path}")
+            # Speichere Analysen
+            self._save_analysis_results(X_sampled)
 
             print("Global SHAP analysis completed successfully!")
-            return explainer, shap_values
+            return self.explainer, self.shap_values
 
         except Exception as e:
-            print(f"Error during global SHAP analysis: {str(e)}")
+            print(f"Error in global SHAP analysis: {str(e)}")
             return None, None
 
-    def explain_local(self, X, instance_index):
+    def explain_local(self, X, instance_indices):
         """
-        Create local explanations for a single instance
+        Erstellt lokale Erklärungen für spezifische Instanzen
 
         Args:
-            X: Input features
-            instance_index: Index of instance to explain
+            X: Feature-Matrix
+            instance_indices: Liste von Indizes für zu erklärende Instanzen
         """
         try:
-            self.output_manager.set_current_model(self.model_name)
-            print(f"\nCreating local explanation for {self.model_name}, instance {instance_index}")
+            print(f"\nCreating local explanations for {len(instance_indices)} instances...")
 
-            # Prepare data
-            if isinstance(X, pd.DataFrame):
-                instance = X.iloc[[instance_index]]
-                feature_names = X.columns
-            else:
-                instance = X[instance_index:instance_index + 1]
-                feature_names = [f"feature_{i}" for i in range(X.shape[1])]
+            if self.explainer is None:
+                self.explainer = self._initialize_explainer(X)
 
-            # Choose appropriate explainer
-            if self._is_tree_based_model():
-                explainer = shap.TreeExplainer(self.model, approximate=True)
-                # Original: explainer = shap.TreeExplainer(self.model)
-            else:
-                print(f"Model {self.model_name} is not tree-based. Using KernelExplainer.")
-                background_data = self._prepare_background_data(X)
-                explainer = shap.KernelExplainer(self.model.predict, background_data)
+            for idx in instance_indices:
+                if isinstance(X, pd.DataFrame):
+                    instance = X.iloc[[idx]]
+                    feature_names = X.columns
+                else:
+                    instance = X[idx:idx + 1]
+                    feature_names = [f"feature_{i}" for i in range(X.shape[1])]
 
-            shap_values = explainer.shap_values(instance)
+                local_shap = self.explainer.shap_values(instance)
+                self._plot_local_explanation(local_shap, instance, feature_names, idx)
 
-            # Handle both single and multi-class outputs
-            if not isinstance(shap_values, list):
-                shap_values = [shap_values]
-
-            # Optimized: Skip plotting for speed
-            # Original: Create bar plot for local explanation
-
-            print(f"Local SHAP analysis for instance {instance_index} completed successfully")
+            print("Local explanations completed successfully!")
 
         except Exception as e:
-            print(f"Error during local SHAP analysis for instance {instance_index}: {str(e)}")
+            print(f"Error in local SHAP analysis: {str(e)}")
 
+    def _is_tree_based_model(self):
+        """Prüft, ob das Modell Tree-basiert ist"""
+        return isinstance(self.model, (
+            RandomForestClassifier,
+            GradientBoostingClassifier,
+            XGBClassifier
+        ))
 
-if __name__ == "__main__":
-    print("This module provides SHAP analysis functionality for machine learning models.")
+    def _sample_data(self, X):
+        """Reduziert Datensatz auf handhabbare Größe"""
+        try:
+            if len(X) <= self.max_samples:
+                return X
+
+            if isinstance(X, pd.DataFrame):
+                return X.sample(n=self.max_samples, random_state=42)
+            else:
+                indices = np.random.RandomState(42).choice(
+                    len(X), self.max_samples, replace=False
+                )
+                return X[indices]
+
+        except Exception as e:
+            print(f"Error in data sampling: {str(e)}")
+            return X
+
+    def _initialize_explainer(self, X):
+        """Initialisiert den passenden SHAP Explainer"""
+        try:
+            if self._is_tree_based_model():
+                return shap.TreeExplainer(self.model)
+            else:
+                background = shap.sample(X, 100)
+                return shap.KernelExplainer(
+                    self.model.predict_proba,
+                    background
+                )
+        except Exception as e:
+            print(f"Error initializing explainer: {str(e)}")
+            return None
+
+    def _calculate_shap_values(self, X):
+        """Berechnet SHAP-Werte"""
+        try:
+            shap_values = self.explainer.shap_values(X)
+            if isinstance(shap_values, list):
+                # Für binäre Klassifikation nehmen wir die positive Klasse
+                shap_values = shap_values[1]
+            return shap_values
+
+        except Exception as e:
+            print(f"Error calculating SHAP values: {str(e)}")
+            return None
+
+    def _create_visualizations(self, X):
+        """Erstellt alle SHAP-Visualisierungen"""
+        try:
+            self._plot_summary(X)
+            self._plot_beeswarm(X)
+            self._plot_feature_importance()
+
+        except Exception as e:
+            print(f"Error creating visualizations: {str(e)}")
+
+    def _plot_summary(self, X):
+        """Erstellt Summary Plot"""
+        try:
+            plt.figure(figsize=(12, 8))
+            shap.summary_plot(
+                self.shap_values,
+                X,
+                max_display=self.max_display,
+                show=False
+            )
+            plt.title(f'{self.model_name} - SHAP Summary Plot')
+            plot_path = self.output_manager.get_path(
+                "models", "shap", "summary_plot.png"
+            )
+            plt.savefig(plot_path, bbox_inches='tight', dpi=300)
+            plt.close()
+
+        except Exception as e:
+            print(f"Error creating summary plot: {str(e)}")
+
+    def _plot_beeswarm(self, X):
+        """Erstellt Beeswarm Plot"""
+        try:
+            plt.figure(figsize=(12, 8))
+            shap.summary_plot(
+                self.shap_values,
+                X,
+                plot_type="bar",
+                max_display=self.max_display,
+                show=False
+            )
+            plt.title(f'{self.model_name} - SHAP Feature Importance')
+            plot_path = self.output_manager.get_path(
+                "models", "shap", "beeswarm_plot.png"
+            )
+            plt.savefig(plot_path, bbox_inches='tight', dpi=300)
+            plt.close()
+
+        except Exception as e:
+            print(f"Error creating beeswarm plot: {str(e)}")
+
+    def _plot_feature_importance(self):
+        """Erstellt Feature Importance Plot"""
+        try:
+            importance_df = pd.DataFrame({
+                'feature': range(self.shap_values.shape[1]),
+                'importance': np.abs(self.shap_values).mean(0)
+            })
+            importance_df = importance_df.sort_values('importance', ascending=False)
+
+            plt.figure(figsize=(12, 8))
+            plt.bar(range(len(importance_df)), importance_df['importance'])
+            plt.xticks(range(len(importance_df)), importance_df['feature'], rotation=45)
+            plt.title(f'{self.model_name} - SHAP Feature Importance')
+            plt.tight_layout()
+
+            plot_path = self.output_manager.get_path(
+                "models", "shap", "feature_importance.png"
+            )
+            plt.savefig(plot_path, bbox_inches='tight', dpi=300)
+            plt.close()
+
+        except Exception as e:
+            print(f"Error creating feature importance plot: {str(e)}")
+
+    def _plot_local_explanation(self, shap_values, instance, feature_names, idx):
+        """Erstellt lokale Erklärungsplots"""
+        try:
+            plt.figure(figsize=(12, 8))
+            shap.force_plot(
+                self.explainer.expected_value,
+                shap_values,
+                instance,
+                feature_names=feature_names,
+                show=False,
+                matplotlib=True
+            )
+            plt.title(f'Local Explanation for Instance {idx}')
+
+            plot_path = self.output_manager.get_path(
+                "models", "shap", f"local_explanation_{idx}.png"
+            )
+            plt.savefig(plot_path, bbox_inches='tight', dpi=300)
+            plt.close()
+
+        except Exception as e:
+            print(f"Error creating local explanation plot: {str(e)}")
+
+    def _save_analysis_results(self, X):
+        """Speichert SHAP-Analyseergebnisse"""
+        try:
+            # Speichere SHAP-Werte
+            if isinstance(X, pd.DataFrame):
+                shap_df = pd.DataFrame(
+                    self.shap_values,
+                    columns=X.columns
+                )
+            else:
+                shap_df = pd.DataFrame(self.shap_values)
+
+            shap_df.to_csv(self.output_manager.get_path(
+                "models", "shap", "shap_values.csv"
+            ))
+
+            # Speichere Feature Importance
+            importance_df = pd.DataFrame({
+                'feature': range(self.shap_values.shape[1]),
+                'importance': np.abs(self.shap_values).mean(0)
+            })
+            importance_df = importance_df.sort_values('importance', ascending=False)
+
+            importance_df.to_csv(self.output_manager.get_path(
+                "models", "shap", "feature_importance.csv"
+            ))
+
+        except Exception as e:
+            print(f"Error saving analysis results: {str(e)}")

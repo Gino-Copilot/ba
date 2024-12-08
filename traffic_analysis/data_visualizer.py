@@ -1,273 +1,377 @@
+# data_visualizer.py
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-import os
-from contextlib import contextmanager
+from sklearn.metrics import roc_curve, auc, precision_recall_curve, confusion_matrix
+import logging
+from typing import Dict, List, Any, Optional
+from pathlib import Path
 
 
 class DataVisualizer:
+    """Klasse zur Visualisierung von Modellmetriken und Ergebnissen"""
+
     def __init__(self, output_manager):
         """
-        Initialize DataVisualizer with an OutputManager
+        Initialisiert den DataVisualizer
 
         Args:
-            output_manager: Instance of OutputManager class for handling output paths
+            output_manager: Instance des OutputManagers für Dateipfade
         """
-        self.model_results = []
         self.output_manager = output_manager
+        self.model_results: List[Dict[str, Any]] = []
 
-    @contextmanager
-    def plot_context(self, figsize=(10, 6)):
-        """Simple context manager for matplotlib figures"""
+        # Definiere Standard-Plot-Stil
+        self.plot_style = {
+            'figure.figsize': (12, 8),
+            'axes.titlesize': 14,
+            'axes.labelsize': 12,
+            'xtick.labelsize': 10,
+            'ytick.labelsize': 10,
+            'legend.fontsize': 10,
+            'axes.grid': True,
+            'grid.alpha': 0.3
+        }
+
+        # Farbpalette für Plots
+        self.colors = ['#2ecc71', '#3498db', '#e74c3c', '#f1c40f', '#9b59b6',
+                       '#1abc9c', '#e67e22', '#34495e']
+
+        # Konfiguration
+        self._setup_visualization()
+        logging.info("DataVisualizer initialized successfully")
+
+    def _setup_visualization(self):
+        """Konfiguriert die Visualisierungseinstellungen"""
+        # Setze matplotlib Parameter
+        for key, value in self.plot_style.items():
+            plt.rcParams[key] = value
+
+        # Konfiguriere Standard-Stil ohne seaborn
+        plt.style.use('default')
+
+        # Konfiguriere seaborn grundlegend
+        sns.set_palette(self.colors)
+
+    def add_model_result(self, model_name: str, metrics: Dict[str, Any]):
+        """
+        Fügt neue Modellergebnisse hinzu und aktualisiert Visualisierungen
+
+        Args:
+            model_name: Name des Modells
+            metrics: Dictionary mit Modellmetriken
+        """
         try:
-            fig = plt.figure(figsize=figsize)
-            yield fig
-        finally:
-            plt.close(fig)
+            result = {
+                'Model': model_name,
+                'Accuracy': metrics['accuracy'],
+                'F1-Score': metrics['weighted avg']['f1-score'],
+                'Precision': metrics['weighted avg']['precision'],
+                'Recall': metrics['weighted avg']['recall'],
+                'ROC AUC': metrics.get('roc_auc', None)
+            }
+            self.model_results.append(result)
 
-    def plot_feature_importance(self, model, X):
+            # Update visualizations
+            self._create_performance_visualizations()
+            self._save_model_summary()
+            logging.info(f"Added results for model: {model_name}")
+
+        except Exception as e:
+            logging.error(f"Error adding model result for {model_name}: {str(e)}")
+
+    def plot_roc_curve(self, model, X_test, y_test, model_name: str):
         """
-        Create and save feature importance plot
+        Erstellt ROC-Kurve für ein Modell
 
         Args:
-            model: Trained model with feature_importances_ attribute
-            X: DataFrame with features
+            model: Trainiertes Modell
+            X_test: Test-Features
+            y_test: Test-Labels
+            model_name: Name des Modells
         """
-        if not hasattr(model, 'feature_importances_'):
-            return None
+        try:
+            plt.figure(figsize=self.plot_style['figure.figsize'])
 
-        importance_df = pd.DataFrame({
-            'feature': X.columns,
-            'importance': model.feature_importances_
-        }).sort_values('importance', ascending=True)
+            if hasattr(model, 'predict_proba'):
+                y_prob = model.predict_proba(X_test)[:, 1]
+                fpr, tpr, _ = roc_curve(y_test, y_prob)
+                roc_auc = auc(fpr, tpr)
 
-        plot_path = self.output_manager.get_path(
-            "models", "plots", "feature_importance.png"
-        )
+                plt.plot(fpr, tpr,
+                         label=f'ROC curve (AUC = {roc_auc:.2f})',
+                         linewidth=2)
+                plt.plot([0, 1], [0, 1], 'k--',
+                         label='Random prediction',
+                         alpha=0.8,
+                         linewidth=1)
 
-        with self.plot_context(figsize=(12, 8)) as fig:
-            plt.barh(importance_df['feature'], importance_df['importance'])
-            plt.title('Feature Importance Analysis')
-            plt.xlabel('Importance Score')
-            plt.ylabel('Features')
+                plt.xlim([0.0, 1.0])
+                plt.ylim([0.0, 1.05])
+                plt.xlabel('False Positive Rate')
+                plt.ylabel('True Positive Rate')
+                plt.title(f'ROC Curve - {model_name}')
+                plt.legend(loc="lower right")
+                plt.grid(True, alpha=0.3)
+
+                self._save_plot('roc_curve', model_name)
+            else:
+                logging.warning(f"Model {model_name} does not support probability predictions")
+
+        except Exception as e:
+            logging.error(f"Error plotting ROC curve for {model_name}: {str(e)}")
+
+    def plot_precision_recall_curve(self, model, X_test, y_test, model_name: str):
+        """
+        Erstellt Precision-Recall-Kurve für ein Modell
+
+        Args:
+            model: Trainiertes Modell
+            X_test: Test-Features
+            y_test: Test-Labels
+            model_name: Name des Modells
+        """
+        try:
+            if hasattr(model, 'predict_proba'):
+                plt.figure(figsize=self.plot_style['figure.figsize'])
+
+                y_prob = model.predict_proba(X_test)[:, 1]
+                precision, recall, _ = precision_recall_curve(y_test, y_prob)
+                pr_auc = auc(recall, precision)
+
+                plt.plot(recall, precision,
+                         label=f'PR curve (AUC = {pr_auc:.2f})',
+                         linewidth=2)
+                plt.xlabel('Recall')
+                plt.ylabel('Precision')
+                plt.title(f'Precision-Recall Curve - {model_name}')
+                plt.legend()
+                plt.grid(True, alpha=0.3)
+
+                self._save_plot('precision_recall_curve', model_name)
+            else:
+                logging.warning(f"Model {model_name} does not support probability predictions")
+
+        except Exception as e:
+            logging.error(f"Error plotting PR curve for {model_name}: {str(e)}")
+
+    def plot_feature_importance(self, model, feature_names, model_name: str):
+        """
+        Visualisiert Feature Importance
+        """
+        try:
+            if not hasattr(model, 'feature_importances_'):
+                logging.warning(f"Model {model_name} does not support feature importance")
+                return
+
+            importance = pd.DataFrame({
+                'feature': feature_names,
+                'importance': model.feature_importances_
+            }).sort_values('importance', ascending=True)
+
+            plt.figure(figsize=(10, max(8, len(feature_names) * 0.3)))
+            plt.barh(range(len(importance)), importance['importance'],
+                     align='center', color=self.colors[0])
+            plt.yticks(range(len(importance)), importance['feature'])
+            plt.xlabel('Importance')
+            plt.title(f'Feature Importance - {model_name}')
+            plt.grid(True, alpha=0.3, axis='x')
             plt.tight_layout()
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 
-        return importance_df
+            self._save_plot('feature_importance', model_name)
 
-    def plot_roc_curve(self, model, X_test, y_test):
+        except Exception as e:
+            logging.error(f"Error plotting feature importance for {model_name}: {str(e)}")
+
+    def plot_confusion_matrix(self, y_true, y_pred, model_name: str, labels: List[str] = None):
         """
-        Create and save ROC curve plot
-
-        Args:
-            model: Trained model
-            X_test: Test features
-            y_test: Test labels
+        Erstellt Confusion Matrix Visualisierung
         """
-        if not hasattr(model, 'predict_proba'):
-            return None
+        try:
+            plt.figure(figsize=(8, 6))
+            cm = confusion_matrix(y_true, y_pred)
 
-        from sklearn.metrics import roc_curve, auc
-        y_prob = model.predict_proba(X_test)[:, 1]
-        fpr, tpr, _ = roc_curve(y_test, y_prob)
-        roc_auc = auc(fpr, tpr)
+            # Erstelle Heatmap manuell mit plt
+            plt.imshow(cm, interpolation='nearest', cmap='Blues')
+            plt.colorbar()
 
-        plot_path = self.output_manager.get_path(
-            "models", "plots", "roc_curve.png"
-        )
+            # Füge Zahlen in die Zellen ein
+            thresh = cm.max() / 2.
+            for i in range(cm.shape[0]):
+                for j in range(cm.shape[1]):
+                    plt.text(j, i, format(cm[i, j], 'd'),
+                             ha="center", va="center",
+                             color="white" if cm[i, j] > thresh else "black")
 
-        with self.plot_context(figsize=(8, 8)) as fig:
-            plt.plot(fpr, tpr, label=f'ROC curve (AUC = {roc_auc:.2f})')
-            plt.plot([0, 1], [0, 1], 'k--', label='Random')
-            plt.xlim([0.0, 1.0])
-            plt.ylim([0.0, 1.05])
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.title('Receiver Operating Characteristic (ROC)')
-            plt.legend(loc='lower right')
-            plt.grid(True, alpha=0.3)
-            plt.tight_layout()
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+            if labels:
+                tick_marks = np.arange(len(labels))
+                plt.xticks(tick_marks, labels)
+                plt.yticks(tick_marks, labels)
 
-        return roc_auc
-
-    def plot_confusion_matrix(self, y_true, y_pred):
-        """
-        Create and save confusion matrix plot
-
-        Args:
-            y_true: True labels
-            y_pred: Predicted labels
-        """
-        from sklearn.metrics import confusion_matrix
-        cm = confusion_matrix(y_true, y_pred)
-
-        plot_path = self.output_manager.get_path(
-            "models", "plots", "confusion_matrix.png"
-        )
-
-        with self.plot_context(figsize=(8, 6)) as fig:
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-            plt.title('Confusion Matrix')
+            plt.title(f'Confusion Matrix - {model_name}')
             plt.ylabel('True Label')
             plt.xlabel('Predicted Label')
             plt.tight_layout()
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 
-    def add_model_result(self, model_name, metrics):
-        """
-        Add results from a model
+            self._save_plot('confusion_matrix', model_name)
 
-        Args:
-            model_name: Name of the model
-            metrics: Dictionary containing metrics
-        """
-        self.model_results.append({
-            'Model': model_name,
-            'Accuracy': metrics['accuracy'],
-            'Precision': metrics['weighted avg']['precision'],
-            'Recall': metrics['weighted avg']['recall'],
-            'F1-Score': metrics['weighted avg']['f1-score'],
-            'ROC AUC': metrics.get('roc_auc', None)
-        })
+        except Exception as e:
+            logging.error(f"Error plotting confusion matrix for {model_name}: {str(e)}")
 
-    def plot_comprehensive_comparison(self):
-        """Create complete model comparison visualizations"""
-        if not self.model_results:
-            return
+    def _create_performance_visualizations(self):
+        """Erstellt verschiedene Performance-Visualisierungen"""
+        try:
+            if not self.model_results:
+                return
 
-        df = pd.DataFrame(self.model_results)
+            df = pd.DataFrame(self.model_results)
+            metrics = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
 
-        # 1. Create bar plot for all metrics
-        plot_path = self.output_manager.get_path(
-            "models", "plots", "model_metrics_comparison.png"
-        )
+            self._create_bar_plot(df, metrics)
+            self._create_heatmap(df, metrics)
+            self._create_radar_plot(df, metrics)
 
-        with self.plot_context(figsize=(15, 8)) as fig:
-            metrics = ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'ROC AUC']
-            bar_width = 0.15
-            index = np.arange(len(df))
+        except Exception as e:
+            logging.error(f"Error creating performance visualizations: {str(e)}")
 
-            # Plot each metric as a bar
+    def _create_bar_plot(self, df: pd.DataFrame, metrics: List[str]):
+        """Erstellt Balkendiagramm für Modellvergleich"""
+        try:
+            plt.figure(figsize=self.plot_style['figure.figsize'])
+            x = np.arange(len(df))
+            width = 0.8 / len(metrics)
+
             for i, metric in enumerate(metrics):
-                if metric in df.columns:
-                    plt.bar(index + i * bar_width,
-                            df[metric],
-                            bar_width,
-                            label=metric,
-                            alpha=0.8)
+                plt.bar(x + i * width, df[metric],
+                        width,
+                        label=metric,
+                        color=self.colors[i % len(self.colors)])
 
             plt.xlabel('Models')
             plt.ylabel('Score')
-            plt.title('Model Performance Metrics Comparison')
-            plt.xticks(index + bar_width * 2, df['Model'], rotation=45, ha='right')
+            plt.title('Model Performance Comparison')
+            plt.xticks(x + width * (len(metrics) - 1) / 2, df['Model'],
+                       rotation=45, ha='right')
             plt.legend()
             plt.grid(True, alpha=0.3)
             plt.tight_layout()
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 
-        # 2. Create heatmap of metrics
-        heatmap_path = self.output_manager.get_path(
-            "models", "plots", "model_metrics_heatmap.png"
-        )
+            self._save_plot('model_comparison', 'bar_plot')
 
-        with self.plot_context(figsize=(12, 8)) as fig:
-            metrics_df = df.set_index('Model')
-            sns.heatmap(metrics_df, annot=True, fmt='.3f', cmap='YlOrRd',
-                        cbar_kws={'label': 'Score'})
-            plt.title('Model Performance Metrics Heatmap')
+        except Exception as e:
+            logging.error(f"Error creating bar plot: {str(e)}")
+
+    def _create_heatmap(self, df: pd.DataFrame, metrics: List[str]):
+        """Erstellt Heatmap für Modellmetriken"""
+        try:
+            plt.figure(figsize=(10, len(df) * 0.5 + 2))
+
+            # Erstelle Heatmap manuell mit plt
+            data = df[metrics].values
+            plt.imshow(data, aspect='auto', cmap='YlOrRd')
+            plt.colorbar()
+
+            # Beschriftungen
+            plt.xticks(range(len(metrics)), metrics)
+            plt.yticks(range(len(df)), df['Model'])
+
+            # Füge Werte in die Zellen ein
+            for i in range(len(df)):
+                for j in range(len(metrics)):
+                    plt.text(j, i, f'{data[i, j]:.3f}',
+                             ha='center', va='center')
+
+            plt.title('Performance Metrics Heatmap')
             plt.tight_layout()
-            plt.savefig(heatmap_path, dpi=300, bbox_inches='tight')
 
-    def save_comparison_table(self):
-        """Save detailed comparison table and summary"""
-        if not self.model_results:
-            return
+            self._save_plot('metrics_heatmap', 'all_models')
 
-        df = pd.DataFrame(self.model_results)
+        except Exception as e:
+            logging.error(f"Error creating heatmap: {str(e)}")
 
-        # Sort by accuracy (best models first)
-        df = df.sort_values('Accuracy', ascending=False)
+    def _create_radar_plot(self, df: pd.DataFrame, metrics: List[str]):
+        """Erstellt Radar-Plot für Modellvergleich"""
+        try:
+            angles = np.linspace(0, 2 * np.pi, len(metrics), endpoint=False)
+            angles = np.concatenate((angles, [angles[0]]))
 
-        # Format percentages for better readability
-        for col in ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'ROC AUC']:
-            if col in df.columns:
-                df[col] = df[col].apply(lambda x: f"{x * 100:.2f}%" if pd.notnull(x) else "N/A")
+            fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='polar'))
 
-        # Save to CSV
-        csv_path = self.output_manager.get_path(
-            "models", "metrics", "model_comparison.csv"
-        )
-        df.to_csv(csv_path, index=False)
+            for idx, row in df.iterrows():
+                values = [row[metric] for metric in metrics]
+                values = np.concatenate((values, [values[0]]))
 
-        # Create and save summary
-        summary = self._generate_summary()
-        summary_path = self.output_manager.get_path(
-            "models", "metrics", "model_comparison_summary.txt"
-        )
-        with open(summary_path, 'w') as f:
-            f.write(summary)
+                ax.plot(angles, values, 'o-',
+                        linewidth=2,
+                        label=row['Model'],
+                        color=self.colors[idx % len(self.colors)])
+                ax.fill(angles, values,
+                        alpha=0.25,
+                        color=self.colors[idx % len(self.colors)])
 
-    def _generate_summary(self):
-        """
-        Create summary of model performance
-
-        Returns:
-            str: Formatted summary text
-        """
-        df = pd.DataFrame(self.model_results)
-
-        summary = "=== Model Performance Summary ===\n\n"
-
-        # Find best model for each metric
-        summary += "Best Performing Models:\n"
-        metrics = ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'ROC AUC']
-        for metric in metrics:
-            if metric in df.columns:
-                best_idx = df[metric].idxmax()
-                best_model = df.iloc[best_idx]['Model']
-                best_score = df.iloc[best_idx][metric]
-                summary += f"{metric}: {best_model} ({best_score * 100:.2f}%)\n"
-
-        # Calculate average performance
-        summary += "\nAverage Performance:\n"
-        for metric in metrics:
-            if metric in df.columns:
-                avg = df[metric].mean()
-                std = df[metric].std()
-                summary += f"{metric}: {avg * 100:.2f}% (±{std * 100:.2f}%)\n"
-
-        return summary
-
-    def plot_model_comparison(self, results):
-        """
-        Create model comparison plots and save results
-
-        Args:
-            results: Dictionary with model results
-        """
-        # Store results first
-        for model_name, metrics in results.items():
-            self.add_model_result(model_name, metrics)
-
-        # Create detailed visualizations
-        self.plot_comprehensive_comparison()
-        self.save_comparison_table()
-
-        # Create simple bar plot for quick overview
-        plot_path = self.output_manager.get_path(
-            "models", "plots", "simple_model_comparison.png"
-        )
-
-        accuracies = {name: data['accuracy'] for name, data in results.items()}
-
-        with self.plot_context(figsize=(10, 6)) as fig:
-            plt.bar(accuracies.keys(), accuracies.values())
-            plt.xticks(rotation=45, ha='right')
-            plt.title('Model Performance Comparison')
-            plt.ylabel('Accuracy')
-            plt.ylim(0, 1)
-            plt.grid(True, alpha=0.3)
+            ax.set_xticks(angles[:-1])
+            ax.set_xticklabels(metrics)
+            ax.set_title('Model Performance Comparison (Radar Plot)')
+            plt.legend(loc='center left', bbox_to_anchor=(1.1, 0.5))
             plt.tight_layout()
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+
+            self._save_plot('radar_plot', 'all_models')
+
+        except Exception as e:
+            logging.error(f"Error creating radar plot: {str(e)}")
+
+    def _save_plot(self, plot_type: str, model_name: str):
+        """Speichert Plot in entsprechendes Verzeichnis"""
+        try:
+            path = self.output_manager.get_path(
+                "reports", "visualizations", f"{model_name}_{plot_type}.png"
+            )
+            plt.savefig(path, bbox_inches='tight', dpi=300)
+            plt.close()
+        except Exception as e:
+            logging.error(f"Error saving plot {plot_type} for {model_name}: {str(e)}")
+
+    def _save_model_summary(self):
+        """Speichert Zusammenfassung der Modellergebnisse"""
+        try:
+            if not self.model_results:
+                return
+
+            df = pd.DataFrame(self.model_results)
+
+            # Save CSV
+            df.to_csv(self.output_manager.get_path(
+                "reports", "summaries", "model_comparison.csv"
+            ), index=False)
+
+            # Save detailed text summary
+            with open(self.output_manager.get_path(
+                    "reports", "summaries", "model_comparison.txt"
+            ), 'w') as f:
+                f.write("=== Model Performance Summary ===\n\n")
+                f.write(f"Analysis Date: {pd.Timestamp.now()}\n\n")
+
+                for _, row in df.iterrows():
+                    f.write(f"Model: {row['Model']}\n")
+                    f.write("-" * len(f"Model: {row['Model']}") + "\n")
+                    for metric in ['Accuracy', 'F1-Score', 'Precision', 'Recall', 'ROC AUC']:
+                        if pd.notnull(row[metric]):
+                            f.write(f"  {metric:.<20} {row[metric]:.4f}\n")
+                    f.write("\n")
+
+                # Add summary statistics
+                f.write("\nSummary Statistics:\n")
+                f.write("-" * 20 + "\n")
+                metrics = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
+                for metric in metrics:
+                    values = df[metric].dropna()
+                    if not values.empty:
+                        f.write(f"\n{metric}:\n")
+                        f.write(f"  Mean: {values.mean():.4f}\n")
+                        f.write(f"  Std:  {values.std():.4f}\n")
+                        f.write(f"  Max:  {values.max():.4f} ({df.loc[values.idxmax(), 'Model']})\n")
+                        f.write(f"  Min:  {values.min():.4f} ({df.loc[values.idxmin(), 'Model']})\n")
+
+        except Exception as e:
+            logging.error(f"Error saving model summary: {str(e)}")
