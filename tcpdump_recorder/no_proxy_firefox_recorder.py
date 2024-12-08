@@ -1,22 +1,24 @@
 import subprocess
-import os
 import time
 from datetime import datetime
-import psutil
+import os
 import signal
+import psutil
 
 
 class TrafficCapture:
-    def __init__(self, traffic_type="shadowsocks_traffic", interval=10, file_count=200, interface="wlp0s20f3", port=8388):
-        # Include date in folder name
-        current_date = datetime.now().strftime("%m-%d")
+    def __init__(self, traffic_type="default_traffic", interval=10, file_count=200, interface="wlp0s20f3"):
+        # Add date to the traffic type for folder naming
+        current_date = datetime.now().strftime("%Y-%m-%d")
         folder_name = f"{traffic_type}_{current_date}"
+
+        # Specific subfolder for traffic type in traffic_data directory
         base_output_dir = os.path.join(os.path.dirname(__file__), '..', 'traffic_data')
         self.output_dir = os.path.join(base_output_dir, folder_name)
+
         self.interval = interval
         self.file_count = file_count
         self.interface = interface
-        self.port = port
         self._ensure_output_dir()
 
     def _ensure_output_dir(self):
@@ -27,34 +29,27 @@ class TrafficCapture:
     def _check_disk_space(self):
         """Check available disk space in output directory."""
         disk = psutil.disk_usage(self.output_dir)
-        free_space_gb = disk.free / (1024 * 1024 * 1024)  # Convert bytes to GB
-        if free_space_gb < 1:  # Warn if less than 1GB is available
-            print(f"Warning: Only {free_space_gb:.2f} GB free disk space left")
-        return free_space_gb
+        if disk.percent > 80:
+            print(f"Warning: Only {disk.free / (1024 * 1024 * 1024):.2f} GB free disk space left")
 
     def capture_traffic(self):
         """Start traffic capture."""
-        free_space_gb = self._check_disk_space()
-        if free_space_gb < 1:
-            print("Insufficient disk space. Aborting traffic capture.")
-            return
+        self._check_disk_space()
 
-        for i in range(1, self.file_count + 1):  # Exact number of files
-            timestamp = datetime.now().strftime("%m-%d_%H-%M-%S")  # Format: MM-DD_HH-MM-SS
-            output_file = os.path.join(self.output_dir, f"capture_{i:03d}_{timestamp}.pcap")
+        for i in range(self.file_count):
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            output_file = os.path.join(self.output_dir, f"traffic_capture_{timestamp}.pcap")
 
-            # Tcpdump command for a single file
             command = [
                 "sudo", "tcpdump",
                 "-i", self.interface,
-                "port", str(self.port),
                 "-w", output_file,
                 "-G", str(self.interval),
+                "-W", str(self.file_count),
                 "-s", "0",
-                "-B", "8192",  # Increased buffer size
+                "-B", "2048",
                 "-n",
-                "-U",          # Immediate write to file
-                "-K",          # Disable packet checksum verification
+                "-K",
                 "-q",
                 "-Z", "root",
             ]
@@ -66,7 +61,7 @@ class TrafficCapture:
                     stderr=subprocess.PIPE
                 )
 
-                time.sleep(self.interval)  # Wait for the duration of one file
+                time.sleep(self.interval)
 
                 if process.poll() is not None:
                     _, stderr = process.communicate()
@@ -94,14 +89,9 @@ class TrafficCapture:
 
 
 def main():
-    # Save Shadowsocks traffic with updated folder and file names
-    traffic_capture = TrafficCapture(
-        traffic_type="shadowsocks_traffic_3_cec_selenium_only_port_8388",
-        interval=3,
-        file_count=200,
-        interface="wlp0s20f3",
-        port=8388
-    )
+    # Example: Save Firefox browser traffic without proxy
+    traffic_capture = TrafficCapture(traffic_type="firefox_without_proxy", interval=3, file_count=200,
+                                     interface="wlp0s20f3")
 
     try:
         traffic_capture.capture_traffic()

@@ -94,8 +94,8 @@ class TrafficAnalyzer:
 def main():
     try:
         # Konfiguration
-        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/nov_1_traffic_PROXY"
-        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/nov_1traffic"
+        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/shadowsocks_traffic_3_cec_selenium_only_port_8388_12-08"
+        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/firefox_without_proxy_2024-12-08"
         results_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_analysis/results"
 
         # Analyse durchführen
