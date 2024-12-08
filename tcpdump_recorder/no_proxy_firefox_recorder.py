@@ -5,7 +5,7 @@ import os
 import signal
 import psutil
 
-
+# Filter by PID of Firefox process
 class TrafficCapture:
     def __init__(self, traffic_type="default_traffic", interval=10, file_count=200, interface="wlp0s20f3"):
         # Add date to the traffic type for folder naming
