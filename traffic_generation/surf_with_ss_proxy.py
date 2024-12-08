@@ -64,8 +64,7 @@ def random_browsing(driver):
         "https://www.icrc.org"
     ]
 
-    print("Starting random browsing...")
-    for _ in range(20):  # Visits 20 pages
+    while True:  # Infinite loop
         url = random.choice(urls)
         print(f"Visiting: {url}")
         driver.get(url)
@@ -74,7 +73,7 @@ def random_browsing(driver):
         wait_time = random.uniform(2, 10)
         print(f"Waiting for {wait_time:.2f} seconds.")
         time.sleep(wait_time)
-    print("Random browsing completed.")
+
 
 
 def main():
