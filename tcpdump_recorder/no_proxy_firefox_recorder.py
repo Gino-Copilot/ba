@@ -1,105 +1,103 @@
 import subprocess
-import time
 from datetime import datetime
 import os
-import signal
 import psutil
+import time
+import signal
 
-# Filter by PID of Firefox process
 class TrafficCapture:
-    def __init__(self, traffic_type="default_traffic", interval=10, file_count=200, interface="wlp0s20f3"):
-        # Add date to the traffic type for folder naming
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        folder_name = f"{traffic_type}_{current_date}"
-
-        # Specific subfolder for traffic type in traffic_data directory
-        base_output_dir = os.path.join(os.path.dirname(__file__), '..', 'traffic_data')
-        self.output_dir = os.path.join(base_output_dir, folder_name)
-
+    def __init__(self, traffic_type="default", interval=3, file_count=5, interface="wlp0s20f3"):
+        # Create a unique folder for storing the capture files
+        folder_name = f"{traffic_type}_{datetime.now().strftime('%m-%d_%H-%M')}"
+        self.output_dir = os.path.join(os.path.dirname(__file__), '..', 'traffic_data', folder_name)
         self.interval = interval
         self.file_count = file_count
         self.interface = interface
-        self._ensure_output_dir()
 
-    def _ensure_output_dir(self):
-        """Make sure output directory exists."""
+        # Ensure the output directory exists
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
     def _check_disk_space(self):
-        """Check available disk space in output directory."""
+        """Checks available disk space and warns if it is low."""
         disk = psutil.disk_usage(self.output_dir)
-        if disk.percent > 80:
-            print(f"Warning: Only {disk.free / (1024 * 1024 * 1024):.2f} GB free disk space left")
+        if disk.percent > 90:
+            print("Warning: Disk space is low!")
+
+    def _verify_file_duration(self, filename):
+        """Verifies if the pcap file has been successfully created."""
+        if os.path.exists(filename):
+            file_size = os.path.getsize(filename)
+            print(f"File {filename} created with size: {file_size} bytes")
+            if file_size == 0:
+                print("Warning: File is empty, tcpdump might not have started correctly.")
+        else:
+            print(f"Error: File {filename} was not created.")
 
     def capture_traffic(self):
-        """Start traffic capture."""
+        """Captures network traffic and writes it to separate pcap files."""
         self._check_disk_space()
+        print(f"Starting traffic capture in: {self.output_dir}")
 
-        for i in range(self.file_count):
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            output_file = os.path.join(self.output_dir, f"traffic_capture_{timestamp}.pcap")
+        for i in range(1, self.file_count + 1):
+            filename = os.path.join(self.output_dir, f"capture_{i}.pcap")
+            print(f"Capturing file {i}/{self.file_count}: {filename}")
 
             command = [
                 "sudo", "tcpdump",
                 "-i", self.interface,
-                "-w", output_file,
-                "-G", str(self.interval),
-                "-W", str(self.file_count),
-                "-s", "0",
-                "-B", "2048",
-                "-n",
-                "-K",
-                "-q",
-                "-Z", "root",
+                "-w", filename,
+                "-s", "0",        # Capture the entire packets
+                "-B", "16384",    # Increased buffer size for better performance
+                "-n",             # Do not resolve hostnames
+                "-q",             # Minimal output
+                "--immediate-mode",  # Process packets immediately
+                "-Z", "root"      # Run as root
             ]
 
             try:
-                process = subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
-                )
+                # Start tcpdump process
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                start_time = time.perf_counter()
 
-                time.sleep(self.interval)
+                # Precisely control the capture duration
+                while time.perf_counter() - start_time < self.interval:
+                    time.sleep(0.01)  # Fine-grained sleep for accuracy
 
-                if process.poll() is not None:
-                    _, stderr = process.communicate()
-                    print(f"tcpdump terminated with error: {stderr.decode()}")
-                    continue
-
+                # Send SIGINT to ensure clean termination
                 process.send_signal(signal.SIGINT)
-                process.wait(timeout=5)
-
-                file_size = os.path.getsize(output_file)  # File size in bytes
-                print(f"Saved traffic to {output_file} ({file_size} Bytes)")
+                process.wait(timeout=2)  # Ensure process termination
 
             except subprocess.TimeoutExpired:
-                print("Timeout while stopping tcpdump")
-                process.kill()
+                print(f"Warning: tcpdump process did not terminate on time. Killing process.")
+                process.kill()  # Forcefully terminate process
             except Exception as e:
-                print(f"Error during capturing: {e}")
-                break
+                print(f"Error during capture: {e}")
+                process.kill()
+            finally:
+                actual_time = time.perf_counter() - start_time
+                print(f"File {i} captured in {actual_time:.3f} seconds.")
+                self._verify_file_duration(filename)
+                self._check_disk_space()
+
+        print("\nTraffic capture completed successfully.")
 
     def cleanup(self):
-        """Stop all tcpdump processes to keep the system clean."""
+        """Terminates any lingering tcpdump processes."""
         for proc in psutil.process_iter(['name']):
             if proc.info['name'] == 'tcpdump':
                 proc.kill()
-
+        print("Cleaned up all tcpdump processes.")
 
 def main():
-    # Example: Save Firefox browser traffic without proxy
-    traffic_capture = TrafficCapture(traffic_type="firefox_without_proxy", interval=3, file_count=200,
-                                     interface="wlp0s20f3")
-
+    # Example: Capture 5 files, each 3 seconds long
+    capture = TrafficCapture(traffic_type="all_traffic", interval=3, file_count=5)
     try:
-        traffic_capture.capture_traffic()
+        capture.capture_traffic()
     except KeyboardInterrupt:
-        print("\nProgram is shutting down...")
+        print("\nCapture stopped by user.")
     finally:
-        traffic_capture.cleanup()
-
+        capture.cleanup()
 
 if __name__ == "__main__":
     main()
