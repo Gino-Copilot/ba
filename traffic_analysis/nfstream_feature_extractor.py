@@ -1,17 +1,22 @@
-import nfstream
-import pandas as pd
-import numpy as np
-import os
-from scipy.stats import entropy
 import logging
+import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Union
-from dataclasses import dataclass
+
+import nfstream
+import numpy as np
+import pandas as pd
+from scipy.stats import entropy
+
+logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
 class FlowFeatures:
-    """Datenklasse für extrahierte Flow-Features"""
+    """
+    Data class that holds extracted flow features.
+    """
     duration_seconds: float
     packets_per_second: float
     bytes_per_second: float
@@ -26,22 +31,31 @@ class FlowFeatures:
 
 
 class NFStreamFeatureExtractor:
-    """Extrahiert Features aus PCAP-Files mittels NFStream"""
+    """
+    Extracts flow-based features from PCAP files using NFStream.
+    """
 
-    def __init__(self, output_manager, use_entropy: bool = False, min_packets: int = 5):
+    def __init__(
+        self,
+        output_manager,
+        use_entropy: bool = False,
+        min_packets: int = 5
+    ):
         """
-        Initialisiert den Feature Extractor
+        Initializes the NFStreamFeatureExtractor.
 
         Args:
-            output_manager: Instance des OutputManagers
-            use_entropy: Aktiviert Entropy-Feature-Berechnung
-            min_packets: Minimale Anzahl Packets pro Flow
+            output_manager: Instance of an output manager (handles file paths).
+            use_entropy: Whether to calculate entropy-based features.
+            min_packets: Minimum number of bidirectional packets to accept a flow.
         """
         self.output_manager = output_manager
         self.use_entropy = use_entropy
         self.min_packets = min_packets
 
-        # Features die von der Analyse ausgeschlossen werden
+        # We do not necessarily need to store these excluded features here,
+        # unless you plan to filter them out from the final DataFrame.
+        # Otherwise we can remove or move them to a config if not used.
         self.exclude_features = {
             'src_ip', 'dst_ip', 'src_mac', 'dst_mac',
             'src_port', 'dst_port', 'protocol', 'ip_version',
@@ -51,96 +65,156 @@ class NFStreamFeatureExtractor:
             'client_fingerprint', 'server_fingerprint'
         }
 
-        print("NFStreamFeatureExtractor initialized")
-        print(f"Entropy features: {'enabled' if use_entropy else 'disabled'}")
-        print(f"Minimum packets per flow: {min_packets}")
+        logging.info("NFStreamFeatureExtractor initialized.")
+        logging.info(f"Entropy calculation: {'enabled' if use_entropy else 'disabled'}.")
+        logging.info(f"Minimum packets per flow: {min_packets}.")
 
-    def calculate_entropy(self, data: bytes) -> float:
+    def prepare_dataset(
+        self,
+        proxy_dir: Union[str, Path],
+        normal_dir: Union[str, Path]
+    ) -> pd.DataFrame:
         """
-        Berechnet Shannon-Entropy für Byte-Sequenz
+        Creates a combined dataset from proxy (Shadowsocks, etc.) and normal traffic directories.
 
         Args:
-            data: Byte-Sequenz
+            proxy_dir: Directory containing PCAP files for proxy traffic.
+            normal_dir: Directory containing PCAP files for normal traffic.
 
         Returns:
-            float: Entropy-Wert
+            A pandas DataFrame containing the combined dataset with labels ('proxy'/'normal').
         """
         try:
-            if not data:
-                return 0.0
+            logging.info("Starting dataset preparation...")
 
-            # Zähle Byte-Häufigkeiten
-            byte_counts = {}
-            for byte in data:
-                byte_counts[byte] = byte_counts.get(byte, 0) + 1
+            # Extract features for proxy traffic
+            proxy_df = self.extract_features(proxy_dir, label='proxy')
+            if not proxy_df.empty:
+                self._save_csv(proxy_df, "nfstream", "processed", "proxy_features.csv")
+            else:
+                logging.warning("No proxy features extracted.")
 
-            # Berechne Wahrscheinlichkeiten und Entropy
-            total_bytes = len(data)
-            probabilities = [count / total_bytes for count in byte_counts.values()]
-            return entropy(probabilities, base=2)
+            # Extract features for normal traffic
+            normal_df = self.extract_features(normal_dir, label='normal')
+            if not normal_df.empty:
+                self._save_csv(normal_df, "nfstream", "processed", "normal_features.csv")
+            else:
+                logging.warning("No normal features extracted.")
+
+            # Combine both
+            if proxy_df.empty and normal_df.empty:
+                logging.warning("No features extracted from either directory.")
+                return pd.DataFrame()
+
+            combined_df = pd.concat([proxy_df, normal_df], ignore_index=True)
+
+            # Cleanup any inf/-inf and NaN values
+            original_shape = combined_df.shape
+            combined_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+            combined_df.dropna(inplace=True)
+
+            logging.info(f"Dataset cleaned from {original_shape} to {combined_df.shape}.")
+
+            if not combined_df.empty:
+                self._save_csv(combined_df, "nfstream", "processed", "complete_dataset.csv")
+                self._save_dataset_summary(combined_df)
+            else:
+                logging.warning("Final combined dataset is empty after cleaning.")
+
+            return combined_df
 
         except Exception as e:
-            print(f"Error calculating entropy: {e}")
-            return 0.0
+            logging.error(f"Error preparing dataset: {e}")
+            return pd.DataFrame()
 
-    def calculate_entropy_features(self, flow) -> Dict[str, float]:
+    def extract_features(
+        self,
+        pcap_dir: Union[str, Path],
+        label: str
+    ) -> pd.DataFrame:
         """
-        Berechnet verschiedene Entropy-basierte Features
+        Extracts features from all PCAP files in the specified directory.
 
         Args:
-            flow: NFStream Flow-Objekt
+            pcap_dir: The directory containing PCAP files.
+            label: The label to assign to the extracted flows (e.g., 'proxy' or 'normal').
 
         Returns:
-            Dict[str, float]: Dictionary mit Entropy-Features
+            A pandas DataFrame with extracted flow features.
         """
-        entropy_features = {}
+        pcap_dir = Path(pcap_dir)
+        flows_data = []
 
-        try:
-            if hasattr(flow, 'payload_bytes') and flow.payload_bytes:
-                # Gesamt-Payload Entropy
-                entropy_features['payload_entropy'] = self.calculate_entropy(
-                    flow.payload_bytes
+        logging.info(f"Analyzing directory: {pcap_dir}")
+        if not pcap_dir.exists():
+            logging.warning(f"Directory {pcap_dir} does not exist.")
+            return pd.DataFrame()
+
+        pcap_files = list(pcap_dir.glob('*.pcap'))
+        if not pcap_files:
+            logging.warning(f"No PCAP files found in {pcap_dir}.")
+            return pd.DataFrame()
+
+        logging.info(f"Found {len(pcap_files)} PCAP file(s) in {pcap_dir}.")
+
+        # Process each PCAP file
+        for pcap_file in pcap_files:
+            logging.info(f"Processing file: {pcap_file}")
+            try:
+                streamer = nfstream.NFStreamer(
+                    source=str(pcap_file),
+                    decode_tunnels=True,
+                    statistical_analysis=True,
+                    splt_analysis=10,
+                    n_dissections=20,
+                    accounting_mode=3
                 )
 
-                # Entropy der ersten n Bytes
-                first_n_bytes = 64
-                if len(flow.payload_bytes) >= first_n_bytes:
-                    entropy_features['first_bytes_entropy'] = self.calculate_entropy(
-                        flow.payload_bytes[:first_n_bytes]
-                    )
+                flow_count, valid_count = 0, 0
+                for flow in streamer:
+                    flow_count += 1
+                    flow_features = self._extract_flow_features(flow)
 
-                # Entropy der Paketgrößen-Verteilung
-                if hasattr(flow, 'packet_lengths'):
-                    entropy_features['packet_length_entropy'] = self.calculate_entropy(
-                        bytes(flow.packet_lengths)
-                    )
+                    if flow_features:
+                        valid_count += 1
+                        flow_dict = {'label': label}
+                        flow_dict.update(self._flow_features_to_dict(flow_features))
+                        flows_data.append(flow_dict)
 
-        except Exception as e:
-            print(f"Error calculating entropy features: {e}")
+                logging.info(f"Flows processed: {flow_count}, valid flows: {valid_count}")
 
-        return entropy_features
+            except Exception as e:
+                logging.error(f"Error processing {pcap_file}: {e}")
+
+        if not flows_data:
+            logging.warning("No valid flow features found.")
+            return pd.DataFrame()
+
+        df = pd.DataFrame(flows_data)
+        logging.info(f"Resulting DataFrame shape: {df.shape}")
+
+        return df
 
     def _extract_flow_features(self, flow) -> Optional[FlowFeatures]:
         """
-        Extrahiert Features aus einem einzelnen Flow
+        Extracts features from a single NFStream flow object.
+        Returns a FlowFeatures instance or None if the flow is invalid.
 
         Args:
-            flow: NFStream Flow-Objekt
+            flow: An NFStream flow object.
 
         Returns:
-            Optional[FlowFeatures]: Extrahierte Features oder None bei zu wenig Packets
+            FlowFeatures dataclass or None if the flow is invalid.
         """
         try:
-            # Überspringe Flows mit zu wenig Packets
             if flow.bidirectional_packets < self.min_packets:
                 return None
 
-            duration_sec = flow.bidirectional_duration_ms / 1000 if flow.bidirectional_duration_ms > 0 else 0
-
+            duration_sec = flow.bidirectional_duration_ms / 1000.0
             if duration_sec <= 0:
                 return None
 
-            # Basis-Features berechnen
+            # Basic flow features
             features = FlowFeatures(
                 duration_seconds=duration_sec,
                 packets_per_second=flow.bidirectional_packets / duration_sec,
@@ -151,210 +225,149 @@ class NFStreamFeatureExtractor:
                 dst2src_bytes_per_second=flow.dst2src_bytes / duration_sec,
                 packet_size_avg=flow.bidirectional_bytes / flow.bidirectional_packets,
                 packet_ratio=flow.src2dst_packets / max(flow.dst2src_packets, 1),
-                byte_ratio=flow.src2dst_bytes / max(flow.dst2src_bytes, 1)
+                byte_ratio=flow.src2dst_bytes / max(flow.dst2src_bytes, 1),
+                entropy_features=None
             )
 
-            # Optional: Entropy-Features
+            # Add entropy features if required
             if self.use_entropy:
-                features.entropy_features = self.calculate_entropy_features(flow)
+                entropy_dict = self._calculate_entropy_features(flow)
+                features.entropy_features = entropy_dict
 
             return features
 
         except Exception as e:
-            print(f"Error extracting flow features: {e}")
+            logging.error(f"Error extracting flow features: {e}")
             return None
 
-    def _convert_features_to_dict(self, features) -> dict:
-        """Konvertiert FlowFeatures in ein Dictionary"""
-        feature_dict = features.__dict__.copy()
+    def _flow_features_to_dict(self, features: FlowFeatures) -> dict:
+        """
+        Converts a FlowFeatures instance into a dictionary for DataFrame insertion.
+
+        Args:
+            features: A FlowFeatures object.
+
+        Returns:
+            Dictionary of feature_name -> value.
+        """
+        result = {
+            'duration_seconds': features.duration_seconds,
+            'packets_per_second': features.packets_per_second,
+            'bytes_per_second': features.bytes_per_second,
+            'src2dst_packets_per_second': features.src2dst_packets_per_second,
+            'dst2src_packets_per_second': features.dst2src_packets_per_second,
+            'src2dst_bytes_per_second': features.src2dst_bytes_per_second,
+            'dst2src_bytes_per_second': features.dst2src_bytes_per_second,
+            'packet_size_avg': features.packet_size_avg,
+            'packet_ratio': features.packet_ratio,
+            'byte_ratio': features.byte_ratio
+        }
+
+        # Merge in entropy features if present
         if features.entropy_features:
-            feature_dict.update(features.entropy_features)
-        del feature_dict['entropy_features']
-        return feature_dict
+            result.update(features.entropy_features)
 
-    def extract_features(self, pcap_dir: Union[str, Path], label: str) -> pd.DataFrame:
+        return result
+
+    def _calculate_entropy_features(self, flow) -> Dict[str, float]:
         """
-        Extrahiert Features aus allen PCAP-Files in einem Verzeichnis
+        Calculates various entropy-based features from the flow payload.
 
         Args:
-            pcap_dir: Verzeichnis mit PCAP-Files
-            label: Label für die Flows
+            flow: An NFStream flow object containing payload bytes.
 
         Returns:
-            pd.DataFrame: DataFrame mit allen Features
+            A dictionary of entropy-related features.
         """
-        pcap_dir = Path(pcap_dir)
-        flows_data = []
-
+        results = {}
         try:
-            print(f"\nAnalyzing directory: {pcap_dir}")
-            print(f"Directory exists: {pcap_dir.exists()}")
-            print(f"Directory contents: {list(pcap_dir.glob('*'))}")
+            if hasattr(flow, 'payload_bytes') and flow.payload_bytes:
+                # Full payload entropy
+                results['payload_entropy'] = self._calculate_entropy(flow.payload_bytes)
 
-            pcap_files = list(pcap_dir.glob('*.pcap'))
-            total_files = len(pcap_files)
+                # Optionally, first N bytes
+                first_n = 64
+                if len(flow.payload_bytes) >= first_n:
+                    snippet = flow.payload_bytes[:first_n]
+                    results['first_bytes_entropy'] = self._calculate_entropy(snippet)
 
-            print(f"Found {total_files} PCAP files")
-
-            if total_files == 0:
-                raise ValueError(f"No PCAP files found in {pcap_dir}")
-
-            for pcap_file in pcap_files:
-                print(f"\nProcessing file: {pcap_file}")
-                print(f"File size: {pcap_file.stat().st_size} bytes")
-
-                try:
-                    # Konfiguriere NFStream
-                    streamer = nfstream.NFStreamer(
-                        source=str(pcap_file),
-                        decode_tunnels=True,
-                        statistical_analysis=True,
-                        splt_analysis=10,
-                        n_dissections=20,
-                        accounting_mode=3
-                    )
-
-                    # Verarbeite jeden Flow
-                    flow_count = 0
-                    valid_flow_count = 0
-                    for flow in streamer:
-                        flow_count += 1
-                        features = self._extract_flow_features(flow)
-                        if features:
-                            valid_flow_count += 1
-                            flow_dict = {
-                                'label': label,
-                                **self._convert_features_to_dict(features)
-                            }
-                            flows_data.append(flow_dict)
-
-                    print(f"Total flows processed: {flow_count}")
-                    print(f"Valid flows extracted: {valid_flow_count}")
-
-                except Exception as e:
-                    print(f"Error processing file {pcap_file}: {str(e)}")
-                    continue
-
-            if not flows_data:
-                print("Warning: No features extracted from any files")
-                return pd.DataFrame()
-
-            df = pd.DataFrame(flows_data)
-            print(f"\nFinal dataset shape: {df.shape}")
-            print(f"Columns: {df.columns.tolist()}")
-            return df
+            # If flow.packet_lengths is available, we can also compute
+            # an entropy measure for packet length distribution
+            if hasattr(flow, 'packet_lengths') and flow.packet_lengths:
+                length_bytes = bytes(flow.packet_lengths)
+                results['packet_length_entropy'] = self._calculate_entropy(length_bytes)
 
         except Exception as e:
-            print(f"Error extracting features from {pcap_dir}: {str(e)}")
-            return pd.DataFrame()
+            logging.error(f"Error calculating entropy features: {e}")
 
-    def prepare_dataset(self, proxy_dir: Union[str, Path], normal_dir: Union[str, Path]) -> pd.DataFrame:
+        return results
+
+    def _calculate_entropy(self, data: bytes) -> float:
         """
-        Erstellt kompletten Datensatz aus Proxy- und Normal-Traffic
+        Calculates Shannon entropy for a given byte sequence.
 
         Args:
-            proxy_dir: Verzeichnis mit Proxy-Traffic
-            normal_dir: Verzeichnis mit Normal-Traffic
+            data: The byte sequence for which to compute entropy.
 
         Returns:
-            pd.DataFrame: Kompletter Datensatz
+            A float representing the Shannon entropy in bits.
+        """
+        if not data:
+            return 0.0
+
+        try:
+            counts = {}
+            for b in data:
+                counts[b] = counts.get(b, 0) + 1
+            total = len(data)
+            probabilities = [count / total for count in counts.values()]
+            return entropy(probabilities, base=2)
+        except Exception as e:
+            logging.error(f"Error in _calculate_entropy: {e}")
+            return 0.0
+
+    def _save_csv(self, df: pd.DataFrame, category: str, subcategory: str, filename: str):
+        """
+        Saves a DataFrame to CSV in a given subdirectory managed by output_manager.
+
+        Args:
+            df: DataFrame to be saved.
+            category: Top-level category (e.g., 'nfstream').
+            subcategory: Subcategory inside the top-level directory.
+            filename: Name of the output CSV file.
         """
         try:
-            # Verarbeite Proxy-Traffic
-            print("\nProcessing proxy traffic...")
-            proxy_df = self.extract_features(proxy_dir, 'proxy')
-            if not proxy_df.empty:
-                print(f"Proxy dataset shape: {proxy_df.shape}")
-                proxy_df.to_csv(self.output_manager.get_path(
-                    "nfstream", "processed", "proxy_features.csv"
-                ), index=False)
-            else:
-                print("No proxy features extracted!")
-
-            # Verarbeite Normal-Traffic
-            print("\nProcessing normal traffic...")
-            normal_df = self.extract_features(normal_dir, 'normal')
-            if not normal_df.empty:
-                print(f"Normal dataset shape: {normal_df.shape}")
-                normal_df.to_csv(self.output_manager.get_path(
-                    "nfstream", "processed", "normal_features.csv"
-                ), index=False)
-            else:
-                print("No normal features extracted!")
-
-            # Kombiniere Datensätze
-            if proxy_df.empty and normal_df.empty:
-                print("No features extracted from either dataset!")
-                return pd.DataFrame()
-
-            df = pd.concat([proxy_df, normal_df], ignore_index=True)
-
-            # Bereinige Datensatz
-            original_shape = df.shape
-            df = df.replace([np.inf, -np.inf], np.nan)
-            df = df.dropna()
-            print(f"\nDataset cleaned: {original_shape} -> {df.shape}")
-
-            # Speichere kompletten Datensatz
-            if not df.empty:
-                df.to_csv(self.output_manager.get_path(
-                    "nfstream", "processed", "complete_dataset.csv"
-                ), index=False)
-                self._save_dataset_summary(df)
-                print("\nDataset saved successfully")
-            else:
-                print("Warning: Final dataset is empty!")
-
-            return df
-
+            csv_path = self.output_manager.get_path(category, subcategory, filename)
+            df.to_csv(csv_path, index=False)
+            logging.info(f"Saved CSV: {csv_path}")
         except Exception as e:
-            print(f"Error preparing dataset: {str(e)}")
-            return pd.DataFrame()
+            logging.error(f"Error saving CSV file {filename}: {e}")
 
     def _save_dataset_summary(self, df: pd.DataFrame):
         """
-        Speichert detaillierte Zusammenfassung des Datensatzes
+        Saves a textual summary of the final dataset.
 
         Args:
-            df: Kompletter Datensatz als DataFrame
+            df: The combined dataset as a pandas DataFrame.
         """
         try:
-            summary_path = self.output_manager.get_path(
-                "nfstream", "summaries", "dataset_summary.txt"
-            )
+            summary_path = self.output_manager.get_path("nfstream", "summaries", "dataset_summary.txt")
+            with open(summary_path, 'w') as file:
+                file.write("=== Dataset Summary ===\n\n")
+                file.write(f"Total flows: {len(df)}\n")
+                file.write(f"Proxy flows: {len(df[df['label'] == 'proxy'])}\n")
+                file.write(f"Normal flows: {len(df[df['label'] == 'normal'])}\n")
+                file.write(f"Number of features (excluding label): {len(df.columns) - 1}\n\n")
 
-            with open(summary_path, 'w') as f:
-                f.write("=== Dataset Summary ===\n\n")
+                file.write("Available Features:\n")
+                for col in sorted(df.columns):
+                    if col != 'label':
+                        file.write(f" - {col}\n")
 
-                # Basis-Statistiken
-                f.write("Dataset Size:\n")
-                f.write(f"Total flows: {len(df)}\n")
-                f.write(f"Proxy flows: {len(df[df['label'] == 'proxy'])}\n")
-                f.write(f"Normal flows: {len(df[df['label'] == 'normal'])}\n")
-                f.write(f"Number of features: {len(df.columns) - 1}\n\n")
-
-                # Feature-Liste und Statistiken
-                f.write("Available Features:\n")
-                for column in sorted(df.columns):
-                    if column != 'label':
-                        f.write(f"- {column}\n")
-
-                # Detaillierte Statistiken
-                f.write("\nFeature Statistics:\n")
-                f.write(df.describe().to_string())
-
-            print(f"Dataset summary saved to {summary_path}")
+                file.write("\nFeature Statistics:\n")
+                file.write(df.describe().to_string())
+                file.write("\n")
+            logging.info(f"Dataset summary saved to {summary_path}")
 
         except Exception as e:
-            print(f"Error saving dataset summary: {str(e)}")
-
-
-if __name__ == "__main__":
-    # Test-Code
-    from pathlib import Path
-
-    test_dir = Path("test_pcaps")
-    if test_dir.exists():
-        extractor = NFStreamFeatureExtractor(None)
-        df = extractor.extract_features(test_dir, "test")
-        print(f"Extracted features shape: {df.shape}")
+            logging.error(f"Error saving dataset summary: {e}")
