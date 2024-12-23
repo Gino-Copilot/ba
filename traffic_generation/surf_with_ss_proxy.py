@@ -8,7 +8,7 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from webdriver_manager.firefox import GeckoDriverManager
 
-from configure_proxy import configure_proxy  # Dein Proxy-Modul
+from configure_proxy import configure_proxy  # proxy module
 
 
 def ensure_non_root():
@@ -26,86 +26,93 @@ def ensure_non_root():
 
 def visit_my_ip(driver):
     """
-    Opens the 'Meine IP' page to check the current IP address.
+    Opens the IP check page.
     """
-    print("Visiting 'Meine IP' page...")
+    print("Visiting IP check page...")
     url = "https://whatismyipaddress.com/de/meine-ip#google_vignette"
     try:
         driver.get(url)
         time.sleep(5)
-        print("Stayed on 'Meine IP' page for 5 seconds.")
+        print("Stayed on IP check page for 5 seconds.")
     except Exception as e:
-        print(f"Error visiting 'Meine IP' page: {e}")
+        print(f"Error visiting IP check page: {e}")
 
 
 def random_browsing(driver):
     """
-    Opens random websites from a list and navigates randomly.
+    Opens random websites from the list and navigates.
     """
     urls = [
         "https://www.bbc.com",
         "https://www.nytimes.com",
+        "https://www.voanews.com",
+        "https://www.rferl.org",
+        "https://www.dw.com",
         "https://www.reddit.com",
         "https://www.facebook.com",
         "https://www.instagram.com",
         "https://www.twitter.com",
-        # usw.
+        "https://www.tiktok.com",
+        "https://www.amnesty.org",
+        "https://www.hrw.org",
+        "https://www.nobelprize.org",
+        "https://www.cfr.org",
+        "https://www.freetibet.org",
+        "https://www.savetibet.org",
+        "https://www.un.org",
+        "https://www.greenpeace.org",
+        "https://www.icrc.org"
     ]
 
-    while True:  # Endlosschleife
+    while True:
         url = random.choice(urls)
         print(f"Visiting: {url}")
         driver.get(url)
 
-        # Warte zwischen 2 und 10 Sekunden
         wait_time = random.uniform(2, 10)
         print(f"Waiting for {wait_time:.2f} seconds.")
         time.sleep(wait_time)
 
 
 def main():
-
     ensure_non_root()
 
-    # 2 get the proxy Object
+    # Get proxy object
     proxy = configure_proxy()
 
-    # 3) Ffirefox-options
+    # Firefox options
     options = Options()
     options.headless = False
 
-    # bind proxy to selenium-chrome-driver
+    # Bind proxy to selenium-firefox-driver
     options.proxy = proxy
-
 
     options.set_preference("network.proxy.type", 1)
 
-    # b) Manuell für SOCKS definieren (redundant, weil wir Selenium Proxy setzen)
+    # Manual SOCKS configuration
     options.set_preference("network.proxy.socks", "127.0.0.1")
     options.set_preference("network.proxy.socks_port", 1080)
 
-    # c) Remote DNS => True oder False
-    # Wenn du "True" einstellst, gehen DNS-Anfragen ebenfalls durch den SOCKS5-Proxy
-    # (sprich: verschlüsselt über Shadowsocks).
-    # Setz "False", wenn du DNS-Anfragen lokal sehen willst.
+    # Remote DNS configuration
+    # True: DNS queries through SOCKS5 proxy (encrypted via Shadowsocks)
+    # False: DNS queries locally
     options.set_preference("network.proxy.socks_remote_dns", False)
 
-    # Falls du HTTP/HTTPS-Proxy-Settings brauchst (normalerweise nicht für SOCKS5):
+    # HTTP/HTTPS proxy settings (optional for SOCKS5):
     # options.set_preference("network.proxy.http", "127.0.0.1")
     # options.set_preference("network.proxy.http_port", 1080)
-    # ...
 
-    # 4) Starte WebDriver
+    # Initialize WebDriver
     driver = webdriver.Firefox(
         service=Service(GeckoDriverManager().install()),
         options=options
     )
 
     try:
-        # Schritt 1: Meine IP anzeigen
+        # Check IP
         visit_my_ip(driver)
 
-        # Schritt 2: Random Browsing
+        # Random browsing
         random_browsing(driver)
     finally:
         driver.quit()

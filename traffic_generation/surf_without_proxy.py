@@ -13,7 +13,6 @@ def ensure_non_root():
     Ensures that the script is not running as root.
     """
     if os.geteuid() == 0:
-        # Relaunch script as 'gino'
         user = "gino"
         python_executable = os.environ.get("VIRTUAL_ENV") + "/bin/python"
         script_path = os.path.abspath(__file__)
@@ -24,23 +23,22 @@ def ensure_non_root():
 
 def visit_my_ip(driver):
     """
-    Opens the 'Meine IP' page to check the current IP address.
+    Opens IP check page to verify current IP address.
     """
-    print("Visiting 'Meine IP' page...")
+    print("Visiting IP check page...")
     url = "https://whatismyipaddress.com/de/meine-ip#google_vignette"
     try:
         driver.get(url)
-        time.sleep(5)  # Wait for 5 seconds to ensure the page fully loads
-        print("Stayed on 'Meine IP' page for 5 seconds.")
+        time.sleep(5)
+        print("Stayed on IP check page for 5 seconds.")
     except Exception as e:
-        print(f"Error visiting 'Meine IP' page: {e}")
+        print(f"Error visiting IP check page: {e}")
 
 
 def random_browsing(driver):
     """
-    Opens random websites from a list and navigates randomly from one to the next.
+    Opens random websites from the list and navigates between them.
     """
-    # List of websites to visit
     urls = [
         "https://www.bbc.com",
         "https://www.nytimes.com",
@@ -63,34 +61,27 @@ def random_browsing(driver):
         "https://www.icrc.org"
     ]
 
-    while True:  # Infinite loop
+    while True:
         url = random.choice(urls)
         print(f"Visiting: {url}")
         driver.get(url)
 
-        # Random dwell time between 2 and 10 seconds
         wait_time = random.uniform(2, 10)
         print(f"Waiting for {wait_time:.2f} seconds.")
         time.sleep(wait_time)
 
 
 def main():
-    # Ensure script is not running as root
     ensure_non_root()
 
-    # Configuration for Firefox WebDriver
     options = Options()
-    options.headless = False  # Make browser visible
-    options.binary_location = "/usr/bin/firefox"  # Adjust binary location if needed
+    options.headless = False
+    options.binary_location = "/usr/bin/firefox"
 
-    # Initialize WebDriver with GeckoDriverManager
     driver = webdriver.Firefox(service=Service(GeckoDriverManager().install()), options=options)
 
     try:
-        # Step 1: Visit 'Meine IP' page
         visit_my_ip(driver)
-
-        # Step 2: Start random browsing
         random_browsing(driver)
     finally:
         driver.quit()
