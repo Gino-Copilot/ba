@@ -183,8 +183,8 @@ def main():
     """
     try:
         # Hier deine tatsächlich existierenden Pfade angeben:
-        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/PROXY_test"
-        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/PROTON_test"
+        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/shadowsocks_traffic_3_cec_selenium_only_port_8388_12-08"
+        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/selenium_filtered_traffic_3_500_2024-12-23_16-35-50"
         results_dir = "/home/gino/PycharmProjects/myenv/ba/results"
 
         analyzer = TrafficAnalyzer(proxy_dir, normal_dir, results_dir)
