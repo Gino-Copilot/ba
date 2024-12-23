@@ -1,5 +1,3 @@
-# data_visualizer.py
-
 import logging
 from pathlib import Path
 from typing import Dict, List, Any
@@ -19,23 +17,13 @@ from sklearn.metrics import (
 
 class DataVisualizer:
     """
-    Provides various plotting and reporting functionalities
-    for model metrics and performance visualization.
+    Provides various plotting functionalities for model metrics and performance visualization.
     """
 
     def __init__(self, output_manager):
-        """
-        Initializes the DataVisualizer.
-
-        Args:
-            output_manager: Instance of OutputManager for path handling.
-        """
         self.output_manager = output_manager
-
-        # Will store cumulative results from multiple models
         self.model_results: List[Dict[str, Any]] = []
 
-        # Global style settings
         self.plot_style = {
             'figure.figsize': (12, 8),
             'axes.titlesize': 14,
@@ -50,25 +38,16 @@ class DataVisualizer:
             '#2ecc71', '#3498db', '#e74c3c', '#f1c40f',
             '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
         ]
-
         self._setup_visualization()
         logging.info("DataVisualizer initialized successfully.")
 
     def _setup_visualization(self):
-        """Sets up global plot styles and color palettes."""
         for key, value in self.plot_style.items():
             plt.rcParams[key] = value
         plt.style.use('default')
         sns.set_palette(self.colors)
 
     def add_model_result(self, model_name: str, metrics: Dict[str, Any]):
-        """
-        Adds new model results and updates visualizations.
-
-        Args:
-            model_name: Name of the model.
-            metrics: Dictionary containing model metrics.
-        """
         try:
             if 'accuracy' not in metrics or 'weighted avg' not in metrics:
                 logging.warning(f"Metrics for {model_name} seem incomplete.")
@@ -84,7 +63,6 @@ class DataVisualizer:
             }
             self.model_results.append(result)
 
-            # After adding a new model, we update comparison plots and summary
             self._create_performance_visualizations()
             self._save_model_summary()
             logging.info(f"Added results for model: {model_name}")
@@ -93,22 +71,14 @@ class DataVisualizer:
             logging.error(f"Error adding model result for {model_name}: {e}")
 
     def plot_roc_curve(self, model, X_test, y_test, model_name: str):
-        """
-        Creates and saves an ROC curve for the given model.
-
-        Args:
-            model: Trained model (with predict_proba).
-            X_test: Test feature matrix.
-            y_test: True labels for test set.
-            model_name: Model name for file naming and title.
-        """
         try:
             if not hasattr(model, 'predict_proba'):
                 logging.warning(f"Model {model_name} does not support predict_proba.")
                 return
 
+            # Wichtig: pos_label=1
             y_prob = model.predict_proba(X_test)[:, 1]
-            fpr, tpr, _ = roc_curve(y_test, y_prob)
+            fpr, tpr, _ = roc_curve(y_test, y_prob, pos_label=1)
             roc_auc = auc(fpr, tpr)
 
             plt.figure(figsize=self.plot_style['figure.figsize'])
@@ -126,22 +96,13 @@ class DataVisualizer:
             logging.error(f"Error plotting ROC curve for {model_name}: {e}")
 
     def plot_precision_recall_curve(self, model, X_test, y_test, model_name: str):
-        """
-        Creates and saves a Precision-Recall curve for the given model.
-
-        Args:
-            model: Trained model (with predict_proba).
-            X_test: Test feature matrix.
-            y_test: True labels for test set.
-            model_name: Model name for file naming and title.
-        """
         try:
             if not hasattr(model, 'predict_proba'):
                 logging.warning(f"Model {model_name} does not support predict_proba.")
                 return
 
             y_prob = model.predict_proba(X_test)[:, 1]
-            precision, recall, _ = precision_recall_curve(y_test, y_prob)
+            precision, recall, _ = precision_recall_curve(y_test, y_prob, pos_label=1)
             pr_auc = auc(recall, precision)
 
             plt.figure(figsize=self.plot_style['figure.figsize'])
@@ -156,14 +117,6 @@ class DataVisualizer:
             logging.error(f"Error plotting Precision-Recall curve for {model_name}: {e}")
 
     def plot_feature_importance(self, model, feature_names, model_name: str):
-        """
-        Creates and saves a feature importance bar chart if model supports it.
-
-        Args:
-            model: Trained model (e.g., RandomForest) with feature_importances_ attribute.
-            feature_names: List of feature names.
-            model_name: Model name for file naming and title.
-        """
         try:
             if not hasattr(model, 'feature_importances_'):
                 logging.warning(f"Model {model_name} has no feature_importances_.")
@@ -186,15 +139,6 @@ class DataVisualizer:
             logging.error(f"Error plotting feature importance for {model_name}: {e}")
 
     def plot_confusion_matrix(self, y_true, y_pred, model_name: str, labels: List[str] = None):
-        """
-        Creates and saves a confusion matrix visualization.
-
-        Args:
-            y_true: True labels.
-            y_pred: Predicted labels.
-            model_name: Model name for file naming and title.
-            labels: Optional list of label names for the axis ticks.
-        """
         try:
             cm = confusion_matrix(y_true, y_pred)
             plt.figure(figsize=(8, 6))
@@ -204,7 +148,7 @@ class DataVisualizer:
             plt.xlabel('Predicted Label')
             if labels:
                 plt.xticks(np.arange(len(labels)) + 0.5, labels, rotation=45)
-                plt.yticks(np.arange(len(labels)) + 0.5, labels, rotation=0)
+                plt.yticks(np.arange(len(labels)) + 0.5, labels)
             plt.tight_layout()
 
             self._save_plot('confusion_matrix', model_name)
@@ -212,18 +156,14 @@ class DataVisualizer:
             logging.error(f"Error plotting confusion matrix for {model_name}: {e}")
 
     def _create_performance_visualizations(self):
-        """
-        Creates comparison plots (bar plot, heatmap, radar) for the accumulated model_results.
-        """
         try:
             if not self.model_results:
                 return
-
             df = pd.DataFrame(self.model_results)
             metrics = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
 
-            # If there's only one model, a comparison chart wouldn't be meaningful
             if len(df) < 2:
+                # Nur ein Modell -> keine Vergleichsplots
                 return
 
             self._create_bar_plot(df, metrics)
@@ -233,12 +173,9 @@ class DataVisualizer:
             logging.error(f"Error creating performance visualizations: {e}")
 
     def _create_bar_plot(self, df: pd.DataFrame, metrics: List[str]):
-        """
-        Creates a bar plot to compare model metrics.
-        """
         try:
             plt.figure(figsize=self.plot_style['figure.figsize'])
-            x = np.arange(len(df))  # number of models
+            x = np.arange(len(df))
             width = 0.8 / len(metrics)
 
             for i, metric in enumerate(metrics):
@@ -257,9 +194,6 @@ class DataVisualizer:
             logging.error(f"Error creating bar plot: {e}")
 
     def _create_heatmap(self, df: pd.DataFrame, metrics: List[str]):
-        """
-        Creates a heatmap for model metrics.
-        """
         try:
             plt.figure(figsize=(8, max(4, len(df) * 0.5 + 2)))
             data = df[metrics].values
@@ -272,9 +206,6 @@ class DataVisualizer:
             logging.error(f"Error creating heatmap: {e}")
 
     def _create_radar_plot(self, df: pd.DataFrame, metrics: List[str]):
-        """
-        Creates a radar plot comparing multiple models on various metrics.
-        """
         try:
             angles = np.linspace(0, 2 * np.pi, len(metrics), endpoint=False)
             angles = np.concatenate((angles, [angles[0]]))
@@ -300,13 +231,6 @@ class DataVisualizer:
             logging.error(f"Error creating radar plot: {e}")
 
     def _save_plot(self, plot_type: str, model_name: str):
-        """
-        Saves the current matplotlib figure using the output_manager.
-
-        Args:
-            plot_type: Identifier for the plot (e.g., 'roc_curve').
-            model_name: Model name or 'all_models' if it's a combined plot.
-        """
         try:
             path = self.output_manager.get_path(
                 "reports", "visualizations", f"{model_name}_{plot_type}.png"
@@ -318,25 +242,18 @@ class DataVisualizer:
             logging.error(f"Error saving plot {plot_type} for {model_name}: {e}")
 
     def _save_model_summary(self):
-        """
-        Saves a summary (CSV and TXT) of all model results.
-        """
         try:
             if not self.model_results:
                 return
 
             df = pd.DataFrame(self.model_results)
 
-            # Save CSV
-            csv_path = self.output_manager.get_path(
-                "reports", "summaries", "model_comparison.csv"
-            )
+            # CSV
+            csv_path = self.output_manager.get_path("reports", "summaries", "model_comparison.csv")
             df.to_csv(csv_path, index=False)
 
-            # Save TXT
-            txt_path = self.output_manager.get_path(
-                "reports", "summaries", "model_comparison.txt"
-            )
+            # TXT
+            txt_path = self.output_manager.get_path("reports", "summaries", "model_comparison.txt")
             with open(txt_path, 'w') as f:
                 f.write("=== Model Performance Summary ===\n\n")
                 f.write(f"Analysis Date: {pd.Timestamp.now()}\n\n")
@@ -351,7 +268,7 @@ class DataVisualizer:
                             f.write(f"{metric:<15}: {val:.4f}\n")
                     f.write("\n")
 
-                # Summary statistics (mean, std, max, min)
+                # summary stats
                 stats_metrics = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
                 f.write("\nSummary Statistics:\n")
                 f.write("-" * 20 + "\n")

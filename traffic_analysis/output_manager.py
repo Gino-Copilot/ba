@@ -1,3 +1,5 @@
+# output_manager.py
+
 import sys
 import os
 import platform
@@ -8,7 +10,6 @@ import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
-
 
 class OutputManager:
     """
@@ -26,64 +27,22 @@ class OutputManager:
         return cls._instance
 
     def __init__(self, base_dir: str = "traffic_results", cleanup_old: bool = False):
-        """
-        Initializes the OutputManager.
-
-        Args:
-            base_dir (str): Base directory for all outputs (default is 'traffic_results').
-            cleanup_old (bool): If True, old results in the base directory are removed.
-        """
-        # Prevent multiple initializations
         if hasattr(self, '_initialized'):
             return
 
         self._initialized = True
 
-        # Derive the absolute path based on the project's directory
         project_root = Path(__file__).parent.parent
         self.base_dir = project_root / base_dir
         self.timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         self.current_model = None
-
-        # Directory structure for organized output
-        self.directory_structure = {
-            "models": {
-                "metrics": ["grid_search", "validation"],
-                "plots": ["performance", "feature_importance"],
-                "shap": ["global", "local"],
-                "trained": ["final", "checkpoints"]
-            },
-            "features": {
-                "correlations": ["matrices", "plots"],
-                "distributions": ["univariate", "bivariate"],
-                "importance": ["rankings", "plots"],
-                "groups": ["statistics", "analyses"],
-                "summaries": ["text", "json"]
-            },
-            "reports": {
-                "summaries": ["model", "feature", "overall"],
-                "visualizations": ["comparisons", "trends"]
-            },
-            "nfstream": {
-                "intermediate": ["raw", "processed"],
-                "processed": ["features", "labels"],
-                "summaries": ["statistics", "metadata"]
-            },
-            "logs": {
-                "analysis": ["info", "error"],
-                "processing": ["info", "error"],
-                "system": ["info", "error"]
-            }
-        }
 
         self._setup_logging()
 
         if cleanup_old:
             self._cleanup_old_results()
 
-        self._create_base_structure()
         self._save_configuration()
-
         logging.info(f"OutputManager initialized with base directory: {self.base_dir}")
 
     def _setup_logging(self):
@@ -106,7 +65,7 @@ class OutputManager:
         logger.addHandler(console_handler)
 
     def _cleanup_old_results(self):
-        """Removes old results in the base directory."""
+        """Removes old results in the base directory if cleanup_old=True."""
         try:
             if self.base_dir.exists():
                 old_logs = self.base_dir / "logs"
@@ -120,27 +79,12 @@ class OutputManager:
         except Exception as e:
             logging.error(f"Error cleaning up old results: {e}")
 
-    def _create_base_structure(self):
-        """Creates the complete directory structure based on the defined dictionary."""
-        try:
-            for main_dir, categories in self.directory_structure.items():
-                main_path = self.base_dir / self.timestamp / main_dir
-                for category, subdirs in categories.items():
-                    for subdir in subdirs:
-                        path = main_path / category / subdir
-                        path.mkdir(parents=True, exist_ok=True)
-            logging.info("Directory structure created successfully.")
-        except Exception as e:
-            logging.error(f"Error creating directory structure: {e}")
-            raise
-
     def _save_configuration(self):
-        """Saves the current configuration to a JSON file."""
+        """Saves current configuration to a JSON file."""
         try:
             config = {
                 "timestamp": self.timestamp,
                 "base_dir": str(self.base_dir),
-                "directory_structure": self.directory_structure,
                 "created_at": datetime.now().isoformat(),
                 "python_version": sys.version,
                 "platform": platform.platform()
@@ -158,21 +102,21 @@ class OutputManager:
 
     def get_path(self, category: str, subcategory: str, filename: str) -> Path:
         """
-        Generates a file path within the defined directory structure.
+        Dynamically creates (if needed) and returns a file path.
 
         Args:
-            category (str): Top-level category (e.g., 'models').
-            subcategory (str): Subcategory within the category (e.g., 'metrics').
-            filename (str): Desired filename.
+            category (str): e.g. "models", "features", "nfstream"
+            subcategory (str): e.g. "metrics", "correlations"
+            filename (str): Name of the file to be saved/used.
 
         Returns:
-            Path: A complete, valid path to the requested file.
+            Path: The complete path
         """
         try:
-            if category not in self.directory_structure:
-                raise ValueError(f"Invalid category: {category}")
-            if subcategory not in self.directory_structure[category]:
-                raise ValueError(f"Invalid subcategory {subcategory} for category {category}")
+            if not category:
+                raise ValueError("Category cannot be empty.")
+            if not subcategory:
+                raise ValueError("Subcategory cannot be empty.")
             if not filename:
                 raise ValueError("Filename cannot be empty.")
 
@@ -190,80 +134,31 @@ class OutputManager:
             raise
 
     def set_current_model(self, model_name: str):
-        """
-        Sets the current model and creates any required subdirectories.
-
-        Args:
-            model_name (str): Name of the current model.
-        """
+        """Sets the current model name. Directories are created on demand in get_path()."""
         try:
             self.current_model = model_name
-            model_base = self.base_dir / self.timestamp / "models" / model_name
-
-            for category, subdirs in self.directory_structure["models"].items():
-                category_dir = model_base / category
-                for subdir in subdirs:
-                    (category_dir / subdir).mkdir(parents=True, exist_ok=True)
-
             logging.info(f"Current model set to: {model_name}")
         except Exception as e:
             logging.error(f"Error setting current model: {e}")
             raise
 
     def get_model_path(self, model_name: str) -> Path:
-        """
-        Returns the base path for a specific model.
-
-        Args:
-            model_name (str): Name of the model.
-
-        Returns:
-            Path: The base path associated with the given model.
-        """
+        """Returns the base path for a specific model."""
         return self.base_dir / self.timestamp / "models" / model_name
 
-    def create_archive(self, include_intermediates: bool = False) -> Optional[str]:
-        """
-        Creates a ZIP archive of the current results.
-
-        Args:
-            include_intermediates (bool): If True, includes intermediate files.
-
-        Returns:
-            Optional[str]: Path to the created archive or None on failure.
-        """
-        try:
-            archive_name = f"results_{self.timestamp}"
-            if not include_intermediates:
-                temp_dir = self.base_dir.parent / f"temp_{self.timestamp}"
-                src = self.base_dir / self.timestamp
-                shutil.copytree(src, temp_dir, ignore=shutil.ignore_patterns('intermediate*'))
-                archive_path = shutil.make_archive(archive_name, 'zip', temp_dir)
-                shutil.rmtree(temp_dir)
-            else:
-                archive_path = shutil.make_archive(archive_name, 'zip', self.base_dir, self.timestamp)
-
-            logging.info(f"Created archive: {archive_path}")
-            return archive_path
-        except Exception as e:
-            logging.error(f"Error creating archive: {e}")
-            return None
-
     def get_size_info(self) -> Dict[str, int]:
-        """
-        Computes the size of each top-level directory in bytes.
-
-        Returns:
-            Dict[str, int]: A mapping of directory to size in bytes.
-        """
+        """Computes the size of each top-level directory in bytes."""
         try:
             size_info = {}
             timestamp_dir = self.base_dir / self.timestamp
 
-            for category in self.directory_structure:
-                path = timestamp_dir / category
-                total_size = sum(f.stat().st_size for f in path.glob('**/*') if f.is_file())
-                size_info[category] = total_size
+            if not timestamp_dir.exists():
+                return size_info
+
+            for category_dir in timestamp_dir.iterdir():
+                if category_dir.is_dir():
+                    total_size = sum(f.stat().st_size for f in category_dir.glob('**/*') if f.is_file())
+                    size_info[category_dir.name] = total_size
 
             size_info['total'] = sum(size_info.values())
 
@@ -277,7 +172,7 @@ class OutputManager:
 
     def cleanup_intermediate_files(self):
         """
-        Removes intermediate files (e.g., raw data) to save disk space.
+        Removes intermediate files (e.g. raw data) to save disk space.
         """
         try:
             intermediate_dir = self.base_dir / self.timestamp / "nfstream" / "intermediate"
@@ -286,13 +181,3 @@ class OutputManager:
                 logging.info("Cleaned up intermediate files.")
         except Exception as e:
             logging.error(f"Error cleaning up intermediate files: {e}")
-
-
-if __name__ == "__main__":
-    # Example usage / quick test
-    manager = OutputManager(cleanup_old=True)
-    print(f"Base directory: {manager.base_dir}")
-    print(f"Current timestamp: {manager.timestamp}\n")
-
-    path = manager.get_path("models", "metrics", "test.csv")
-    print(f"Generated path: {path}")
