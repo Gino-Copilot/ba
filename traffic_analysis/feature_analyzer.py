@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')  # Backend festlegen
 import logging
 from pathlib import Path
 from typing import Dict, Optional, List

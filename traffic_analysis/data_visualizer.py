@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')  # Backend festlegen
 import logging
 from pathlib import Path
 from typing import Dict, List, Any
@@ -48,6 +50,10 @@ class DataVisualizer:
         sns.set_palette(self.colors)
 
     def add_model_result(self, model_name: str, metrics: Dict[str, Any]):
+        """
+        Stores and logs model metrics (Accuracy, F1, Precision, Recall, ROC AUC).
+        Generates overview plots for performance comparison among multiple models.
+        """
         try:
             if 'accuracy' not in metrics or 'weighted avg' not in metrics:
                 logging.warning(f"Metrics for {model_name} seem incomplete.")
@@ -71,12 +77,14 @@ class DataVisualizer:
             logging.error(f"Error adding model result for {model_name}: {e}")
 
     def plot_roc_curve(self, model, X_test, y_test, model_name: str):
+        """
+        Plots and saves the ROC curve for a given model, if predict_proba is available.
+        """
         try:
             if not hasattr(model, 'predict_proba'):
                 logging.warning(f"Model {model_name} does not support predict_proba.")
                 return
 
-            # Wichtig: pos_label=1
             y_prob = model.predict_proba(X_test)[:, 1]
             fpr, tpr, _ = roc_curve(y_test, y_prob, pos_label=1)
             roc_auc = auc(fpr, tpr)
@@ -96,6 +104,9 @@ class DataVisualizer:
             logging.error(f"Error plotting ROC curve for {model_name}: {e}")
 
     def plot_precision_recall_curve(self, model, X_test, y_test, model_name: str):
+        """
+        Plots and saves the Precision-Recall curve for a given model, if predict_proba is available.
+        """
         try:
             if not hasattr(model, 'predict_proba'):
                 logging.warning(f"Model {model_name} does not support predict_proba.")
@@ -117,6 +128,9 @@ class DataVisualizer:
             logging.error(f"Error plotting Precision-Recall curve for {model_name}: {e}")
 
     def plot_feature_importance(self, model, feature_names, model_name: str):
+        """
+        Plots and saves feature importances for tree-based models (with feature_importances_).
+        """
         try:
             if not hasattr(model, 'feature_importances_'):
                 logging.warning(f"Model {model_name} has no feature_importances_.")
@@ -139,6 +153,9 @@ class DataVisualizer:
             logging.error(f"Error plotting feature importance for {model_name}: {e}")
 
     def plot_confusion_matrix(self, y_true, y_pred, model_name: str, labels: List[str] = None):
+        """
+        Plots and saves a confusion matrix for predicted vs. true labels.
+        """
         try:
             cm = confusion_matrix(y_true, y_pred)
             plt.figure(figsize=(8, 6))
@@ -155,7 +172,69 @@ class DataVisualizer:
         except Exception as e:
             logging.error(f"Error plotting confusion matrix for {model_name}: {e}")
 
+    def plot_model_comparison(self, metrics_list: List[tuple]):
+        """
+        Creates a simple bar chart comparing model accuracies (or other metrics).
+        Expects a list of tuples like [(model_name, accuracy), ...].
+        """
+        if not metrics_list:
+            logging.warning("No metrics provided for plot_model_comparison.")
+            return
+
+        model_names = [t[0] for t in metrics_list]
+        accuracies = [t[1] for t in metrics_list]
+
+        plt.figure(figsize=self.plot_style['figure.figsize'])
+        bars = plt.bar(model_names, accuracies, color='skyblue')
+        plt.xlabel("Models")
+        plt.ylabel("Accuracy")
+        plt.title("Model Comparison by Accuracy")
+
+        # Annotate each bar with the accuracy value
+        for bar, acc in zip(bars, accuracies):
+            plt.text(bar.get_x() + bar.get_width() / 2.0,
+                     bar.get_height(),
+                     f"{acc:.3f}",
+                     ha='center', va='bottom')
+
+        plt.ylim([0, 1])  # if accuracy is a 0-1 scale
+        plt.tight_layout()
+
+        output_path = self.output_manager.get_path("", "", "model_comparison_accuracy.png")
+        plt.savefig(output_path)
+        plt.close()
+        logging.info(f"Model comparison chart saved as {output_path}")
+
+    def plot_pcap_size_distribution(self, pcap_sizes: Dict[str, List[int]]):
+        """
+        Plots a boxplot (or barplot) showing the distribution of pcap file sizes for each folder.
+        pcap_sizes: { "proxy": [size_1, size_2, ...], "normal": [size_1, size_2, ...], ... }
+        """
+        try:
+            # Convert dict to a DataFrame for easy plotting with Seaborn
+            plot_data = []
+            for folder_label, sizes in pcap_sizes.items():
+                for s in sizes:
+                    plot_data.append({"Folder": folder_label, "SizeBytes": s})
+
+            df = pd.DataFrame(plot_data)
+            if df.empty:
+                logging.warning("No PCAP size data to plot.")
+                return
+
+            plt.figure(figsize=self.plot_style['figure.figsize'])
+            sns.boxplot(x="Folder", y="SizeBytes", data=df)
+            plt.title("PCAP Size Distribution per Folder")
+            plt.ylabel("PCAP File Size (bytes)")
+
+            self._save_plot('pcap_size_distribution', 'all_folders')
+        except Exception as e:
+            logging.error(f"Error plotting PCAP size distribution: {e}")
+
     def _create_performance_visualizations(self):
+        """
+        Called internally whenever a new model result is added, to generate comparative plots.
+        """
         try:
             if not self.model_results:
                 return
@@ -163,7 +242,7 @@ class DataVisualizer:
             metrics = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
 
             if len(df) < 2:
-                # Nur ein Modell -> keine Vergleichsplots
+                # Only one model -> skip multi-model comparison
                 return
 
             self._create_bar_plot(df, metrics)
@@ -173,14 +252,20 @@ class DataVisualizer:
             logging.error(f"Error creating performance visualizations: {e}")
 
     def _create_bar_plot(self, df: pd.DataFrame, metrics: List[str]):
+        """
+        Creates a grouped bar plot for multiple metrics across all models.
+        """
         try:
             plt.figure(figsize=self.plot_style['figure.figsize'])
             x = np.arange(len(df))
             width = 0.8 / len(metrics)
 
             for i, metric in enumerate(metrics):
-                plt.bar(x + i * width, df[metric], width,
-                        label=metric, color=self.colors[i % len(self.colors)])
+                plt.bar(x + i * width,
+                        df[metric],
+                        width,
+                        label=metric,
+                        color=self.colors[i % len(self.colors)])
 
             plt.xlabel('Models')
             plt.ylabel('Score')
@@ -194,10 +279,17 @@ class DataVisualizer:
             logging.error(f"Error creating bar plot: {e}")
 
     def _create_heatmap(self, df: pd.DataFrame, metrics: List[str]):
+        """
+        Creates a heatmap of the main metrics for each model.
+        """
         try:
             plt.figure(figsize=(8, max(4, len(df) * 0.5 + 2)))
             data = df[metrics].values
-            sns.heatmap(data, annot=True, cmap='YlOrRd', xticklabels=metrics, yticklabels=df['Model'])
+            sns.heatmap(data,
+                        annot=True,
+                        cmap='YlOrRd',
+                        xticklabels=metrics,
+                        yticklabels=df['Model'])
             plt.title('Performance Metrics Heatmap')
             plt.tight_layout()
 
@@ -206,6 +298,9 @@ class DataVisualizer:
             logging.error(f"Error creating heatmap: {e}")
 
     def _create_radar_plot(self, df: pd.DataFrame, metrics: List[str]):
+        """
+        Creates a radar/spider plot for selected metrics across models.
+        """
         try:
             angles = np.linspace(0, 2 * np.pi, len(metrics), endpoint=False)
             angles = np.concatenate((angles, [angles[0]]))
@@ -231,6 +326,9 @@ class DataVisualizer:
             logging.error(f"Error creating radar plot: {e}")
 
     def _save_plot(self, plot_type: str, model_name: str):
+        """
+        Saves the current figure with a standardized naming scheme.
+        """
         try:
             path = self.output_manager.get_path(
                 "reports", "visualizations", f"{model_name}_{plot_type}.png"
@@ -242,6 +340,9 @@ class DataVisualizer:
             logging.error(f"Error saving plot {plot_type} for {model_name}: {e}")
 
     def _save_model_summary(self):
+        """
+        Exports the current model_results to CSV and TXT summaries.
+        """
         try:
             if not self.model_results:
                 return

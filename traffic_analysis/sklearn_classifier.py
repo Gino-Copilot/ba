@@ -1,6 +1,7 @@
+import matplotlib
+matplotlib.use('Agg')  # Backend festlegen
 import logging
 from typing import Dict, Any
-
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
