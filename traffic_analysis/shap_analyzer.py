@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('Agg')  # Backend festlegen
+matplotlib.use('Agg')  # Non-interactive backend
 import shap
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,25 +30,36 @@ class SHAPAnalyzer:
         logging.info(f"Initialized SHAP Analyzer for model: {self.model_name}")
 
     def explain_global(self, X: pd.DataFrame, y: pd.Series = None):
+        """
+        Main entry point for global SHAP analysis.
+        X: Feature DataFrame
+        y: (Optional) target series if needed
+        """
         try:
             logging.info(f"Starting global SHAP analysis for {self.model_name}...")
 
             if X is None or len(X) == 0:
                 raise ValueError("Empty or invalid input data to SHAPAnalyzer.")
 
+            # Step 1) Possibly sample large data
             X_sampled = self._sample_data(X)
 
+            # Step 2) Initialize the SHAP explainer
             self.explainer = self._initialize_explainer(X_sampled)
             if self.explainer is None:
                 logging.warning("Failed to initialize SHAP explainer.")
                 return None, None
 
+            # Step 3) Calculate SHAP values
             self.shap_values = self._calculate_shap_values(X_sampled)
             if self.shap_values is None:
                 logging.warning("Failed to compute SHAP values.")
                 return None, None
 
+            # Step 4) Create plots
             self._create_visualizations(X_sampled)
+
+            # Step 5) Save CSV results
             self._save_analysis_results(X_sampled)
 
             logging.info("Global SHAP analysis completed successfully!")
@@ -59,9 +70,12 @@ class SHAPAnalyzer:
             return None, None
 
     def explain_local(self, X, instance_indices):
+        """
+        Provides local SHAP explanations for given instance indices.
+        """
         try:
             if self.explainer is None:
-                logging.info("Explainer not found. Initializing for local explanations.")
+                logging.info("No explainer found. Initializing for local explanations.")
                 X_sampled = self._sample_data(X)
                 self.explainer = self._initialize_explainer(X_sampled)
 
@@ -78,6 +92,9 @@ class SHAPAnalyzer:
             logging.error(f"Error in local SHAP analysis: {str(e)}")
 
     def _explain_single_instance(self, X, idx: int):
+        """
+        Creates a force plot for a single instance by index.
+        """
         try:
             if isinstance(X, pd.DataFrame):
                 instance = X.iloc[[idx]]
@@ -87,7 +104,8 @@ class SHAPAnalyzer:
                 feature_names = [f"feature_{i}" for i in range(X.shape[1])]
 
             local_shap_values = self.explainer.shap_values(instance)
-            # Falls hier 3D -> extrahiere nur Klasse 1
+
+            # If shap_values is a list => multiclass => pick class 1 for illustration
             if isinstance(local_shap_values, list) and len(local_shap_values) > 1:
                 local_shap_values = local_shap_values[1]
             elif isinstance(local_shap_values, np.ndarray) and local_shap_values.ndim == 3:
@@ -98,6 +116,9 @@ class SHAPAnalyzer:
             logging.error(f"Error explaining instance {idx}: {str(e)}")
 
     def _is_tree_based_model(self) -> bool:
+        """
+        Checks if the model is tree-based (RF, GBDT, XGBoost).
+        """
         return isinstance(self.model, (
             RandomForestClassifier,
             GradientBoostingClassifier,
@@ -105,6 +126,9 @@ class SHAPAnalyzer:
         ))
 
     def _sample_data(self, X):
+        """
+        Samples the DataFrame or array if it exceeds max_samples.
+        """
         try:
             if len(X) <= self.max_samples:
                 return X
@@ -120,6 +144,9 @@ class SHAPAnalyzer:
             return X
 
     def _initialize_explainer(self, X):
+        """
+        Creates a SHAP explainer depending on model type (tree-based or not).
+        """
         try:
             if self._is_tree_based_model():
                 logging.info("Using TreeExplainer for a tree-based model.")
@@ -133,22 +160,24 @@ class SHAPAnalyzer:
             return None
 
     def _calculate_shap_values(self, X):
+        """
+        Calls self.explainer.shap_values(X) and handles multiclass or 3D arrays.
+        """
         try:
             shap_values = self.explainer.shap_values(X)
-
-            # Falls shap_values = list => n_classes => n-element list
             if isinstance(shap_values, list) and len(shap_values) > 1:
                 shap_values = shap_values[1]
-            # Falls shap_values = 3D => (samples, features, classes)
             elif isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
                 shap_values = shap_values[:, :, 1]
-
             return shap_values
         except Exception as e:
             logging.error(f"Error calculating SHAP values: {str(e)}")
             return None
 
     def _create_visualizations(self, X):
+        """
+        Calls the main plotting methods if shap_values is not None.
+        """
         try:
             if self.shap_values is None:
                 return
@@ -159,6 +188,9 @@ class SHAPAnalyzer:
             logging.error(f"Error creating visualizations: {str(e)}")
 
     def _plot_summary(self, X):
+        """
+        Plots a SHAP summary plot (dot plot) and saves it.
+        """
         try:
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
@@ -174,6 +206,9 @@ class SHAPAnalyzer:
             logging.error(f"Error creating SHAP summary plot: {str(e)}")
 
     def _plot_beeswarm(self, X):
+        """
+        Plots a SHAP summary plot in 'bar' mode (beeswarm) and saves it.
+        """
         try:
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
@@ -190,17 +225,16 @@ class SHAPAnalyzer:
             logging.error(f"Error creating SHAP beeswarm plot: {str(e)}")
 
     def _plot_feature_importance(self):
+        """
+        Creates a simple bar chart of mean absolute shap values.
+        """
         try:
             abs_shap = np.abs(self.shap_values).mean(axis=0)
             features_count = len(abs_shap)
-            importance_df = pd.DataFrame({
-                'feature': range(features_count),
-                'importance': abs_shap
-            }).sort_values('importance', ascending=False)
 
             plt.figure(figsize=(12, 8))
-            plt.bar(range(features_count), importance_df['importance'])
-            plt.xticks(range(features_count), importance_df['feature'], rotation=45)
+            plt.bar(range(features_count), abs_shap)
+            plt.xticks(range(features_count), [f"f_{i}" for i in range(features_count)], rotation=45)
             plt.title(f"{self.model_name} - SHAP Feature Importance (Mean Abs)")
             plt.tight_layout()
 
@@ -213,6 +247,9 @@ class SHAPAnalyzer:
             logging.error(f"Error creating feature importance plot: {str(e)}")
 
     def _plot_local_explanation(self, shap_values, instance, feature_names, idx):
+        """
+        Creates a force plot for a single instance and saves it.
+        """
         try:
             plt.figure(figsize=(12, 8))
             shap.force_plot(
@@ -234,6 +271,9 @@ class SHAPAnalyzer:
             logging.error(f"Error creating local explanation plot for instance {idx}: {str(e)}")
 
     def _save_analysis_results(self, X):
+        """
+        Saves shap_values and mean absolute importance as CSV files.
+        """
         try:
             shap_values_path = self.output_manager.get_path("models", "shap", "shap_values.csv")
 

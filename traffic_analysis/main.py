@@ -18,19 +18,20 @@ from traffic_analysis.data_visualizer import DataVisualizer
 from traffic_analysis.output_manager import OutputManager
 from traffic_analysis.shap_analyzer import SHAPAnalyzer
 from traffic_analysis.data_cleaner import DataCleaner
-from traffic_analysis.data_inspector import DataInspector  # The Inspector for PCAP stats
+from traffic_analysis.data_inspector import DataInspector  # Use for skipping small PCAPs
 
 class TrafficAnalyzer:
     """
-    Main entry point for analyzing proxy vs. normal traffic.
-    It removes small PCAP files, extracts features, cleans data,
-    performs feature analysis, trains/evaluates models, and optionally runs SHAP analysis.
+    Main class that handles:
+      - Removing small PCAP files
+      - Extracting features
+      - Cleaning data
+      - Feature analysis
+      - Model training/evaluation
+      - (Optional) SHAP analysis
     """
 
     def __init__(self, proxy_dir: str, normal_dir: str, results_dir: str):
-        """
-        Initializes the TrafficAnalyzer with directory paths and logging setup.
-        """
         self.proxy_dir = self._validate_directory(proxy_dir)
         self.normal_dir = self._validate_directory(normal_dir)
 
@@ -49,24 +50,17 @@ class TrafficAnalyzer:
         self.model_selector = ModelSelector()
 
         self._setup_logging()
-        logging.info("TrafficAnalyzer initialized successfully.")
+        logging.info("TrafficAnalyzer initialized.")
         logging.info(f"Comparing:\n  Proxy folder: {self.proxy_dir}\n  Normal folder: {self.normal_dir}")
         logging.info(f"Results will be saved under: {self.results_dir}")
 
     def _validate_directory(self, directory: str) -> str:
-        """
-        Ensures that the directory exists. Raises ValueError if not found.
-        Returns the absolute resolved path.
-        """
         path = Path(directory)
         if not path.exists():
             raise ValueError(f"Directory does not exist: {directory}")
         return str(path.resolve())
 
     def _setup_logging(self):
-        """
-        Configures logging to file (INFO+) and console (WARN+).
-        """
         log_dir = Path(self.results_dir) / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -93,9 +87,6 @@ class TrafficAnalyzer:
         logging.info("Logging setup complete. (Detailed logs in file, warnings+ on console)")
 
     def _calculate_folder_bytes_list(self, directory: str):
-        """
-        Returns a list of file sizes (in bytes) for all .pcap files in the given directory.
-        """
         path = Path(directory)
         sizes = []
         for pcap_file in path.glob("*.pcap"):
@@ -103,64 +94,68 @@ class TrafficAnalyzer:
         return sizes
 
     def run_analysis(self):
-        """
-        Executes the end-to-end analysis pipeline.
-        """
         try:
             start_time = time.time()
-            logging.info("Starting traffic analysis pipeline...")
+            logging.info("Starting the traffic analysis pipeline...")
 
-            # 1) (Optional) Show the distribution of .pcap file sizes
+            # 1) Show PCAP file-size distribution (optional)
             pcap_sizes = {
                 "proxy": self._calculate_folder_bytes_list(self.proxy_dir),
                 "normal": self._calculate_folder_bytes_list(self.normal_dir)
             }
             self.data_visualizer.plot_pcap_size_distribution(pcap_sizes)
 
-            # 2) Remove small PCAP files so the extractor won't pick them up
-            inspector = DataInspector(min_file_size_bytes=50_000, min_flow_count=10)
-            inspector.remove_small_pcaps(self.proxy_dir)
-            inspector.remove_small_pcaps(self.normal_dir)
+            # 2) Remove small PCAPs
+            inspector = DataInspector(min_file_size_bytes=50000, min_flow_count=10)
 
-            # 3) Feature extraction (skips the removed PCAP files automatically)
+            removed_proxy = inspector.remove_small_pcaps(self.proxy_dir)
+            removed_normal = inspector.remove_small_pcaps(self.normal_dir)
+
+            total_removed = removed_proxy + removed_normal
+            logging.info(
+                f"Total PCAPs removed from both directories: {total_removed}"
+            )
+
+            # 3) Extract features after small PCAPs have been removed
             extractor = NFStreamFeatureExtractor(self.output_manager)
             df = extractor.prepare_dataset(self.proxy_dir, self.normal_dir)
             if df.empty:
-                logging.warning("No data extracted. Analysis aborted.")
+                logging.warning("No data extracted. Aborting analysis.")
                 return
 
-            # 4) Clean the DataFrame (ignore columns that do not exist)
+            # 4) Clean data (ignores columns that do not exist)
             cleaner = DataCleaner(min_packet_threshold=5, impute_with_median=True)
             df = cleaner.clean_dataset(df)
             if df.empty:
-                logging.warning("After cleaning, dataset is empty. Aborting.")
+                logging.warning("After cleaning, the dataset is empty. Aborting.")
                 return
 
-            # 5) Convert 'normal'/'proxy' to 0/1 if the label column exists
+            # 5) Convert 'normal' / 'proxy' labels to 0 / 1
             if 'label' not in df.columns:
-                logging.error("No 'label' column found in the dataset. Aborting.")
+                logging.error("No 'label' column found. Aborting.")
                 return
 
             mapping = {'normal': 0, 'proxy': 1}
             df['label'] = df['label'].map(mapping)
 
+            # Remove rows with unknown labels
             unknown_labels = df['label'].isna()
             if unknown_labels.any():
-                logging.warning("Unknown labels found. Dropping affected rows.")
+                logging.warning("Unknown labels found. Dropping those rows.")
                 df = df[~unknown_labels].copy()
 
             if df['label'].nunique() < 2:
                 logging.warning("Less than two distinct classes found. Aborting.")
                 return
 
-            # 6) Check DataFrame columns and flow count
+            # 6) Inspect DataFrame columns and row count
             inspector.check_flow_dataframe(df)
 
             # 7) Feature analysis
             analyzer = FeatureAnalyzer(self.output_manager)
             _ = analyzer.analyze_features(df)
 
-            # 8) Model training and evaluation
+            # 8) Train and evaluate models
             models = self.model_selector.get_all_models()
             metrics_list = []
 
@@ -178,25 +173,25 @@ class TrafficAnalyzer:
                 )
                 metrics = classifier.train(df, target_column='label')
 
+                # If training succeeded and we got an accuracy, store it
                 if "accuracy" in metrics:
                     metrics_list.append((name, metrics["accuracy"]))
 
                 # 9) SHAP analysis if predict_proba is supported
                 best_model_pipeline = classifier.best_estimator_
-                if (best_model_pipeline
-                        and hasattr(best_model_pipeline["model"], 'predict_proba')):
+                if best_model_pipeline and hasattr(best_model_pipeline["model"], 'predict_proba'):
                     shap_analyzer = SHAPAnalyzer(best_model_pipeline["model"], self.output_manager)
                     X_test_scaled = best_model_pipeline["scaler"].transform(classifier.X_test)
                     X_test_scaled_df = pd.DataFrame(X_test_scaled, columns=classifier.X_test.columns)
                     shap_analyzer.explain_global(X_test_scaled_df)
                 else:
-                    logging.info(f"Skipping SHAP analysis for {name} (model has no predict_proba).")
+                    logging.info(f"Skipping SHAP analysis for {name} (no predict_proba).")
 
             # 10) Plot model comparison
             if metrics_list:
                 self.data_visualizer.plot_model_comparison(metrics_list)
             else:
-                logging.info("No metrics to plot. Possibly no successful training or missing 'accuracy'.")
+                logging.info("No metrics to plot. Possibly no successful training or missing 'accuracy' key.")
 
             duration = time.time() - start_time
             logging.info(f"Analysis completed in {duration:.2f} seconds.")
@@ -207,13 +202,9 @@ class TrafficAnalyzer:
             raise
 
 def main():
-    """
-    Main function to run the TrafficAnalyzer with example directories.
-    Adjust the paths according to your actual setup.
-    """
     try:
-        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/shadowsocks_traffic_3_cec_selenium_only_port_8388_12-08"
-        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/selenium_filtered_traffic_3_500_2024-12-23_16-35-50"
+        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/proton_vpn_capture_3_Sec_500_12-23"
+        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/normal_traffic_comparison_12-23"
         results_dir = "/home/gino/PycharmProjects/myenv/ba/results"
 
         analyzer = TrafficAnalyzer(proxy_dir, normal_dir, results_dir)

@@ -103,8 +103,8 @@ class OutputManager:
         Dynamically creates (if needed) and returns a file path.
 
         Args:
-            category (str): e.g. "models", "features", "nfstream"
-            subcategory (str): e.g. "metrics", "correlations"
+            category (str): Example: "models", "features", "nfstream"
+            subcategory (str): Example: "metrics", "correlations"
             filename (str): Name of the file to be saved/used.
 
         Returns:
