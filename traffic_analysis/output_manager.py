@@ -30,6 +30,7 @@ class OutputManager:
 
         self._initialized = True
 
+        # ! Using the parent of the current file as project root
         project_root = Path(__file__).parent.parent
         self.base_dir = project_root / base_dir
         self.timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -44,7 +45,9 @@ class OutputManager:
         logging.info(f"OutputManager initialized with base directory: {self.base_dir}")
 
     def _setup_logging(self):
-        """Sets up logging for the OutputManager."""
+        """
+        ! Sets up logging to both file and console with a standard format.
+        """
         log_dir = self.base_dir / "logs" / self.timestamp / "system" / "info"
         log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -54,7 +57,7 @@ class OutputManager:
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(formatter)
 
-        console_handler = logging.StreamHandler()
+        console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
 
         logger = logging.getLogger()
@@ -63,7 +66,9 @@ class OutputManager:
         logger.addHandler(console_handler)
 
     def _cleanup_old_results(self):
-        """Removes old results in the base directory if cleanup_old=True."""
+        """
+        ! Removes old results in the base directory if cleanup_old=True.
+        """
         try:
             if self.base_dir.exists():
                 old_logs = self.base_dir / "logs"
@@ -78,7 +83,9 @@ class OutputManager:
             logging.error(f"Error cleaning up old results: {e}")
 
     def _save_configuration(self):
-        """Saves current configuration to a JSON file."""
+        """
+        ! Saves current configuration to a JSON file, including OS and Python info.
+        """
         try:
             config = {
                 "timestamp": self.timestamp,
@@ -111,12 +118,18 @@ class OutputManager:
             Path: The complete path
         """
         try:
+            # ! Use fallback "misc" if category is empty
             if not category:
-                raise ValueError("Category cannot be empty.")
+                logging.warning("Category is empty - using fallback 'misc'.")
+                category = "misc"
+            # ! Use fallback "misc" if subcategory is empty
             if not subcategory:
-                raise ValueError("Subcategory cannot be empty.")
+                logging.warning("Subcategory is empty - using fallback 'misc'.")
+                subcategory = "misc"
+            # ! Use fallback "untitled.txt" if filename is empty
             if not filename:
-                raise ValueError("Filename cannot be empty.")
+                logging.warning("Filename is empty - using fallback 'untitled.txt'.")
+                filename = "untitled.txt"
 
             if category == "models" and self.current_model:
                 path = self.base_dir / self.timestamp / category / self.current_model / subcategory
@@ -127,12 +140,18 @@ class OutputManager:
             full_path = path / filename
             logging.debug(f"Generated path: {full_path}")
             return full_path
+
         except Exception as e:
             logging.error(f"Error generating path: {e}")
-            raise
+            # ! Instead of re-raising, return a default fallback path if desired
+            fallback_path = self.base_dir / "fallback_path.txt"
+            logging.warning(f"Returning fallback path: {fallback_path}")
+            return fallback_path
 
     def set_current_model(self, model_name: str):
-        """Sets the current model name. Directories are created on demand in get_path()."""
+        """
+        ! Sets the current model name, so that future get_path calls for 'models' will nest under this model name.
+        """
         try:
             self.current_model = model_name
             logging.info(f"Current model set to: {model_name}")
@@ -141,11 +160,15 @@ class OutputManager:
             raise
 
     def get_model_path(self, model_name: str) -> Path:
-        """Returns the base path for a specific model."""
+        """
+        Returns the base path for a specific model.
+        """
         return self.base_dir / self.timestamp / "models" / model_name
 
     def get_size_info(self) -> Dict[str, int]:
-        """Computes the size of each top-level directory in bytes."""
+        """
+        Computes the size of each top-level directory in bytes.
+        """
         try:
             size_info = {}
             timestamp_dir = self.base_dir / self.timestamp
@@ -170,7 +193,7 @@ class OutputManager:
 
     def cleanup_intermediate_files(self):
         """
-        Removes intermediate files (e.g. raw data) to save disk space.
+        ! Removes intermediate files (e.g., raw data) to save disk space.
         """
         try:
             intermediate_dir = self.base_dir / self.timestamp / "nfstream" / "intermediate"

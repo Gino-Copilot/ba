@@ -1,76 +1,96 @@
+# file: data_inspector.py
+
 import logging
-import pandas as pd
-import numpy as np
+import shutil
 from pathlib import Path
+
 
 class DataInspector:
     """
-    Checks and removes small PCAP files, and inspects DataFrame properties.
+    Checks .pcap files for a minimum size requirement, copies only those above
+    the threshold into a 'clean' folder, and provides a method to inspect
+    DataFrame properties.
     """
 
     def __init__(self, min_file_size_bytes=50000, min_flow_count=10):
         """
-        :param min_file_size_bytes: PCAP files smaller than this threshold are deleted.
-        :param min_flow_count: If a DataFrame has fewer rows than this, a warning is logged.
+        Args:
+            min_file_size_bytes: PCAP files smaller than this threshold are considered invalid.
+            min_flow_count: If a DataFrame has fewer rows than this, a warning is logged.
         """
         self.min_file_size_bytes = min_file_size_bytes
         self.min_flow_count = min_flow_count
 
-    def remove_small_pcaps(self, pcap_dir: str) -> int:
+    def copy_valid_pcaps(self, source_dir: str, target_dir: str) -> None:
         """
-        Scans the directory for small PCAP files (under self.min_file_size_bytes).
-        Physically deletes them so the FeatureExtractor does not see them later.
-        Returns the number of deleted files.
+        Copies only valid PCAP files (>= self.min_file_size_bytes) from source_dir
+        into target_dir. Logs any file that is too small but does not delete the original.
 
-        :param pcap_dir: Directory containing .pcap files.
-        :return: The count of deleted PCAP files.
+        Args:
+            source_dir: The folder containing the original PCAPs.
+            target_dir: The folder where valid PCAPs are copied.
         """
-        pcap_path = Path(pcap_dir)
-        pcap_files = list(pcap_path.glob("*.pcap"))
+        source_path = Path(source_dir)
+        target_path = Path(target_dir)
+
+        if not source_path.exists():
+            logging.error(f"Source directory does not exist: {source_dir}")
+            return
+
+        target_path.mkdir(parents=True, exist_ok=True)
+        pcap_files = list(source_path.glob("*.pcap"))
+
+        if not pcap_files:
+            logging.warning(f"No PCAP files found in {source_dir}. Nothing to copy.")
+            return
+
         total_files = len(pcap_files)
-        deleted_files = 0
+        valid_count = 0
+        skipped_count = 0
 
-        if total_files == 0:
-            logging.info(f"No PCAP files found in {pcap_dir}")
-            return 0
+        for pcap in pcap_files:
+            size = pcap.stat().st_size
+            if size >= self.min_file_size_bytes:
+                valid_count += 1
+                destination = target_path / pcap.name
+                shutil.copy2(str(pcap), str(destination))
+                logging.info(
+                    f"Copied: {pcap.name} ({size} bytes) -> {destination}"
+                )
+            else:
+                skipped_count += 1
+                logging.info(
+                    f"Skipped (too small): {pcap.name} ({size} bytes), "
+                    f"threshold={self.min_file_size_bytes}"
+                )
 
-        for pcap_file in pcap_files:
-            size = pcap_file.stat().st_size
-            if size < self.min_file_size_bytes:
-                try:
-                    pcap_file.unlink()  # physically remove the file
-                    deleted_files += 1
-                    logging.warning(
-                        f"Deleted {pcap_file.name} ({size} bytes) in {pcap_dir}, "
-                        f"threshold={self.min_file_size_bytes}."
-                    )
-                except Exception as e:
-                    logging.error(f"Error deleting {pcap_file.name}: {e}")
+        logging.info(
+            f"DataInspector: Copied {valid_count}, skipped {skipped_count} out of {total_files} PCAPs "
+            f"from {source_dir} to {target_dir}."
+        )
 
-        if deleted_files > 0:
-            percent = 100.0 * deleted_files / total_files
-            logging.info(
-                f"Removed {deleted_files} out of {total_files} PCAPs in {pcap_dir} "
-                f"({percent:.1f}%)."
-            )
-        else:
-            logging.info(
-                f"All {total_files} PCAP files in {pcap_dir} "
-                f"are above {self.min_file_size_bytes} bytes."
-            )
-
-        return deleted_files
-
-    def check_flow_dataframe(self, df: pd.DataFrame) -> None:
+    def check_flow_dataframe(self, df) -> None:
         """
-        Logs the shape, missing columns, or flow count checks.
-        Warns if important columns are missing or if too few flows are present.
+        Logs the shape, checks for missing columns, and warns if the flow count is below the threshold.
+
+        Args:
+            df: A pandas DataFrame representing extracted flow data.
         """
         row_count, col_count = df.shape
         logging.info(f"Flow-DataFrame has {row_count} rows and {col_count} columns.")
 
-        # If you expect certain columns, put them here:
-        required_cols = ["bidirectional_packets", "src2dst_bytes", "dst2src_bytes"]
+        # Example of required columns
+        required_cols = [
+            "packets_per_second",
+            "src2dst_bytes_per_second",
+            "dst2src_bytes_per_second",
+            "duration_seconds",
+            "bytes_per_second",
+            "packet_size_avg",
+            "packet_ratio",
+            "byte_ratio"
+        ]
+
         missing_cols = [c for c in required_cols if c not in df.columns]
         if missing_cols:
             logging.warning(f"Missing columns: {missing_cols}")
@@ -79,3 +99,4 @@ class DataInspector:
             logging.warning(
                 f"DataFrame has only {row_count} flows, under threshold {self.min_flow_count}."
             )
+

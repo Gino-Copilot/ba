@@ -5,7 +5,7 @@
 - **Name:** Gino Peduto
 - **Institution:** Universität Heidelberg / Heidelberg University 
 - **Dokument / Document:** Bachelorarbeit / Bachelor Thesis
-- **Jahr / Year:** 2024
+- **Jahr / Year:** 2005
 
 ## Projektbeschreibung / Project Description
 [DE] Dieses Tool implementiert verschiedene Machine Learning Algorithmen zur Erkennung von Shadowsocks-Proxy-Traffic. Es nutzt NFStream für die Feature-Extraktion aus Netzwerk-Flows und implementiert mehrere Klassifikationsmodelle wie Random Forest, XGBoost, und andere zur Traffic-Klassifizierung.

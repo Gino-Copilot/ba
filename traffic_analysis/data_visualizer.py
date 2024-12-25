@@ -1,5 +1,8 @@
+# file: data_visualizer.py
+
 import matplotlib
-matplotlib.use('Agg')  # Backend festlegen
+
+matplotlib.use('Agg')  # Non-interactive backend
 import logging
 from pathlib import Path
 from typing import Dict, List, Any
@@ -23,6 +26,9 @@ class DataVisualizer:
     """
 
     def __init__(self, output_manager):
+        """
+        Initializes the DataVisualizer with a given OutputManager for path handling.
+        """
         self.output_manager = output_manager
         self.model_results: List[Dict[str, Any]] = []
 
@@ -44,6 +50,9 @@ class DataVisualizer:
         logging.info("DataVisualizer initialized successfully.")
 
     def _setup_visualization(self):
+        """
+        Applies chosen plot style (rcParams) and color palette for Seaborn/Matplotlib.
+        """
         for key, value in self.plot_style.items():
             plt.rcParams[key] = value
         plt.style.use('default')
@@ -176,6 +185,11 @@ class DataVisualizer:
         """
         Creates a simple bar chart comparing model accuracies (or other metrics).
         Expects a list of tuples like [(model_name, accuracy), ...].
+
+        NOTE:
+          Previously, get_path was called with empty category/subcategory. This caused
+          the fallback 'misc'. We now specify meaningful parameters:
+          category='reports', subcategory='visualizations'.
         """
         if not metrics_list:
             logging.warning("No metrics provided for plot_model_comparison.")
@@ -200,7 +214,8 @@ class DataVisualizer:
         plt.ylim([0, 1])  # if accuracy is a 0-1 scale
         plt.tight_layout()
 
-        output_path = self.output_manager.get_path("", "", "model_comparison_accuracy.png")
+        # FIXED: Now providing real category/subcategory
+        output_path = self.output_manager.get_path("reports", "visualizations", "model_comparison_accuracy.png")
         plt.savefig(output_path)
         plt.close()
         logging.info(f"Model comparison chart saved as {output_path}")
@@ -233,7 +248,8 @@ class DataVisualizer:
 
     def _create_performance_visualizations(self):
         """
-        Called internally whenever a new model result is added, to generate comparative plots.
+        Called internally whenever a new model result is added, to generate
+        comparative plots like bar-plot, heatmap, or radar-plot for multiple models.
         """
         try:
             if not self.model_results:
@@ -285,11 +301,13 @@ class DataVisualizer:
         try:
             plt.figure(figsize=(8, max(4, len(df) * 0.5 + 2)))
             data = df[metrics].values
-            sns.heatmap(data,
-                        annot=True,
-                        cmap='YlOrRd',
-                        xticklabels=metrics,
-                        yticklabels=df['Model'])
+            sns.heatmap(
+                data,
+                annot=True,
+                cmap='YlOrRd',
+                xticklabels=metrics,
+                yticklabels=df['Model']
+            )
             plt.title('Performance Metrics Heatmap')
             plt.tight_layout()
 

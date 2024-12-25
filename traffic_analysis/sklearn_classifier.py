@@ -1,197 +1,184 @@
-import matplotlib
-matplotlib.use('Agg')  # Backend festlegen
+# file: sklearn_classifier.py
+
 import logging
-from typing import Dict, Any
 import numpy as np
 import pandas as pd
+from typing import Dict, Any, Optional
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.metrics import classification_report
+
 
 class ScikitLearnTrafficClassifier:
     """
-    Trains and evaluates a scikit-learn model within a Pipeline (including scaling).
-    Uses GridSearchCV for hyperparameter tuning and a separate test set for final evaluation.
-    Integrates with DataVisualizer to generate relevant plots and logs.
+    A wrapper class for scikit-learn classifiers with integrated preprocessing,
+    optional GridSearch, cross-validation, and metric calculation.
     """
 
-    def __init__(self,
-                 model,
-                 output_manager,
-                 data_visualizer,
-                 test_size: float = 0.2,
-                 random_state: int = 42,
-                 cv_folds: int = 5):
+    def __init__(
+        self,
+        model,
+        output_manager,
+        data_visualizer,
+        test_size: float = 0.2,
+        random_state: int = 42,
+        cv_folds: int = 5,
+        param_grid: Optional[dict] = None,
+        gridsearch_scoring: str = "accuracy"
+    ):
+        """
+        Args:
+            model: A scikit-learn classifier instance
+            output_manager: Instance handling file paths and saving
+            data_visualizer: Instance for creating visualizations
+            test_size: Fraction of data to use for testing (default: 0.2)
+            random_state: Random seed (default: 42)
+            cv_folds: Number of cross-validation folds (default: 5)
+            param_grid: Dict of hyperparameters for optional GridSearchCV (default: None)
+                        e.g. {"model__C": [0.1, 1, 10]}
+            gridsearch_scoring: Metric name for scoring in GridSearchCV (default: "accuracy")
+        """
         self.model = model
         self.output_manager = output_manager
         self.data_visualizer = data_visualizer
         self.test_size = test_size
         self.random_state = random_state
         self.cv_folds = cv_folds
+        self.param_grid = param_grid or {}  # empty if none provided
+        self.gridsearch_scoring = gridsearch_scoring
 
-        self.best_estimator_ = None
         self.X_test = None
         self.y_test = None
-
-        logging.info(f"ScikitLearnTrafficClassifier initialized for model: {self.model.__class__.__name__}")
+        self.best_estimator_ = None
+        self.pipeline = None
 
     def train(self, df: pd.DataFrame, target_column: str = 'label') -> Dict[str, Any]:
         """
-        Conducts the full training procedure with a Pipeline (scaling + model),
-        a GridSearchCV for hyperparameter tuning, and final evaluation on a test set.
+        Trains the model (with or without GridSearch) and returns performance metrics.
 
-        :param df: A pandas DataFrame containing features and the target column.
-        :param target_column: The name of the column containing labels (e.g. 'label').
-        :return: A dictionary of metrics and best parameters.
+        Steps:
+          1) Validate DataFrame
+          2) Split into features (X) and target (y)
+          3) Build pipeline: [StandardScaler -> model]
+          4) If param_grid is not empty, run GridSearchCV -> best_estimator_
+          5) Predict on test set, produce classification_report
+          6) Return metrics dict
+
+        Args:
+            df: DataFrame containing features and target
+            target_column: Name of the target column
+
+        Returns:
+            A dict with various performance metrics + possibly best_params
         """
         try:
-            logging.info("Starting training process with Pipeline and GridSearchCV...")
+            if not isinstance(df, pd.DataFrame):
+                logging.error("Input must be a pandas DataFrame.")
+                return {}
 
-            # Log initial shape and missing values
-            logging.info(f"Initial DataFrame shape: {df.shape}")
-            logging.info(f"Initial number of NaNs in DataFrame: {df.isna().sum().sum()}")
+            if df.empty or df.shape[1] == 0:
+                logging.error("DataFrame is empty or has no columns.")
+                return {}
 
             if target_column not in df.columns:
-                raise ValueError(f"Target column '{target_column}' not found in DataFrame.")
+                logging.error(f"Target column '{target_column}' not found in {df.columns.tolist()}")
+                return {}
 
-            # Separate X and y
-            X = df.drop(columns=[target_column])
-            y = df[target_column]
+            # Need at least 2 classes in the target
+            unique_labels = df[target_column].unique()
+            if len(unique_labels) < 2:
+                logging.error(f"Need at least 2 classes, found only: {unique_labels}")
+                return {}
 
-            # Log shape and missing values for X, y
-            logging.info(f"After dropping target column '{target_column}', X shape: {X.shape}, y shape: {y.shape}")
-            logging.info(f"Number of NaNs in X: {X.isna().sum().sum()}, Number of NaNs in y: {y.isna().sum()}")
+            # Check NaN/Inf
+            nan_cols = df.columns[df.isna().any()].tolist()
+            inf_cols = df.columns[df.isin([np.inf, -np.inf]).any()].tolist()
+            if nan_cols or inf_cols:
+                logging.error(f"Found NaN in columns: {nan_cols}")
+                logging.error(f"Found Inf in columns: {inf_cols}")
+                return {}
 
-            if X.empty:
-                raise ValueError("No features to train on.")
+            # Split features/target
+            X = df.drop(columns=[target_column]).copy()
+            y = df[target_column].copy()
 
-            # Log some info about the target distribution
-            unique_labels = y.unique()
-            logging.info(f"Unique labels in y: {unique_labels}, counts: {y.value_counts().to_dict()}")
+            # Check numeric columns
+            for col in X.columns:
+                if not np.issubdtype(X[col].dtype, np.number):
+                    logging.error(f"Non-numeric column found: {col} ({X[col].dtype})")
+                    return {}
 
-            # Split into train and test sets
+            # Train-test split
+            from sklearn.model_selection import train_test_split
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y,
                 test_size=self.test_size,
                 random_state=self.random_state,
-                stratify=y if y.nunique() > 1 else None
+                stratify=y
             )
 
-            # Log shapes and missing values after the split
-            logging.info(f"X_train shape: {X_train.shape}, X_test shape: {X_test.shape}")
-            logging.info(f"y_train shape: {y_train.shape}, y_test shape: {y_test.shape}")
-            logging.info(f"Number of NaNs in X_train: {X_train.isna().sum().sum()}, in X_test: {X_test.isna().sum().sum()}")
-            logging.info(f"Number of NaNs in y_train: {y_train.isna().sum()}, in y_test: {y_test.isna().sum()}")
+            # Basic pipeline
+            from sklearn.pipeline import Pipeline
+            from sklearn.preprocessing import StandardScaler
 
             pipeline = Pipeline([
-                ("scaler", StandardScaler()),
-                ("model", self.model)
+                ('scaler', StandardScaler()),
+                ('model', self.model)
             ])
 
-            param_grids = {
-                "LogisticRegression": {
-                    "model__C": [0.1, 1, 10],
-                    "model__penalty": ['l2']
-                },
-                "RandomForestClassifier": {
-                    "model__n_estimators": [50, 100],
-                    "model__max_depth": [None, 5, 10]
-                },
-                "SVC": {
-                    "model__C": [0.1, 1, 10],
-                    "model__gamma": ['scale', 'auto']
-                },
-                "XGBClassifier": {
-                    "model__n_estimators": [50, 100],
-                    "model__max_depth": [3, 5],
-                    "model__learning_rate": [0.01, 0.1]
-                }
-            }
+            if self.param_grid:
+                # Perform GridSearchCV
+                logging.info(f"Running GridSearch with param_grid={self.param_grid}")
+                from sklearn.model_selection import GridSearchCV
 
-            model_class_name = self.model.__class__.__name__
-            if model_class_name not in param_grids:
-                logging.warning(f"No param grid found for {model_class_name}. Using empty param grid.")
-                grid_params = {}
+                grid = GridSearchCV(
+                    estimator=pipeline,
+                    param_grid=self.param_grid,
+                    scoring=self.gridsearch_scoring,
+                    cv=self.cv_folds,
+                    n_jobs=-1,
+                    verbose=1
+                )
+                grid.fit(X_train, y_train)
+
+                self.pipeline = grid.best_estimator_  # best pipeline
+                best_params = grid.best_params_
+                best_score = grid.best_score_
+                logging.info(f"Best params: {best_params}")
+                logging.info(f"Best CV score={best_score:.4f} ({self.gridsearch_scoring})")
             else:
-                grid_params = param_grids[model_class_name]
-
-            logging.info(f"Running GridSearchCV for {model_class_name} with param grid: {grid_params}")
-            grid_search = GridSearchCV(
-                estimator=pipeline,
-                param_grid=grid_params,
-                cv=self.cv_folds,
-                scoring='accuracy',
-                n_jobs=-1,
-                verbose=0
-            )
-            grid_search.fit(X_train, y_train)
-
-            self.best_estimator_ = grid_search.best_estimator_
-            logging.info(f"Best params for {model_class_name}: {grid_search.best_params_}")
+                # Direct fit without GridSearch
+                logging.info("No param_grid provided; fitting pipeline directly.")
+                pipeline.fit(X_train, y_train)
+                self.pipeline = pipeline
 
             # Predict on test set
-            y_pred = self.best_estimator_.predict(X_test)
+            y_pred = self.pipeline.predict(X_test)
 
-            metrics = self._calculate_metrics(y_test, y_pred)
-            metrics["best_params"] = grid_search.best_params_
-            metrics["cv_results"] = grid_search.cv_results_
-
+            # Save references
             self.X_test = X_test
             self.y_test = y_test
+            self.best_estimator_ = self.pipeline
 
-            logging.info(f"Final test metrics for best {model_class_name}: {metrics}")
+            # Classification report
+            from sklearn.metrics import classification_report
+            metrics = classification_report(y_test, y_pred, output_dict=True)
 
-            # Visualization calls
-            self.data_visualizer.add_model_result(model_class_name, metrics)
-            self.data_visualizer.plot_confusion_matrix(y_test, y_pred, model_class_name, labels=[0,1])
+            # If we used gridsearch, store best_* in metrics
+            if self.param_grid:
+                metrics["gridsearch_best_params"] = best_params
+                metrics["gridsearch_best_score"] = best_score
 
-            # If predict_proba is available, plot ROC & Precision-Recall
-            if hasattr(self.best_estimator_["model"], "predict_proba"):
-                X_test_scaled = self.best_estimator_["scaler"].transform(X_test)
-                logging.info(f"Shape of X_test_scaled for ROC/PR curves: {X_test_scaled.shape}")
-                self.data_visualizer.plot_roc_curve(self.best_estimator_["model"], X_test_scaled, y_test, model_class_name)
-                self.data_visualizer.plot_precision_recall_curve(self.best_estimator_["model"], X_test_scaled, y_test, model_class_name)
-
-            # If feature_importances_ is available, plot importance
-            if hasattr(self.best_estimator_["model"], "feature_importances_"):
-                self.data_visualizer.plot_feature_importance(
-                    self.best_estimator_["model"], list(X.columns), model_class_name
-                )
+            # Log final results
+            accuracy = metrics.get("accuracy", None)
+            if accuracy is not None:
+                logging.info(f"Test Accuracy={accuracy:.3f}")
+            else:
+                logging.info("No accuracy found in classification_report.")
 
             return metrics
 
         except Exception as e:
-            logging.error(f"Error during model training/evaluation: {e}")
+            logging.error(f"Training failed: {e}", exc_info=True)
             return {}
-
-    def _calculate_metrics(self, y_true, y_pred) -> Dict[str, Any]:
-        """
-        Calculates main classification metrics (classification report, accuracy, roc_auc if available).
-        Logs an error if something goes wrong during metric computation.
-
-        :param y_true: Ground truth labels.
-        :param y_pred: Predicted labels.
-        :return: A dictionary containing metrics.
-        """
-        metrics_dict = {}
-        try:
-            report = classification_report(
-                y_true,
-                y_pred,
-                output_dict=True,
-                zero_division=0
-            )
-            metrics_dict.update(report)
-            metrics_dict['accuracy'] = report['accuracy']
-
-            # Calculate ROC AUC if predict_proba is implemented
-            if hasattr(self.best_estimator_["model"], "predict_proba"):
-                X_test_scaled = self.best_estimator_["scaler"].transform(self.X_test)
-                y_prob = self.best_estimator_["model"].predict_proba(X_test_scaled)[:, 1]
-                metrics_dict['roc_auc'] = float(roc_auc_score(y_true, y_prob))
-
-        except Exception as e:
-            logging.error(f"Error calculating metrics: {e}")
-
-        return metrics_dict
