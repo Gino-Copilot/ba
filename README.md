@@ -5,7 +5,7 @@
 - **Name:** Gino Peduto
 - **Institution:** Universität Heidelberg / Heidelberg University 
 - **Dokument / Document:** Bachelorarbeit / Bachelor Thesis
-- **Jahr / Year:** 2005
+- **Jahr / Year:** 2025
 
 ## Projektbeschreibung / Project Description
 [DE] Dieses Tool implementiert verschiedene Machine Learning Algorithmen zur Erkennung von Shadowsocks-Proxy-Traffic. Es nutzt NFStream für die Feature-Extraktion aus Netzwerk-Flows und implementiert mehrere Klassifikationsmodelle wie Random Forest, XGBoost, und andere zur Traffic-Klassifizierung.
@@ -51,18 +51,61 @@ pip install -e .[dev,capture]
 ## Project Structure
 ```
 .
-├── traffic_analysis/          # Main module for traffic analysis
-│   ├── main.py               # Main execution file
-│   ├── model_selection.py    # ML model configurations
-│   ├── sklearn_classifier.py # ML classifiers
-│   ├── feature_analyzer.py   # Feature analysis implementation
-│   ├── shap_analyzer.py      # SHAP analysis implementation
-│   └── nfstream_feature_extractor.py  # Feature extraction
-├── traffic_capture/          # Module for traffic recording
-│   └── tcpdump_recorder.py   # Traffic capture functionality
-├── tests/                    # Test modules
-├── pyproject.toml           # Project configuration and dependencies
-└── README.md                # This file
+├── deployment/                # Deployment-Konfigurationen
+├── results/                   # Analyse-Ergebnisse und Modell-Outputs
+│   ├── [experiment_name]/    # Ergebnisse einzelner Experimente
+│   │   ├── features/         # Feature-Analysen
+│   │   │   ├── correlations/
+│   │   │   ├── groups/
+│   │   │   ├── importance/
+│   │   │   └── summaries/
+│   │   ├── models/          # Trainierte Modelle
+│   │   │   ├── LogisticRegression/
+│   │   │   ├── RandomForestClassifier/
+│   │   │   ├── SVC/
+│   │   │   └── XGBClassifier/
+│   │   ├── nfstream/        # NFStream Ergebnisse
+│   │   │   ├── processed/
+│   │   │   └── summaries/
+│   │   ├── reports/         # Analyseberichte
+│   │   │   └── visualizations/
+│   │   └── trained/         # Trainierte Modelle
+│   │       └── best/
+├── tcpdump_recorder/         # Traffic-Aufzeichnungsmodule
+│   ├── __init__.py
+│   ├── no_proxy_firefox_recorder.py
+│   ├── proton_recorder.py
+│   ├── proxy_port_8388_recorder.py
+│   └── tcpdump_recorder_all_trafic.py
+├── tests/                    # Testmodule
+│   ├── __pycache__/
+│   └── test_data/
+├── traffic_analysis/         # Hauptanalysemodule
+│   ├── __init__.py
+│   ├── data_cleaner.py
+│   ├── data_inspector.py
+│   ├── data_visualizer.py
+│   ├── feature_analyzer.py
+│   ├── main.py
+│   ├── model_selection.py
+│   ├── nfstream_feature_extractor.py
+│   ├── output_manager.py
+│   ├── shap_analyzer.py
+│   └── sklearn_classifier.py
+├── traffic_data/            # Rohdaten und verarbeitete Daten
+│   ├── firefox_without_proxy_2024-12-08/
+│   ├── normal_traffic_comparison_12-23/
+│   ├── PROTON_test/
+│   ├── regular_selenium_traffic/
+│   ├── shadowsocks_traffic/
+│   └── traffic_zips/
+├── traffic_generation/      # Traffic-Generierungstools
+│   ├── configure_proxy.py
+│   ├── surf_without_proxy.py
+│   └── surf_with_ss_proxy.py
+├── pyproject.toml          # Projektkonfiguration
+└── README.md               # Diese Datei
+
 ```
 
 ## Usage
@@ -125,7 +168,7 @@ Project configuration and dependencies are defined in `pyproject.toml`:
 ### License
 MIT License
 
-Copyright (c) 2024 Gino Peduto
+Copyright (c) 2025 Gino Peduto
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -138,10 +181,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 [EN] When using this code in academic work, please cite as follows:
 
 ```bibtex
-@misc{peduto2024shadowsocks,
+@misc{peduto2025shadowsocks,
   author = {Peduto, Gino},
   title = {Detection and Analysis of Shadowsocks Traffic},
-  year = {2024},
+  year = {2025},
   publisher = {GitHub},
   journal = {GitHub Repository},
   howpublished = {\url{https://github.com/Gino-Copilot/ba}},
@@ -152,6 +195,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Or in text form:
 ```
-Peduto, G. (2024). Detection and Analysis of Shadowsocks Traffic [Bachelor's Thesis]. 
+Peduto, G. (2025). Detection and Analysis of Shadowsocks Traffic [Bachelor's Thesis]. 
 Heidelberg University. https://github.com/Gino-Copilot/ba
 ```
