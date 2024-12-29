@@ -6,7 +6,7 @@ import psutil
 import signal
 
 class TrafficCapture:
-    def __init__(self, traffic_type="shadowsocks_traffic", interval=10, file_count=200, interface="wlp0s20f3", port=8388):
+    def __init__(self, traffic_type="shadowsocks_traffic", interval=10, file_count=100, interface="wlp0s20f3", port=8388):
         # Include date in folder name
         current_date = datetime.now().strftime("%m-%d")
         folder_name = f"{traffic_type}_{current_date}"
@@ -95,8 +95,8 @@ class TrafficCapture:
 def main():
     # Save Shadowsocks traffic with updated folder and file names
     traffic_capture = TrafficCapture(
-        traffic_type="shadowsocks_traffic_3_sec_youtube_only_port_8388_500",
-        interval=3,
+        traffic_type="shadowsocks_traffic_20_sec_selenium_only_port_8388_500_aes_128",
+        interval=20,
         file_count=500,
         interface="wlp0s20f3",
         port=8388
