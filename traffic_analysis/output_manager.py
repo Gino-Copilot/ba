@@ -1,3 +1,5 @@
+# file: output_manager.py
+
 import sys
 import os
 import platform
@@ -24,13 +26,19 @@ class OutputManager:
                 cls._instance = super(OutputManager, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, base_dir: str = "traffic_results", cleanup_old: bool = False):
+    def __init__(self, base_dir: str = "model_training_results", cleanup_old: bool = False):
+        """
+        Args:
+            base_dir: The base directory in which all output will be stored.
+                      Default is 'model_training_results'.
+            cleanup_old: If True, removes old results in the base directory before proceeding.
+        """
         if hasattr(self, '_initialized'):
             return
 
         self._initialized = True
 
-        # ! Using the parent of the current file as project root
+        # Using the parent of the current file as project root
         project_root = Path(__file__).parent.parent
         self.base_dir = project_root / base_dir
         self.timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -46,7 +54,7 @@ class OutputManager:
 
     def _setup_logging(self):
         """
-        ! Sets up logging to both file and console with a standard format.
+        Sets up logging to both file and console with a standard format.
         """
         log_dir = self.base_dir / "logs" / self.timestamp / "system" / "info"
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -67,7 +75,7 @@ class OutputManager:
 
     def _cleanup_old_results(self):
         """
-        ! Removes old results in the base directory if cleanup_old=True.
+        Removes old results in the base directory if cleanup_old=True.
         """
         try:
             if self.base_dir.exists():
@@ -84,7 +92,7 @@ class OutputManager:
 
     def _save_configuration(self):
         """
-        ! Saves current configuration to a JSON file, including OS and Python info.
+        Saves current configuration to a JSON file, including OS and Python info.
         """
         try:
             config = {
@@ -118,15 +126,14 @@ class OutputManager:
             Path: The complete path
         """
         try:
-            # ! Use fallback "misc" if category is empty
             if not category:
                 logging.warning("Category is empty - using fallback 'misc'.")
                 category = "misc"
-            # ! Use fallback "misc" if subcategory is empty
+
             if not subcategory:
                 logging.warning("Subcategory is empty - using fallback 'misc'.")
                 subcategory = "misc"
-            # ! Use fallback "untitled.txt" if filename is empty
+
             if not filename:
                 logging.warning("Filename is empty - using fallback 'untitled.txt'.")
                 filename = "untitled.txt"
@@ -143,14 +150,14 @@ class OutputManager:
 
         except Exception as e:
             logging.error(f"Error generating path: {e}")
-            # ! Instead of re-raising, return a default fallback path if desired
             fallback_path = self.base_dir / "fallback_path.txt"
             logging.warning(f"Returning fallback path: {fallback_path}")
             return fallback_path
 
     def set_current_model(self, model_name: str):
         """
-        ! Sets the current model name, so that future get_path calls for 'models' will nest under this model name.
+        Sets the current model name, so that future get_path calls for 'models'
+        will nest under this model name.
         """
         try:
             self.current_model = model_name
@@ -193,7 +200,7 @@ class OutputManager:
 
     def cleanup_intermediate_files(self):
         """
-        ! Removes intermediate files (e.g., raw data) to save disk space.
+        Removes intermediate files (e.g., raw data) to save disk space.
         """
         try:
             intermediate_dir = self.base_dir / self.timestamp / "nfstream" / "intermediate"
