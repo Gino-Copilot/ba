@@ -1,7 +1,4 @@
-# file: data_visualizer.py
-
 import matplotlib
-
 matplotlib.use('Agg')  # Non-interactive backend
 import logging
 from pathlib import Path
@@ -139,25 +136,31 @@ class DataVisualizer:
     def plot_feature_importance(self, model, feature_names, model_name: str):
         """
         Plots and saves feature importances for tree-based models (with feature_importances_).
+        Updated: We rename output file to 'tree_feature_importance.png' to avoid confusion
+        with any SHAP-based importance plots.
         """
         try:
             if not hasattr(model, 'feature_importances_'):
                 logging.warning(f"Model {model_name} has no feature_importances_.")
                 return
 
+            # Optional: Sort features by importance
+            importance_vals = model.feature_importances_
             importance_df = pd.DataFrame({
                 'feature': feature_names,
-                'importance': model.feature_importances_
+                'importance': importance_vals
             }).sort_values('importance', ascending=True)
 
             plt.figure(figsize=(10, max(8, len(feature_names) * 0.3)))
             plt.barh(importance_df['feature'], importance_df['importance'], color=self.colors[0])
             plt.xlabel('Importance')
-            plt.title(f'Feature Importance - {model_name}')
+            plt.ylabel('Feature')
+            plt.title(f'Feature Importance (Tree-based) - {model_name}')
             plt.grid(True, alpha=0.3, axis='x')
             plt.tight_layout()
 
-            self._save_plot('feature_importance', model_name)
+            # Save as 'tree_feature_importance.png'
+            self._save_plot('tree_feature_importance', model_name)
         except Exception as e:
             logging.error(f"Error plotting feature importance for {model_name}: {e}")
 
@@ -185,11 +188,6 @@ class DataVisualizer:
         """
         Creates a simple bar chart comparing model accuracies (or other metrics).
         Expects a list of tuples like [(model_name, accuracy), ...].
-
-        NOTE:
-          Previously, get_path was called with empty category/subcategory. This caused
-          the fallback 'misc'. We now specify meaningful parameters:
-          category='reports', subcategory='visualizations'.
         """
         if not metrics_list:
             logging.warning("No metrics provided for plot_model_comparison.")
@@ -214,7 +212,6 @@ class DataVisualizer:
         plt.ylim([0, 1])  # if accuracy is a 0-1 scale
         plt.tight_layout()
 
-        # FIXED: Now providing real category/subcategory
         output_path = self.output_manager.get_path("reports", "visualizations", "model_comparison_accuracy.png")
         plt.savefig(output_path)
         plt.close()

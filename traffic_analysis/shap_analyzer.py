@@ -181,42 +181,47 @@ class SHAPAnalyzer:
         try:
             if self.shap_values is None:
                 return
-            self._plot_summary(X)
-            self._plot_beeswarm(X)
-            self._plot_feature_importance()
+            self._plot_summary(X)             # Default (dot) summary plot
+            self._plot_beeswarm(X)            # BeeSwarm = dot-plot (similar to summary, but separate if we like)
+            self._plot_summary_bar(X)         # Bar-Plot summary
+            self._plot_mean_abs_importance(X) # Mean absolute shap importance
         except Exception as e:
             logging.error(f"Error creating visualizations: {str(e)}")
 
     def _plot_summary(self, X):
         """
-        Plots a SHAP summary plot (dot plot) and saves it.
+        Plots a SHAP summary plot (dot plot) and saves it (the "classic" beeswarm).
         """
         try:
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
                 self.shap_values, X,
-                max_display=self.max_display, show=False
+                plot_type="dot",  # Dot-plot, a.k.a. beeswarm
+                max_display=self.max_display,
+                show=False
             )
-            plt.title(f"{self.model_name} - SHAP Summary Plot")
+            plt.title(f"{self.model_name} - SHAP Summary (Dot/Beeswarm)")
             path = self.output_manager.get_path("models", "shap", "summary_plot.png")
             plt.savefig(path, bbox_inches='tight', dpi=300)
             plt.close()
-            logging.info(f"SHAP summary plot saved: {path}")
+            logging.info(f"SHAP summary (dot) plot saved: {path}")
         except Exception as e:
             logging.error(f"Error creating SHAP summary plot: {str(e)}")
 
     def _plot_beeswarm(self, X):
         """
-        Plots a SHAP summary plot in 'bar' mode (beeswarm) and saves it.
+        Alternative beeswarm plot (just an example, you can decide if you really need a second one).
         """
         try:
+            # Falls du nur EINE Form des Beeswarm möchtest, kann diese Methode entfallen
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
                 self.shap_values, X,
-                plot_type="bar",
-                max_display=self.max_display, show=False
+                plot_type="dot",  # again, dot => beeswarm
+                max_display=self.max_display,
+                show=False
             )
-            plt.title(f"{self.model_name} - SHAP Feature Importance")
+            plt.title(f"{self.model_name} - Alternate Beeswarm")
             path = self.output_manager.get_path("models", "shap", "beeswarm_plot.png")
             plt.savefig(path, bbox_inches='tight', dpi=300)
             plt.close()
@@ -224,24 +229,57 @@ class SHAPAnalyzer:
         except Exception as e:
             logging.error(f"Error creating SHAP beeswarm plot: {str(e)}")
 
-    def _plot_feature_importance(self):
+    def _plot_summary_bar(self, X):
         """
-        Creates a simple bar chart of mean absolute shap values.
+        Plots a SHAP summary plot in 'bar' mode and saves it.
+        """
+        try:
+            plt.figure(figsize=(12, 8))
+            shap.summary_plot(
+                self.shap_values, X,
+                plot_type="bar",
+                max_display=self.max_display,
+                show=False
+            )
+            plt.title(f"{self.model_name} - SHAP Summary Bar")
+            path = self.output_manager.get_path("models", "shap", "summary_bar_plot.png")
+            plt.savefig(path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"SHAP bar summary plot saved: {path}")
+        except Exception as e:
+            logging.error(f"Error creating SHAP bar summary plot: {str(e)}")
+
+    def _plot_mean_abs_importance(self, X):
+        """
+        Creates a simple bar chart of mean absolute shap values (user-defined).
         """
         try:
             abs_shap = np.abs(self.shap_values).mean(axis=0)
             features_count = len(abs_shap)
 
+            # Sort by descending mean(|SHAP|)
+            sorted_idx = np.argsort(abs_shap)[::-1]
+
+            if isinstance(X, pd.DataFrame):
+                feature_names = X.columns
+            else:
+                feature_names = [f"feature_{i}" for i in range(features_count)]
+
+            sorted_feature_names = feature_names[sorted_idx]
+            sorted_values = abs_shap[sorted_idx]
+
             plt.figure(figsize=(12, 8))
-            plt.bar(range(features_count), abs_shap)
-            plt.xticks(range(features_count), [f"f_{i}" for i in range(features_count)], rotation=45)
+            plt.bar(range(features_count), sorted_values, color='skyblue')
+            plt.xticks(range(features_count), sorted_feature_names, rotation=45, ha='right')
+            plt.xlabel("Features")
+            plt.ylabel("Mean(|SHAP value|)")
             plt.title(f"{self.model_name} - SHAP Feature Importance (Mean Abs)")
             plt.tight_layout()
 
-            plot_path = self.output_manager.get_path("models", "shap", "feature_importance.png")
+            plot_path = self.output_manager.get_path("models", "shap", "shap_feature_importance_meanabs.png")
             plt.savefig(plot_path, bbox_inches='tight', dpi=300)
             plt.close()
-            logging.info(f"SHAP feature importance plot saved: {plot_path}")
+            logging.info(f"SHAP mean abs feature importance plot saved: {plot_path}")
 
         except Exception as e:
             logging.error(f"Error creating feature importance plot: {str(e)}")
@@ -296,7 +334,7 @@ class SHAPAnalyzer:
                 'importance': abs_shap
             }).sort_values('importance', ascending=False)
 
-            importance_path = self.output_manager.get_path("models", "shap", "feature_importance.csv")
+            importance_path = self.output_manager.get_path("models", "shap", "shap_feature_importance.csv")
             importance_df.to_csv(importance_path, index=False)
             logging.info(f"SHAP-based feature importance saved: {importance_path}")
 
