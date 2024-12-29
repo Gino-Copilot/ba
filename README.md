@@ -51,36 +51,36 @@ pip install -e .[dev,capture]
 ## Project Structure
 ```
 .
-├── deployment/                # Deployment-Konfigurationen
-├── results/                   # Analyse-Ergebnisse und Modell-Outputs
-│   ├── [experiment_name]/    # Ergebnisse einzelner Experimente
-│   │   ├── features/         # Feature-Analysen
+├── deployment/                # Deployment configurations
+├── results/                   # Analysis outputs and model artifacts
+│   ├── [experiment_name]/    # Individual experiment results
+│   │   ├── features/         # Feature analysis outputs
 │   │   │   ├── correlations/
 │   │   │   ├── groups/
 │   │   │   ├── importance/
 │   │   │   └── summaries/
-│   │   ├── models/          # Trainierte Modelle
+│   │   ├── models/           # Trained models
 │   │   │   ├── LogisticRegression/
 │   │   │   ├── RandomForestClassifier/
 │   │   │   ├── SVC/
 │   │   │   └── XGBClassifier/
-│   │   ├── nfstream/        # NFStream Ergebnisse
+│   │   ├── nfstream/         # NFStream results
 │   │   │   ├── processed/
 │   │   │   └── summaries/
-│   │   ├── reports/         # Analyseberichte
+│   │   ├── reports/          # Analysis reports
 │   │   │   └── visualizations/
-│   │   └── trained/         # Trainierte Modelle
+│   │   └── trained/          # Final trained models
 │   │       └── best/
-├── tcpdump_recorder/         # Traffic-Aufzeichnungsmodule
+├── tcpdump_recorder/         # Modules for live traffic capture
 │   ├── __init__.py
 │   ├── no_proxy_firefox_recorder.py
 │   ├── proton_recorder.py
 │   ├── proxy_port_8388_recorder.py
 │   └── tcpdump_recorder_all_trafic.py
-├── tests/                    # Testmodule
+├── tests/                    # Test modules
 │   ├── __pycache__/
 │   └── test_data/
-├── traffic_analysis/         # Hauptanalysemodule
+├── traffic_analysis/         # Main analysis modules
 │   ├── __init__.py
 │   ├── data_cleaner.py
 │   ├── data_inspector.py
@@ -92,50 +92,65 @@ pip install -e .[dev,capture]
 │   ├── output_manager.py
 │   ├── shap_analyzer.py
 │   └── sklearn_classifier.py
-├── traffic_data/            # Rohdaten und verarbeitete Daten
-│   ├── firefox_without_proxy_2024-12-08/
-│   ├── normal_traffic_comparison_12-23/
-│   ├── PROTON_test/
-│   ├── regular_selenium_traffic/
-│   ├── shadowsocks_traffic/
+├── traffic_data/             # Raw data and intermediate files
+│   ├── normal
+│   ├── shadowsocks
+│   ├── proton
+│   ├── test
 │   └── traffic_zips/
-├── traffic_generation/      # Traffic-Generierungstools
+├── traffic_generation/       # Scripts for generating synthetic traffic
 │   ├── configure_proxy.py
 │   ├── surf_without_proxy.py
 │   └── surf_with_ss_proxy.py
-├── pyproject.toml          # Projektkonfiguration
-└── README.md               # Diese Datei
+├── pyproject.toml            # Project configuration
+└── README.md                 # Documentation (this file)
 
 ```
 
 ## Usage
 
-### Feature Extraction and Model Training
-```python
-from traffic_analysis.nfstream_feature_extractor import NFStreamFeatureExtractor
-from traffic_analysis.sklearn_classifier import ScikitLearnTrafficClassifier
-from traffic_analysis.model_selection import MODELS
+### 1. Create PCABs - tcpdump_recorder
+This script allows to quickly record pcaps, listening on port 443 for normal network traffic or port 8388 for network traffic over shadowsocks.
+Optionally traffic_generation can be used - a small selenium script that simulates a user who wants to read messages on various relevant sites and browses around.
 
-# Feature extraction
-extractor = NFStreamFeatureExtractor()
-df = extractor.prepare_dataset(proxy_dir, normal_dir)
+### 2. Run the machine learning pipeline - main.py
+In main.py, an entry point named main() is defined near the bottom of the file, where three directory variables (proxy_dir, normal_dir, results_dir) can be customized.
 
-# Model training and evaluation
-for model_name, model in MODELS.items():
-    classifier = ScikitLearnTrafficClassifier(model)
-    classifier.train(df)
 ```
+proxy_dir = "/path/to/your/proxy_folder"
 
-### Results
-Analysis results are saved in the following directories:
-- `analysis_results/`: Visualizations and model comparisons
-- `nfstream_results/`: Feature importance and datasets
+normal_dir = "/path/to/your/normal_folder"
 
-## Development
+results_dir = "/path/to/your/results_folder"
 
-### Running Tests
-```bash
-pytest
+```
+These directory paths should be set to the appropriate locations on the local system: one containing the proxy PCAP files, one containing the normal PCAP files, and a chosen folder for storing all analysis results.
+
+- Execute the script, by running the main.py
+
+now a pipeline with the following functions will start automatically:
+
+  1) Copy PCAPs from original folders -> 'clean_data' subfolders
+  2) Plot PCAP size distribution
+  3) NFStream feature extraction
+  4) Data cleaning
+  5) Model training (GridSearch if param_grid != {})
+  6) SHAP analysis if predict_proba is supported
+  7) Compare model accuracies
+  8) Save only the best model pipeline in 'trained/best'
+
+a time-stamped subfolder will be created under the specified results_dir
+there is also the best model for that run stored in a subfolder named **trained**, wich is a .joblib file
+
+### 3. Make predictions
+In the folder deployment is the file inference.py
+At the beginning of the file inside the main-function are the necessary customisations to do
+(PCAP folder and trained model path)
+
+```
+    # Adjust these paths as needed:
+    pcap_dir = "/path/to/unlabeled_pcaps"    # <-- Place your PCAP directory path here
+    model_path = "/path/to/BEST_XGBClassifier_pipeline.joblib"  # <-- Path to your joblib model
 ```
 
 ### Code Quality

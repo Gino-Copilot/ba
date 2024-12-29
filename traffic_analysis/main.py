@@ -40,30 +40,33 @@ class TrafficAnalyzer:
          under the main timestamp directory (with an info file about data origin).
     """
 
-    def __init__(self, proxy_dir: str, normal_dir: str, results_dir: str):
+    def __init__(self, proxy_dir: str, normal_dir: str, model_training_dir: str):
         """
         Initializes the TrafficAnalyzer with user-specified proxy/normal PCAP folders
-        and a results directory. Stores all outputs in a subfolder named:
-           "<proxy_name>_vs_<normal_name>_<dd-mm-yyyy_hh-mm>"
+        and a model_training_dir directory.
 
-        Args:
-            proxy_dir: Folder containing the original proxy PCAP files.
-            normal_dir: Folder containing the original normal PCAP files.
-            results_dir: Base results directory for all analyses.
+        Creates a subfolder named:
+           "<dd-mm-yyyy>_<HH-mm>__<proxy_name>_vs_<normal_name>"
+
+        where <dd-mm-yyyy> is the date, <HH-mm> is hours-minutes, and
+        <proxy_name>, <normal_name> are derived from the specified folders.
         """
         self.proxy_dir = self._validate_directory(proxy_dir)
         self.normal_dir = self._validate_directory(normal_dir)
 
-        # Use folder names for naming the result directory
+        # Use folder names for part of the result directory
         proxy_name = Path(self.proxy_dir).name
         normal_name = Path(self.normal_dir).name
 
-        # Day-Month-Year_Hour-Minute (no seconds)
-        timestamp = time.strftime('%d-%m-%Y_%H-%M')
+        # Separate date and time (no seconds)
+        date_str = time.strftime('%d-%m-%Y')
+        time_str = time.strftime('%H-%M')
+
+        # Example: "27-12-2024_15-32__shadow_test_vs_PROTON_test"
+        folder_name = f"{date_str}_{time_str}__{proxy_name}_vs_{normal_name}"
 
         # Create the subfolder for this particular analysis
-        folder_name = f"{proxy_name}_vs_{normal_name}_{timestamp}"
-        analysis_dir = Path(results_dir) / folder_name
+        analysis_dir = Path(model_training_dir) / folder_name
         analysis_dir.mkdir(parents=True, exist_ok=True)
 
         self.results_dir = analysis_dir
@@ -104,7 +107,7 @@ class TrafficAnalyzer:
         log_dir = Path(self.results_dir) / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        # Log file (no seconds)
+        # Log file name includes date and time (no seconds)
         log_file = log_dir / f"analysis_{time.strftime('%d-%m-%Y_%H-%M')}.log"
 
         logger = logging.getLogger()
@@ -308,12 +311,12 @@ def main():
     Entry point: Just an example usage with static paths. Adjust as needed.
     """
     try:
-        # Example directories
-        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/shadowsocks_traffic_5_sec_selenium_only_port_8388_500_aes_128_12-27"
-        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/regular_selenium_traffic_on_port_443_5s_500_12-27"
-        results_dir = "/home/gino/PycharmProjects/myenv/ba/results"
+        # Example directories (unchanged)
+        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/shadowsocks_traffic_20_sec_youtube_only_port_8388_500_aes_256_12-29"
+        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/normal/regular_youtube_traffic_on_port_443_20s_500_12-28"
+        model_training_dir = "/home/gino/PycharmProjects/myenv/ba/model_training_results"
 
-        analyzer = TrafficAnalyzer(proxy_dir, normal_dir, results_dir)
+        analyzer = TrafficAnalyzer(proxy_dir, normal_dir, model_training_dir)
         analyzer.run_analysis()
 
     except Exception as e:

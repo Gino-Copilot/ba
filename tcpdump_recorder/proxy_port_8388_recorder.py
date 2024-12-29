@@ -95,7 +95,7 @@ class TrafficCapture:
 def main():
     # Save Shadowsocks traffic with updated folder and file names
     traffic_capture = TrafficCapture(
-        traffic_type="shadowsocks_traffic_20_sec_selenium_only_port_8388_500_aes_128",
+        traffic_type="shadowsocks_traffic_20_sec_youtube_only_port_8388_500_aes_256",
         interval=20,
         file_count=500,
         interface="wlp0s20f3",
