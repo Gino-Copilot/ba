@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 from typing import Dict, Any, Optional
+
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -12,8 +13,8 @@ from sklearn.metrics import classification_report
 
 class ScikitLearnTrafficClassifier:
     """
-    A wrapper class for scikit-learn classifiers with integrated preprocessing,
-    optional GridSearch, cross-validation, and metric calculation.
+    A wrapper for scikit-learn classifiers with optional GridSearch,
+    cross-validation, and metric reporting.
     """
 
     def __init__(
@@ -29,15 +30,14 @@ class ScikitLearnTrafficClassifier:
     ):
         """
         Args:
-            model: A scikit-learn classifier instance
-            output_manager: Instance handling file paths and saving
-            data_visualizer: Instance for creating visualizations
-            test_size: Fraction of data to use for testing (default: 0.2)
-            random_state: Random seed (default: 42)
-            cv_folds: Number of cross-validation folds (default: 5)
-            param_grid: Dict of hyperparameters for optional GridSearchCV (default: None)
-                        e.g. {"model__C": [0.1, 1, 10]}
-            gridsearch_scoring: Metric name for scoring in GridSearchCV (default: "accuracy")
+            model: scikit-learn classifier
+            output_manager: handles output paths
+            data_visualizer: for optional plots
+            test_size: fraction for test split
+            random_state: random seed
+            cv_folds: folds in cross-validation
+            param_grid: hyperparams for GridSearch
+            gridsearch_scoring: metric for GridSearch
         """
         self.model = model
         self.output_manager = output_manager
@@ -45,7 +45,7 @@ class ScikitLearnTrafficClassifier:
         self.test_size = test_size
         self.random_state = random_state
         self.cv_folds = cv_folds
-        self.param_grid = param_grid or {}  # empty if none provided
+        self.param_grid = param_grid or {}
         self.gridsearch_scoring = gridsearch_scoring
 
         self.X_test = None
@@ -55,62 +55,55 @@ class ScikitLearnTrafficClassifier:
 
     def train(self, df: pd.DataFrame, target_column: str = 'label') -> Dict[str, Any]:
         """
-        Trains the model (with or without GridSearch) and returns performance metrics.
+        Trains the model and returns performance metrics.
 
         Steps:
-          1) Validate DataFrame
-          2) Split into features (X) and target (y)
-          3) Build pipeline: [StandardScaler -> model]
-          4) If param_grid is not empty, run GridSearchCV -> best_estimator_
-          5) Predict on test set, produce classification_report
-          6) Return metrics dict
-
-        Args:
-            df: DataFrame containing features and target
-            target_column: Name of the target column
-
-        Returns:
-            A dict with various performance metrics + possibly best_params
+          1) Validate input
+          2) Split into X/y
+          3) Build pipeline [Scaler -> model]
+          4) Optional GridSearch
+          5) Predict + classification report
+          6) Return metrics
         """
         try:
+            # 1) Validate input
             if not isinstance(df, pd.DataFrame):
-                logging.error("Input must be a pandas DataFrame.")
+                logging.error("Input must be a DataFrame.")
                 return {}
-
             if df.empty or df.shape[1] == 0:
                 logging.error("DataFrame is empty or has no columns.")
                 return {}
-
             if target_column not in df.columns:
-                logging.error(f"Target column '{target_column}' not found in {df.columns.tolist()}")
+                logging.error(f"Target column '{target_column}' not found.")
                 return {}
-
-            # Need at least 2 classes in the target
             unique_labels = df[target_column].unique()
             if len(unique_labels) < 2:
-                logging.error(f"Need at least 2 classes, found only: {unique_labels}")
+                logging.error(f"Need >=2 classes, found only: {unique_labels}")
                 return {}
 
             # Check NaN/Inf
             nan_cols = df.columns[df.isna().any()].tolist()
             inf_cols = df.columns[df.isin([np.inf, -np.inf]).any()].tolist()
             if nan_cols or inf_cols:
-                logging.error(f"Found NaN in columns: {nan_cols}")
-                logging.error(f"Found Inf in columns: {inf_cols}")
+                logging.error(f"NaN in: {nan_cols}, Inf in: {inf_cols}")
                 return {}
 
-            # Split features/target
+            # 2) Split X/y
             X = df.drop(columns=[target_column]).copy()
             y = df[target_column].copy()
 
-            # Check numeric columns
+            # Drop non-numeric
+            non_numeric = [c for c in X.columns if X[c].dtype == object]
+            if non_numeric:
+                logging.info(f"Dropping non-numeric cols: {non_numeric}")
+                X.drop(columns=non_numeric, inplace=True, errors='ignore')
+
+            # Check numeric
             for col in X.columns:
                 if not np.issubdtype(X[col].dtype, np.number):
-                    logging.error(f"Non-numeric column found: {col} ({X[col].dtype})")
+                    logging.error(f"Column '{col}' not numeric.")
                     return {}
 
-            # Train-test split
-            from sklearn.model_selection import train_test_split
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y,
                 test_size=self.test_size,
@@ -118,20 +111,15 @@ class ScikitLearnTrafficClassifier:
                 stratify=y
             )
 
-            # Basic pipeline
-            from sklearn.pipeline import Pipeline
-            from sklearn.preprocessing import StandardScaler
-
+            # 3) Pipeline
             pipeline = Pipeline([
                 ('scaler', StandardScaler()),
                 ('model', self.model)
             ])
 
+            # 4) GridSearch or direct fit
             if self.param_grid:
-                # Perform GridSearchCV
-                logging.info(f"Running GridSearch with param_grid={self.param_grid}")
-                from sklearn.model_selection import GridSearchCV
-
+                logging.info(f"GridSearch with param_grid={self.param_grid}")
                 grid = GridSearchCV(
                     estimator=pipeline,
                     param_grid=self.param_grid,
@@ -141,41 +129,32 @@ class ScikitLearnTrafficClassifier:
                     verbose=1
                 )
                 grid.fit(X_train, y_train)
-
-                self.pipeline = grid.best_estimator_  # best pipeline
+                self.pipeline = grid.best_estimator_
                 best_params = grid.best_params_
                 best_score = grid.best_score_
                 logging.info(f"Best params: {best_params}")
-                logging.info(f"Best CV score={best_score:.4f} ({self.gridsearch_scoring})")
+                logging.info(f"Best CV score={best_score:.4f}")
             else:
-                # Direct fit without GridSearch
-                logging.info("No param_grid provided; fitting pipeline directly.")
+                logging.info("No param_grid provided; fitting directly.")
                 pipeline.fit(X_train, y_train)
                 self.pipeline = pipeline
 
-            # Predict on test set
+            # 5) Predict + metrics
             y_pred = self.pipeline.predict(X_test)
-
-            # Save references
             self.X_test = X_test
             self.y_test = y_test
             self.best_estimator_ = self.pipeline
 
-            # Classification report
-            from sklearn.metrics import classification_report
             metrics = classification_report(y_test, y_pred, output_dict=True)
-
-            # If we used gridsearch, store best_* in metrics
             if self.param_grid:
                 metrics["gridsearch_best_params"] = best_params
                 metrics["gridsearch_best_score"] = best_score
 
-            # Log final results
-            accuracy = metrics.get("accuracy", None)
-            if accuracy is not None:
-                logging.info(f"Test Accuracy={accuracy:.3f}")
+            acc = metrics.get("accuracy", None)
+            if acc is not None:
+                logging.info(f"Test Accuracy={acc:.3f}")
             else:
-                logging.info("No accuracy found in classification_report.")
+                logging.info("No accuracy in classification_report.")
 
             return metrics
 

@@ -41,25 +41,25 @@ class SHAPAnalyzer:
             if X is None or len(X) == 0:
                 raise ValueError("Empty or invalid input data to SHAPAnalyzer.")
 
-            # Step 1) Possibly sample large data
+            # Possibly sample large data
             X_sampled = self._sample_data(X)
 
-            # Step 2) Initialize the SHAP explainer
+            # Initialize the SHAP explainer
             self.explainer = self._initialize_explainer(X_sampled)
             if self.explainer is None:
                 logging.warning("Failed to initialize SHAP explainer.")
                 return None, None
 
-            # Step 3) Calculate SHAP values
+            # Calculate SHAP values
             self.shap_values = self._calculate_shap_values(X_sampled)
             if self.shap_values is None:
                 logging.warning("Failed to compute SHAP values.")
                 return None, None
 
-            # Step 4) Create plots
+            # Create plots
             self._create_visualizations(X_sampled)
 
-            # Step 5) Save CSV results
+            # Save CSV results
             self._save_analysis_results(X_sampled)
 
             logging.info("Global SHAP analysis completed successfully!")
@@ -213,7 +213,6 @@ class SHAPAnalyzer:
         Alternative beeswarm plot (just an example, you can decide if you really need a second one).
         """
         try:
-            # Falls du nur EINE Form des Beeswarm möchtest, kann diese Methode entfallen
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
                 self.shap_values, X,
