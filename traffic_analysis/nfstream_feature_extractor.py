@@ -1,3 +1,5 @@
+# file: traffic_analysis/nfstream_feature_extractor.py
+
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -36,7 +38,7 @@ class NFStreamFeatureExtractor:
     def __init__(self, output_manager, use_entropy: bool = False, min_packets: int = 5):
         """
         Args:
-            output_manager: An instance of OutputManager for handling output paths.
+            output_manager: An instance of OutputManager (or None) for handling output paths.
             use_entropy: Whether to calculate entropy-based features or not.
             min_packets: Minimum bidirectional packets required to consider a flow valid.
         """
@@ -55,11 +57,7 @@ class NFStreamFeatureExtractor:
           2) Extract features from the normal directory (label='normal').
           3) Concatenate the two DataFrames.
           4) Drop Inf/NaN values.
-          5) Save combined CSV and summary.
-
-        Args:
-            proxy_dir: Path to the directory containing .pcap files labeled "proxy".
-            normal_dir: Path to the directory containing .pcap files labeled "normal".
+          5) (Optionally) Save combined CSV and summary.
 
         Returns:
             A combined DataFrame of all extracted flows with a 'label' column.
@@ -93,19 +91,21 @@ class NFStreamFeatureExtractor:
                 logging.error("Both proxy and normal DataFrames are empty! Returning empty.")
                 return pd.DataFrame()
 
-            # Combine the DataFrames
+            # Combine
             combined_df = pd.concat([proxy_df, normal_df], ignore_index=True)
             logging.info(f"Combined DataFrame shape: {combined_df.shape}")
             logging.info(f"Label distribution:\n{combined_df['label'].value_counts(dropna=False)}")
 
-            # Remove Inf/NaN values
+            # Remove Inf/NaN
             original_shape = combined_df.shape
             combined_df.replace([np.inf, -np.inf], np.nan, inplace=True)
             combined_df.dropna(inplace=True)
             logging.info(f"Cleaned dataset from shape={original_shape} to shape={combined_df.shape}")
 
             if not combined_df.empty:
+                # Optionally save combined CSV
                 self._save_csv(combined_df, "nfstream", "processed", "complete_dataset.csv")
+                # Optionally save a summary
                 self._save_dataset_summary(combined_df)
             else:
                 logging.error("Final dataset is empty after cleaning (post-concat dropna)!")
@@ -118,15 +118,17 @@ class NFStreamFeatureExtractor:
 
     def extract_features(self, pcap_dir: Union[str, Path], label: str) -> pd.DataFrame:
         """
-        Extracts features for all PCAP files in the specified directory.
+        Extracts features for all PCAP files in the specified directory (or single file).
 
         Args:
-            pcap_dir: Path to directory containing .pcap files.
-            label: 'proxy' or 'normal' (used in the 'label' column of the output DataFrame).
+            pcap_dir: Directory or file path containing .pcap(s).
+            label: 'proxy' or 'normal' (added to each flow in DataFrame).
 
         Returns:
-            A DataFrame with flows from all PCAP files. If no files or no valid flows,
-            returns an empty DataFrame.
+            A DataFrame with flows from all PCAP files, including columns:
+                - 'label' (e.g. 'proxy' or 'normal')
+                - 'filename' (the PCAP file name)
+                - various FlowFeatures
         """
         pcap_dir = Path(pcap_dir)
         flows_data = []
@@ -146,8 +148,7 @@ class NFStreamFeatureExtractor:
             f"Label for extracted flows will be '{label}'."
         )
 
-        # Use tqdm to create a progress bar. That results in exactly one bar for this directory.
-        # If you call extract_features() twice (proxy + normal), you get two bars total.
+        # Use tqdm progress bar if multiple PCAP files
         for pcap_file in tqdm(pcap_files, desc=f"Extracting [{label}]"):
             try:
                 logging.info(f"Processing file: {pcap_file}")
@@ -163,12 +164,14 @@ class NFStreamFeatureExtractor:
                 flow_count, valid_count = 0, 0
                 for flow in streamer:
                     flow_count += 1
-
-                    # Extract features for this flow
+                    # Extract single-flow features
                     feats = self._extract_flow_features(flow)
                     if feats:
                         valid_count += 1
-                        flow_dict = {'label': label}
+                        flow_dict = {
+                            'label': label,
+                            'filename': pcap_file.name  # crucial for grouping by PCAP
+                        }
                         flow_dict.update(self._flow_features_to_dict(feats))
                         flows_data.append(flow_dict)
 
@@ -197,10 +200,10 @@ class NFStreamFeatureExtractor:
     def _extract_flow_features(self, flow) -> Optional[FlowFeatures]:
         """
         Extracts FlowFeatures from a single nfstream flow object.
-        Returns None if the flow doesn't meet the criteria (e.g., fewer than min_packets).
+        Returns None if under min_packets or invalid.
         """
         try:
-            # Minimum packet requirement
+            # Basic threshold
             if flow.bidirectional_packets < self.min_packets:
                 return None
 
@@ -242,7 +245,7 @@ class NFStreamFeatureExtractor:
 
     def _flow_features_to_dict(self, features: FlowFeatures) -> Dict[str, Any]:
         """
-        Converts a FlowFeatures dataclass into a dict for easy DataFrame construction.
+        Converts a FlowFeatures dataclass into a dict for easy usage in a DataFrame.
         """
         d = {
             'duration_seconds': features.duration_seconds,
@@ -262,16 +265,15 @@ class NFStreamFeatureExtractor:
 
     def _calculate_entropy_features(self, flow) -> Dict[str, float]:
         """
-        Calculates optional entropy-based features (payload entropy, packet-length entropy).
-        Returns an empty dict if no relevant data is found.
+        Calculates optional entropy-based features for payload and/or packet lengths.
         """
         results = {}
         try:
-            # If the flow object has payload_bytes, compute entropy
+            # If the flow object has payload bytes
             if getattr(flow, 'payload_bytes', None):
                 results['payload_entropy'] = self._calculate_entropy(flow.payload_bytes)
 
-            # If the flow object has a packet_lengths attribute
+            # If the flow object has packet_lengths
             if hasattr(flow, 'packet_lengths') and flow.packet_lengths:
                 length_bytes = bytes(flow.packet_lengths)
                 results['packet_length_entropy'] = self._calculate_entropy(length_bytes)
@@ -282,7 +284,7 @@ class NFStreamFeatureExtractor:
 
     def _calculate_entropy(self, data: bytes) -> float:
         """
-        Computes Shannon entropy for a bytes object.
+        Computes Shannon entropy for raw bytes.
         """
         if not data:
             return 0.0
@@ -291,7 +293,7 @@ class NFStreamFeatureExtractor:
             for b in data:
                 counts[b] = counts.get(b, 0) + 1
             total = len(data)
-            probs = [v / total for v in counts.values()]
+            probs = [c / total for c in counts.values()]
             return entropy(probs, base=2)
         except Exception as e:
             logging.error(f"Error in _calculate_entropy: {e}")
@@ -300,7 +302,10 @@ class NFStreamFeatureExtractor:
     def _save_csv(self, df: pd.DataFrame, category: str, subcategory: str, filename: str):
         """
         Saves a DataFrame to CSV using the OutputManager path structure.
+        If self.output_manager is None, does nothing.
         """
+        if not self.output_manager:
+            return  # do nothing if no output_manager is used
         try:
             path = self.output_manager.get_path(category, subcategory, filename)
             df.to_csv(path, index=False)
@@ -310,30 +315,29 @@ class NFStreamFeatureExtractor:
 
     def _save_dataset_summary(self, df: pd.DataFrame):
         """
-        Saves a text summary of the combined dataset (row count, feature list, stats).
+        Saves a text summary of the dataset (counts, columns, stats).
+        If self.output_manager is None, does nothing.
         """
+        if not self.output_manager:
+            return
         try:
             summary_path = self.output_manager.get_path("nfstream", "summaries", "dataset_summary.txt")
             with open(summary_path, 'w') as f:
                 f.write("=== Dataset Summary ===\n\n")
                 f.write(f"Total flows: {len(df)}\n")
                 if 'label' in df.columns:
-                    # The user might still have 'proxy'/'normal' or numeric.
-                    # If numeric, label=1 means proxy, label=0 means normal.
-                    # This is just an example.
-                    # (Optional) If you want a more direct approach,
-                    #           count how many 'proxy' vs. 'normal' in the original data
-                    #           or show the distribution for 0/1 if already mapped.
-                    proxy_count = len(df[df['label'] == 'proxy']) if 'proxy' in df['label'].unique() else 0
-                    normal_count = len(df[df['label'] == 'normal']) if 'normal' in df['label'].unique() else 0
+                    # Count how many 'proxy' vs. 'normal'
+                    proxy_count = (df['label'] == 'proxy').sum()
+                    normal_count = (df['label'] == 'normal').sum()
                     f.write(f"Proxy flows (label='proxy'): {proxy_count}\n")
                     f.write(f"Normal flows (label='normal'): {normal_count}\n")
 
-                f.write(f"Number of features: {len(df.columns) - 1}\n\n")
+                f.write(f"\nNumber of features: {len(df.columns) - 1}\n\n")
                 f.write("Available Features:\n")
                 for col in sorted(df.columns):
                     if col != 'label':
                         f.write(f" - {col}\n")
+
                 f.write("\nFeature Statistics:\n")
                 f.write(df.describe().to_string())
                 f.write("\n")
