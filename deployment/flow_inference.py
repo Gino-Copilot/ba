@@ -1,4 +1,4 @@
-# file: deployment/inference_flow_based.py
+# file: deployment/flow_inference.py
 
 """
 Script to load a pre-trained best model (pipeline) and use it for classifying new PCAPs
@@ -11,7 +11,7 @@ Inside that folder, it saves:
   - A bar chart of predicted class distribution
 
 Example usage:
-    python inference_flow_based.py
+    python flow_inference.py
 
 Workflow:
     1) Extract features from PCAPs (minimally like in your pipeline).
@@ -30,7 +30,7 @@ import numpy as np
 from joblib import load
 import matplotlib.pyplot as plt
 
-# Adjust the import path if needed.
+# Falls nötig, Pfad anpassen:
 from traffic_analysis.nfstream_feature_extractor import NFStreamFeatureExtractor
 
 
@@ -46,7 +46,7 @@ def setup_logging():
 
 
 def main():
-    # PCAP input folder & trained model path
+    # Pfade und Dateien anpassen:
     pcap_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/unlabeled/20241229_203756"
     model_path = (
         "/home/gino/PycharmProjects/myenv/ba/model_training_results/"
@@ -55,9 +55,9 @@ def main():
         "BEST_RandomForestClassifier_pipeline.joblib"
     )
 
-    # Output folder: "<dd-mm-yyyy>_<HH-mm>__flow_inference"
+    # Ausgabe-Ordner => "<dd-mm-yyyy>_<HH-mm>__flow_inference"
     results_base_dir = "/home/gino/PycharmProjects/myenv/ba/inference_results"
-    date_time_str = time.strftime("%d-%m-%Y_%H-%M")  # day-month-year_hour-minute
+    date_time_str = time.strftime("%d-%m-%Y_%H-%M")  # Tag-Monat-Jahr_Stunde-Minuten (ohne Sekunden)
     output_subfolder_name = f"{date_time_str}__flow_inference"
     inference_result_dir = Path(results_base_dir) / output_subfolder_name
     inference_result_dir.mkdir(parents=True, exist_ok=True)
@@ -65,25 +65,26 @@ def main():
     setup_logging()
     logging.info("Starting Shadowsocks flow-based inference script...")
 
-    # Extract flow-level features
+    # 1) Extrahiere Flow-Features aus den PCAPs
     logging.info(f"Extracting flow features from PCAPs in: {pcap_dir}")
     df = extract_features_from_pcaps(pcap_dir)
     if df.empty:
         logging.error("No flows extracted from the provided PCAP folder. Exiting.")
         return
 
-    # Load model pipeline
+    # 2) Lade das vortrainierte Pipeline-Modell
     pipeline = load_model_pipeline(model_path)
     if pipeline is None:
         logging.error("Could not load pipeline. Exiting.")
         return
 
-    # Drop columns not in the training schema (e.g. 'filename') before .predict()
+    # 3) Vorhersage
+    # Falls 'filename' nicht zum Train-Set gehört => droppen
     logging.info("Predicting Shadowsocks vs. Non-Shadowsocks flows...")
     df_for_model = df.drop(columns=["filename"], errors="ignore")
     predictions = pipeline.predict(df_for_model)
 
-    # Summaries
+    # Zusammenfassung
     ss_count = np.sum(predictions == 1)
     total_flows = len(predictions)
     logging.info(
@@ -91,14 +92,14 @@ def main():
         f"({(ss_count/total_flows)*100:.1f}% of flows)"
     )
 
-    # Save predictions to CSV
+    # 4) Speichere CSV mit allen Flows und Predictions
     df_out = df.copy()
     df_out['prediction'] = predictions
     csv_path = inference_result_dir / "shadowsocks_predictions.csv"
     df_out.to_csv(csv_path, index=False)
     logging.info(f"Predictions CSV saved to: {csv_path}")
 
-    # Plot distribution bar chart
+    # 5) Erstelle eine Balkengrafik der Klassenverteilung
     logging.info("Creating class distribution plot...")
     class_labels = ["Non-Shadowsocks (0)", "Shadowsocks (1)"]
     class_counts = [np.sum(predictions == 0), np.sum(predictions == 1)]
@@ -115,11 +116,11 @@ def main():
     plt.close()
     logging.info(f"Class distribution plot saved: {plot_path}")
 
-    # Write a small summary text file
+    # 6) Schreibe eine kurze Zusammenfassung
     summary_path = inference_result_dir / "inference_summary.txt"
     with open(summary_path, "w") as f:
         f.write("=== Flow-Based Shadowsocks Inference Summary ===\n\n")
-        f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M')}\n")  # or same format as subfolder
+        f.write(f"Timestamp: {time.strftime('%d-%m-%Y_%H-%M')}\n")  # identisches Format wie Subfolder
         f.write(f"PCAP folder: {pcap_dir}\n")
         f.write(f"Model used: {model_path}\n\n")
         f.write(f"Total flows analyzed: {total_flows}\n")
@@ -137,17 +138,17 @@ def extract_features_from_pcaps(pcap_dir: str) -> pd.DataFrame:
     """
     Uses NFStreamFeatureExtractor (with minimal config) to get a DataFrame of flows
     from the PCAPs. We keep 'filename' so we know from which PCAP each flow came,
-    but we remove any 'label' column (since it's unlabeled).
+    but drop any 'label' column (if present).
     """
     extractor = NFStreamFeatureExtractor(
         output_manager=None,
         use_entropy=False,
         min_packets=2
     )
-    # Label flows as 'unlabeled' (just for internal consistency).
+    # Label flows as 'unlabeled' (relevant for internal usage).
     df = extractor.extract_features(pcap_dir, label='unlabeled')
 
-    # Drop 'label' if present, keep 'filename' if you'd like to know PCAP origins.
+    # Falls 'label' noch da ist => entfernen
     if "label" in df.columns:
         df.drop(columns=["label"], inplace=True, errors="ignore")
 
@@ -156,8 +157,7 @@ def extract_features_from_pcaps(pcap_dir: str) -> pd.DataFrame:
 
 def load_model_pipeline(path_to_model: str):
     """
-    Loads a scikit-learn pipeline from .joblib. This pipeline might consist of
-    (scaler + model) or something similar.
+    Loads a scikit-learn pipeline (with scaler + model) from the specified .joblib file.
     """
     p = Path(path_to_model)
     if not p.exists():
