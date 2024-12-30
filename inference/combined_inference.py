@@ -49,7 +49,7 @@ def main():
     # 1) Deine Pfade und Dateien
     # ============================
     pcap_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/unlabeled/20241229_203756"
-    model_path = ("/home/gino/PycharmProjects/myenv/ba/results_training/shadow_test_vs_PROTON_test_30-12-2024_22-06/20241230-220658/trained/best/BEST_RandomForestClassifier_pipeline.joblib")
+    model_path = ("/home/gino/PycharmProjects/myenv/ba/results_training/shadowsocks_traffic_20_sec_youtube_only_port_8388_500_aes_256_12-29_vs_regular_youtube_traffic_on_port_443_20s_500_12-28_30-12-2024_23-21/20241230-232110/trained/best/BEST_RandomForestClassifier_pipeline.joblib")
     results_base_dir = "/home/gino/PycharmProjects/myenv/ba/inference_results"
     # Ordnername: "<dd-mm-yyyy>_<HH-mm>__combined_inference" (ohne Sekunden)
     date_time_str = time.strftime("%d-%m-%Y_%H-%M")

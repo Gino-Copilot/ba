@@ -309,8 +309,8 @@ def main():
     """
     try:
         # Example directories
-        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/test/shadow_test"
-        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/test/PROTON_test"
+        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/shadowsocks/shadowsocks_traffic_20_sec_youtube_only_port_8388_500_aes_256_12-29"
+        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/normal/regular_youtube_traffic_on_port_443_20s_500_12-28"
         results_dir = "/home/gino/PycharmProjects/myenv/ba/results_training"
 
         analyzer = TrafficAnalyzer(proxy_dir, normal_dir, results_dir)
