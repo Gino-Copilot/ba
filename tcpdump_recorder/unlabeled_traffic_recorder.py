@@ -123,10 +123,7 @@ class UnlabeledTrafficCapture:
                 proc.kill()
 
 def main():
-    """
-    Example usage:
-    Captures 5 files, each 10 seconds long, capturing all traffic on 'eth0'.
-    """
+
     capture = UnlabeledTrafficCapture(
         interval=10,
         file_count=5,

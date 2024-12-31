@@ -106,7 +106,7 @@ class TrafficCapture:
 def main():
     # Beispiel: Erfassen von 10 Dateien, jeweils 10 Sekunden lang, auf Port 443
     traffic_capture = TrafficCapture(
-        traffic_type="regular_youtube_traffic_on_port_443_5s_500",
+        traffic_type="regular_selenium_traffic_on_port_443_20s_500",
         interval=20,
         file_count=500,
         interface="wlp0s20f3",
