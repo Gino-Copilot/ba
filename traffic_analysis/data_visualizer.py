@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import logging
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -21,16 +21,17 @@ from sklearn.metrics import (
 
 class DataVisualizer:
     """
-    Provides various plotting functionalities for model metrics and performance visualization.
+    Provides plotting methods for model metrics, feature importances, etc.
     """
 
     def __init__(self, output_manager):
         """
-        Initializes the DataVisualizer with a given OutputManager for path handling.
+        output_manager: manages file paths for saving plots.
         """
         self.output_manager = output_manager
         self.model_results: List[Dict[str, Any]] = []
 
+        # Basic style config
         self.plot_style = {
             'figure.figsize': (12, 8),
             'axes.titlesize': 14,
@@ -46,11 +47,11 @@ class DataVisualizer:
             '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
         ]
         self._setup_visualization()
-        logging.info("DataVisualizer initialized successfully.")
+        logging.info("DataVisualizer initialized.")
 
     def _setup_visualization(self):
         """
-        Applies chosen plot style (rcParams) and color palette for Seaborn/Matplotlib.
+        Applies chosen rcParams and Seaborn palette.
         """
         for key, value in self.plot_style.items():
             plt.rcParams[key] = value
@@ -59,216 +60,55 @@ class DataVisualizer:
 
     def add_model_result(self, model_name: str, metrics: Dict[str, Any]):
         """
-        Stores and logs model metrics (Accuracy, F1, Precision, Recall, ROC AUC).
-        Generates overview plots for performance comparison among multiple models.
+        Store metrics (Accuracy, F1, etc.) in self.model_results
+        and potentially create comparison plots.
         """
         try:
-            if 'accuracy' not in metrics or 'weighted avg' not in metrics:
-                logging.warning(f"Metrics for {model_name} seem incomplete.")
+            if 'accuracy' not in metrics:
+                logging.warning(f"Metrics for {model_name} have no 'accuracy'.")
                 return
 
+            wavg = metrics.get('weighted avg', {})
             result = {
                 'Model': model_name,
                 'Accuracy': metrics.get('accuracy', np.nan),
-                'F1-Score': metrics['weighted avg'].get('f1-score', np.nan),
-                'Precision': metrics['weighted avg'].get('precision', np.nan),
-                'Recall': metrics['weighted avg'].get('recall', np.nan),
-                'ROC AUC': metrics.get('roc_auc', None)
+                'F1-Score': wavg.get('f1-score', np.nan),
+                'Precision': wavg.get('precision', np.nan),
+                'Recall': wavg.get('recall', np.nan),
             }
+
             self.model_results.append(result)
-
             self._create_performance_visualizations()
-            self._save_model_summary()
-            logging.info(f"Added results for model: {model_name}")
-
+            logging.info(f"Added model result for {model_name}.")
         except Exception as e:
-            logging.error(f"Error adding model result for {model_name}: {e}")
-
-    def plot_roc_curve(self, model, X_test, y_test, model_name: str):
-        """
-        Plots and saves the ROC curve for a given model, if predict_proba is available.
-        """
-        try:
-            if not hasattr(model, 'predict_proba'):
-                logging.warning(f"Model {model_name} does not support predict_proba.")
-                return
-
-            y_prob = model.predict_proba(X_test)[:, 1]
-            fpr, tpr, _ = roc_curve(y_test, y_prob, pos_label=1)
-            roc_auc = auc(fpr, tpr)
-
-            plt.figure(figsize=self.plot_style['figure.figsize'])
-            plt.plot(fpr, tpr, label=f'ROC (AUC={roc_auc:.2f})', linewidth=2)
-            plt.plot([0, 1], [0, 1], 'k--', alpha=0.8, linewidth=1)
-            plt.xlim([0.0, 1.0])
-            plt.ylim([0.0, 1.05])
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.title(f'ROC Curve - {model_name}')
-            plt.legend(loc="lower right")
-
-            self._save_plot('roc_curve', model_name)
-        except Exception as e:
-            logging.error(f"Error plotting ROC curve for {model_name}: {e}")
-
-    def plot_precision_recall_curve(self, model, X_test, y_test, model_name: str):
-        """
-        Plots and saves the Precision-Recall curve for a given model, if predict_proba is available.
-        """
-        try:
-            if not hasattr(model, 'predict_proba'):
-                logging.warning(f"Model {model_name} does not support predict_proba.")
-                return
-
-            y_prob = model.predict_proba(X_test)[:, 1]
-            precision, recall, _ = precision_recall_curve(y_test, y_prob, pos_label=1)
-            pr_auc = auc(recall, precision)
-
-            plt.figure(figsize=self.plot_style['figure.figsize'])
-            plt.plot(recall, precision, label=f'PR (AUC={pr_auc:.2f})', linewidth=2)
-            plt.xlabel('Recall')
-            plt.ylabel('Precision')
-            plt.title(f'Precision-Recall Curve - {model_name}')
-            plt.legend()
-
-            self._save_plot('precision_recall_curve', model_name)
-        except Exception as e:
-            logging.error(f"Error plotting Precision-Recall curve for {model_name}: {e}")
-
-    def plot_feature_importance(self, model, feature_names, model_name: str):
-        """
-        Plots and saves feature importances for tree-based models (with feature_importances_).
-        Updated: We rename output file to 'tree_feature_importance.png' to avoid confusion
-        with any SHAP-based importance plots.
-        """
-        try:
-            if not hasattr(model, 'feature_importances_'):
-                logging.warning(f"Model {model_name} has no feature_importances_.")
-                return
-
-            # Optional: Sort features by importance
-            importance_vals = model.feature_importances_
-            importance_df = pd.DataFrame({
-                'feature': feature_names,
-                'importance': importance_vals
-            }).sort_values('importance', ascending=True)
-
-            plt.figure(figsize=(10, max(8, len(feature_names) * 0.3)))
-            plt.barh(importance_df['feature'], importance_df['importance'], color=self.colors[0])
-            plt.xlabel('Importance')
-            plt.ylabel('Feature')
-            plt.title(f'Feature Importance (Tree-based) - {model_name}')
-            plt.grid(True, alpha=0.3, axis='x')
-            plt.tight_layout()
-
-            # Save as 'tree_feature_importance.png'
-            self._save_plot('tree_feature_importance', model_name)
-        except Exception as e:
-            logging.error(f"Error plotting feature importance for {model_name}: {e}")
-
-    def plot_confusion_matrix(self, y_true, y_pred, model_name: str, labels: List[str] = None):
-        """
-        Plots and saves a confusion matrix for predicted vs. true labels.
-        """
-        try:
-            cm = confusion_matrix(y_true, y_pred)
-            plt.figure(figsize=(8, 6))
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-            plt.title(f'Confusion Matrix - {model_name}')
-            plt.ylabel('True Label')
-            plt.xlabel('Predicted Label')
-            if labels:
-                plt.xticks(np.arange(len(labels)) + 0.5, labels, rotation=45)
-                plt.yticks(np.arange(len(labels)) + 0.5, labels)
-            plt.tight_layout()
-
-            self._save_plot('confusion_matrix', model_name)
-        except Exception as e:
-            logging.error(f"Error plotting confusion matrix for {model_name}: {e}")
-
-    def plot_model_comparison(self, metrics_list: List[tuple]):
-        """
-        Creates a simple bar chart comparing model accuracies (or other metrics).
-        Expects a list of tuples like [(model_name, accuracy), ...].
-        """
-        if not metrics_list:
-            logging.warning("No metrics provided for plot_model_comparison.")
-            return
-
-        model_names = [t[0] for t in metrics_list]
-        accuracies = [t[1] for t in metrics_list]
-
-        plt.figure(figsize=self.plot_style['figure.figsize'])
-        bars = plt.bar(model_names, accuracies, color='skyblue')
-        plt.xlabel("Models")
-        plt.ylabel("Accuracy")
-        plt.title("Model Comparison by Accuracy")
-
-        # Annotate each bar with the accuracy value
-        for bar, acc in zip(bars, accuracies):
-            plt.text(bar.get_x() + bar.get_width() / 2.0,
-                     bar.get_height(),
-                     f"{acc:.3f}",
-                     ha='center', va='bottom')
-
-        plt.ylim([0, 1])  # if accuracy is a 0-1 scale
-        plt.tight_layout()
-
-        output_path = self.output_manager.get_path("reports", "visualizations", "model_comparison_accuracy.png")
-        plt.savefig(output_path)
-        plt.close()
-        logging.info(f"Model comparison chart saved as {output_path}")
-
-    def plot_pcap_size_distribution(self, pcap_sizes: Dict[str, List[int]]):
-        """
-        Plots a boxplot (or barplot) showing the distribution of pcap file sizes for each folder.
-        pcap_sizes: { "proxy": [size_1, size_2, ...], "normal": [size_1, size_2, ...], ... }
-        """
-        try:
-            # Convert dict to a DataFrame for easy plotting with Seaborn
-            plot_data = []
-            for folder_label, sizes in pcap_sizes.items():
-                for s in sizes:
-                    plot_data.append({"Folder": folder_label, "SizeBytes": s})
-
-            df = pd.DataFrame(plot_data)
-            if df.empty:
-                logging.warning("No PCAP size data to plot.")
-                return
-
-            plt.figure(figsize=self.plot_style['figure.figsize'])
-            sns.boxplot(x="Folder", y="SizeBytes", data=df)
-            plt.title("PCAP Size Distribution per Folder")
-            plt.ylabel("PCAP File Size (bytes)")
-
-            self._save_plot('pcap_size_distribution', 'all_folders')
-        except Exception as e:
-            logging.error(f"Error plotting PCAP size distribution: {e}")
+            logging.error(f"Error in add_model_result for {model_name}: {e}")
 
     def _create_performance_visualizations(self):
         """
-        Called internally whenever a new model result is added, to generate
-        comparative plots like bar-plot, heatmap, or radar-plot for multiple models.
+        Generates bar plots, heatmaps, etc. for all models in self.model_results.
         """
         try:
             if not self.model_results:
                 return
+
             df = pd.DataFrame(self.model_results)
             metrics = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
 
             if len(df) < 2:
-                # Only one model -> skip multi-model comparison
+                # Only one model => skip multi-model comparisons
                 return
 
+            # Possibly bar plot for each metric
             self._create_bar_plot(df, metrics)
+            # Possibly a heatmap
             self._create_heatmap(df, metrics)
-            self._create_radar_plot(df, metrics)
+
         except Exception as e:
             logging.error(f"Error creating performance visualizations: {e}")
 
     def _create_bar_plot(self, df: pd.DataFrame, metrics: List[str]):
         """
-        Creates a grouped bar plot for multiple metrics across all models.
+        Simple grouped bar plot for multiple metrics.
         """
         try:
             plt.figure(figsize=self.plot_style['figure.figsize'])
@@ -276,26 +116,32 @@ class DataVisualizer:
             width = 0.8 / len(metrics)
 
             for i, metric in enumerate(metrics):
-                plt.bar(x + i * width,
-                        df[metric],
-                        width,
-                        label=metric,
-                        color=self.colors[i % len(self.colors)])
+                plt.bar(
+                    x + i * width,
+                    df[metric],
+                    width,
+                    label=metric,
+                    color=self.colors[i % len(self.colors)]
+                )
 
             plt.xlabel('Models')
             plt.ylabel('Score')
-            plt.title('Model Performance Comparison')
-            plt.xticks(x + width * (len(metrics) - 1) / 2, df['Model'], rotation=45, ha='right')
+            plt.title('Model Comparison')
+            plt.xticks(x + width * (len(metrics)-1)/2, df['Model'], rotation=45, ha='right')
             plt.legend()
             plt.tight_layout()
 
-            self._save_plot('model_comparison_bar', 'all_models')
+            out_path = self.output_manager.get_path("reports", "visualizations", "model_comparison_bar.png")
+            plt.savefig(out_path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"Saved bar plot: {out_path}")
+
         except Exception as e:
             logging.error(f"Error creating bar plot: {e}")
 
     def _create_heatmap(self, df: pd.DataFrame, metrics: List[str]):
         """
-        Creates a heatmap of the main metrics for each model.
+        Heatmap of metrics for all models.
         """
         try:
             plt.figure(figsize=(8, max(4, len(df) * 0.5 + 2)))
@@ -310,95 +156,238 @@ class DataVisualizer:
             plt.title('Performance Metrics Heatmap')
             plt.tight_layout()
 
-            self._save_plot('metrics_heatmap', 'all_models')
+            out_path = self.output_manager.get_path("reports", "visualizations", "metrics_heatmap.png")
+            plt.savefig(out_path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"Saved heatmap: {out_path}")
+
         except Exception as e:
             logging.error(f"Error creating heatmap: {e}")
 
-    def _create_radar_plot(self, df: pd.DataFrame, metrics: List[str]):
+    def plot_roc_curve(self, model, X_test, y_test, model_name: str):
         """
-        Creates a radar/spider plot for selected metrics across models.
-        """
-        try:
-            angles = np.linspace(0, 2 * np.pi, len(metrics), endpoint=False)
-            angles = np.concatenate((angles, [angles[0]]))
-
-            fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='polar'))
-
-            for idx, row in df.iterrows():
-                values = [row[m] for m in metrics]
-                values = np.concatenate((values, [values[0]]))
-                ax.plot(angles, values, 'o-', linewidth=2,
-                        label=row['Model'], color=self.colors[idx % len(self.colors)])
-                ax.fill(angles, values, alpha=0.25,
-                        color=self.colors[idx % len(self.colors)])
-
-            ax.set_xticks(angles[:-1])
-            ax.set_xticklabels(metrics)
-            ax.set_title('Model Performance (Radar Plot)')
-            ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
-            plt.tight_layout()
-
-            self._save_plot('radar_plot', 'all_models')
-        except Exception as e:
-            logging.error(f"Error creating radar plot: {e}")
-
-    def _save_plot(self, plot_type: str, model_name: str):
-        """
-        Saves the current figure with a standardized naming scheme.
+        Plots and saves ROC curve if predict_proba is available.
         """
         try:
-            path = self.output_manager.get_path(
-                "reports", "visualizations", f"{model_name}_{plot_type}.png"
-            )
-            plt.savefig(path, bbox_inches='tight', dpi=300)
-            plt.close()
-            logging.info(f"Plot saved: {path}")
-        except Exception as e:
-            logging.error(f"Error saving plot {plot_type} for {model_name}: {e}")
-
-    def _save_model_summary(self):
-        """
-        Exports the current model_results to CSV and TXT summaries.
-        """
-        try:
-            if not self.model_results:
+            if not hasattr(model, 'predict_proba'):
+                logging.warning(f"Model {model_name} has no predict_proba, skipping ROC.")
                 return
 
-            df = pd.DataFrame(self.model_results)
+            y_prob = model.predict_proba(X_test)[:, 1]
+            fpr, tpr, _ = roc_curve(y_test, y_prob, pos_label=1)
+            roc_auc = auc(fpr, tpr)
 
-            # CSV
-            csv_path = self.output_manager.get_path("reports", "summaries", "model_comparison.csv")
-            df.to_csv(csv_path, index=False)
+            plt.figure(figsize=self.plot_style['figure.figsize'])
+            plt.plot(fpr, tpr, label=f'ROC (AUC={roc_auc:.2f})')
+            plt.plot([0,1], [0,1], 'k--', alpha=0.7)
+            plt.xlim([0,1])
+            plt.ylim([0,1])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title(f'ROC Curve - {model_name}')
+            plt.legend()
 
-            # TXT
-            txt_path = self.output_manager.get_path("reports", "summaries", "model_comparison.txt")
-            with open(txt_path, 'w') as f:
-                f.write("=== Model Performance Summary ===\n\n")
-                f.write(f"Analysis Date: {pd.Timestamp.now()}\n\n")
+            out_path = self.output_manager.get_path("reports", "visualizations", f"{model_name}_roc_curve.png")
+            plt.savefig(out_path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"ROC curve saved: {out_path}")
 
-                for _, row in df.iterrows():
-                    model_name = row['Model']
-                    f.write(f"Model: {model_name}\n")
-                    f.write("-" * (len(model_name) + 7) + "\n")
-                    for metric in ['Accuracy', 'F1-Score', 'Precision', 'Recall', 'ROC AUC']:
-                        val = row.get(metric, None)
-                        if val is not None and not pd.isnull(val):
-                            f.write(f"{metric:<15}: {val:.4f}\n")
-                    f.write("\n")
-
-                # summary stats
-                stats_metrics = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
-                f.write("\nSummary Statistics:\n")
-                f.write("-" * 20 + "\n")
-                for metric in stats_metrics:
-                    series = df[metric].dropna()
-                    if not series.empty:
-                        f.write(f"\n{metric}:\n")
-                        f.write(f"  Mean: {series.mean():.4f}\n")
-                        f.write(f"  Std:  {series.std():.4f}\n")
-                        f.write(f"  Max:  {series.max():.4f} ({df.loc[series.idxmax(), 'Model']})\n")
-                        f.write(f"  Min:  {series.min():.4f} ({df.loc[series.idxmin(), 'Model']})\n")
-
-            logging.info("Model summary saved successfully.")
         except Exception as e:
-            logging.error(f"Error saving model summary: {e}")
+            logging.error(f"Error plotting ROC curve for {model_name}: {e}")
+
+    def plot_precision_recall_curve(self, model, X_test, y_test, model_name: str):
+        """
+        Plots Precision-Recall curve if predict_proba is available.
+        """
+        try:
+            if not hasattr(model, 'predict_proba'):
+                logging.warning(f"Model {model_name} has no predict_proba, skipping PR curve.")
+                return
+
+            y_prob = model.predict_proba(X_test)[:, 1]
+            precision, recall, _ = precision_recall_curve(y_test, y_prob, pos_label=1)
+            pr_auc = auc(recall, precision)
+
+            plt.figure(figsize=self.plot_style['figure.figsize'])
+            plt.plot(recall, precision, label=f'PR AUC={pr_auc:.2f}')
+            plt.xlabel('Recall')
+            plt.ylabel('Precision')
+            plt.title(f'Precision-Recall Curve - {model_name}')
+            plt.legend()
+
+            out_path = self.output_manager.get_path("reports", "visualizations", f"{model_name}_pr_curve.png")
+            plt.savefig(out_path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"PR curve saved: {out_path}")
+
+        except Exception as e:
+            logging.error(f"Error plotting PR curve for {model_name}: {e}")
+
+    def plot_confusion_matrix(self, model_name: str, y_true, y_pred, labels: Optional[List[str]] = None):
+        """
+        Creates a confusion matrix plot for predicted vs. actual.
+        """
+        try:
+            cm = confusion_matrix(y_true, y_pred)
+            plt.figure(figsize=(8,6))
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+            plt.title(f'Confusion Matrix - {model_name}')
+            plt.ylabel('True Label')
+            plt.xlabel('Predicted Label')
+
+            if labels and len(labels) == cm.shape[0]:
+                plt.xticks(np.arange(len(labels)) + 0.5, labels, rotation=45, ha='right')
+                plt.yticks(np.arange(len(labels)) + 0.5, labels)
+
+            plt.tight_layout()
+            out_path = self.output_manager.get_path("reports", "visualizations", f"{model_name}_confusion_matrix.png")
+            plt.savefig(out_path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"Confusion matrix saved: {out_path}")
+
+        except Exception as e:
+            logging.error(f"Error plotting confusion matrix: {e}")
+
+    def plot_model_comparison(self, metrics_list: List[tuple]):
+        """
+        Creates a bar chart comparing model accuracies (or other metrics).
+        metrics_list: e.g. [("RF", 0.92), ("SVC", 0.88), ...]
+        """
+        if not metrics_list:
+            logging.warning("No metrics for plot_model_comparison.")
+            return
+
+        try:
+            model_names = [m[0] for m in metrics_list]
+            accuracies = [m[1] for m in metrics_list]
+
+            plt.figure(figsize=self.plot_style['figure.figsize'])
+            bars = plt.bar(model_names, accuracies, color='skyblue')
+            plt.xlabel("Models")
+            plt.ylabel("Accuracy")
+            plt.title("Model Comparison by Accuracy")
+
+            for bar, acc in zip(bars, accuracies):
+                plt.text(
+                    bar.get_x() + bar.get_width()/2.0,
+                    bar.get_height(),
+                    f"{acc:.3f}",
+                    ha='center', va='bottom'
+                )
+
+            plt.ylim([0,1])
+            plt.tight_layout()
+
+            out_path = self.output_manager.get_path("reports", "visualizations", "model_comparison_accuracy.png")
+            plt.savefig(out_path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"Model comparison chart saved: {out_path}")
+
+        except Exception as e:
+            logging.error(f"Error in plot_model_comparison: {e}")
+
+    def plot_pcap_size_distribution(self, pcap_sizes: Dict[str, List[int]]):
+        """
+        Boxplot of PCAP file sizes per category (e.g. 'proxy', 'normal').
+        """
+        try:
+            plot_data = []
+            for label, sizes in pcap_sizes.items():
+                for s in sizes:
+                    plot_data.append({"Category": label, "SizeBytes": s})
+
+            if not plot_data:
+                logging.warning("No PCAP sizes to plot.")
+                return
+
+            df = pd.DataFrame(plot_data)
+            plt.figure(figsize=self.plot_style['figure.figsize'])
+            sns.boxplot(x="Category", y="SizeBytes", data=df)
+            plt.title("PCAP Size Distribution")
+            plt.ylabel("File Size (bytes)")
+            plt.tight_layout()
+
+            out_path = self.output_manager.get_path("reports", "visualizations", "pcap_size_distribution.png")
+            plt.savefig(out_path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"PCAP size distribution saved: {out_path}")
+        except Exception as e:
+            logging.error(f"Error plotting PCAP size distribution: {e}")
+
+    def safe_plot_feature_importance(self, pipeline, feature_names: List[str], model_name: str):
+        """
+        Safely plots feature importances for tree-based models, avoiding
+        'only integer scalar arrays can be converted to a scalar index' errors.
+
+        Steps:
+          1) Check if final_model has feature_importances_.
+          2) Convert to 1D array if 2D.
+          3) Make sure we have same length as feature_names.
+          4) Sort by importances (argsort).
+          5) Plot a barh plot.
+        """
+        import logging
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        # 1) final_model
+        try:
+            final_model = pipeline["model"]
+        except Exception as ex:
+            logging.error(f"Could not access pipeline['model']: {ex}")
+            return
+
+        if not hasattr(final_model, "feature_importances_"):
+            logging.warning(f"Model '{model_name}' has no feature_importances_. Skipping.")
+            return
+
+        importances = final_model.feature_importances_
+
+        # Debug logging
+        logging.debug(f"[{model_name}] importances type={type(importances)}, shape={getattr(importances, 'shape', None)}")
+        logging.debug(f"[{model_name}] feature_names type={type(feature_names)}, length={len(feature_names)}")
+
+        # 2) If importances is 2D => average across axis=0 or pick first row
+        if importances.ndim > 1:
+            logging.warning(f"[{model_name}] importances is {importances.shape}-dim. Taking mean(axis=0).")
+            importances = importances.mean(axis=0)
+
+        importances = np.array(importances, dtype=np.float64)
+
+        # Convert feature_names to a standard list
+        feature_names_list = list(feature_names)  # ensure it's a normal Python list
+
+        # 3) Check length
+        if len(importances) != len(feature_names_list):
+            logging.error(
+                f"[{model_name}] mismatch: len(importances)={len(importances)} vs. "
+                f"len(feature_names)={len(feature_names_list)}. Skipping plot."
+            )
+            return
+
+        # additional numeric check
+        if not np.issubdtype(importances.dtype, np.number):
+            logging.warning(f"[{model_name}] importances are not numeric. dtype={importances.dtype}. Skipping plot.")
+            return
+
+        # 4) Sort
+        sorted_idx = np.argsort(importances).astype(int)
+        sorted_importances = importances[sorted_idx]
+        sorted_names = [feature_names_list[int(i)] for i in sorted_idx]
+
+        # 5) barh
+        try:
+            plt.figure(figsize=(10, max(4, len(feature_names_list) * 0.3)))
+            plt.barh(sorted_names, sorted_importances, color=self.colors[0])
+            plt.xlabel("Importance")
+            plt.ylabel("Feature")
+            plt.title(f"Feature Importances - {model_name}")
+            plt.tight_layout()
+
+            out_path = self.output_manager.get_path("reports", "visualizations", f"{model_name}_feature_importance.png")
+            plt.savefig(out_path, bbox_inches='tight', dpi=300)
+            plt.close()
+            logging.info(f"Feature importance plot saved: {out_path}")
+
+        except Exception as e:
+            logging.error(f"Error creating feature importance plot for {model_name}: {e}")

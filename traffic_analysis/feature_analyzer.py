@@ -22,6 +22,7 @@ plt.rcParams.update({
 })
 sns.set_style('whitegrid')
 
+
 class FeatureAnalyzer:
     """
     Analyzes features: groups, correlation, RF importance, mutual info.
@@ -127,9 +128,10 @@ class FeatureAnalyzer:
 
     def _rf_importance(self, X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
         try:
-            if X.empty: return pd.DataFrame()
+            if X.empty:
+                return pd.DataFrame()
             rf = RandomForestClassifier(n_estimators=50, random_state=42)
-            rf.fit(X,y)
+            rf.fit(X, y)
             df_imp = pd.DataFrame({
                 'feature': X.columns,
                 'importance': rf.feature_importances_
@@ -141,7 +143,8 @@ class FeatureAnalyzer:
 
     def _mutual_info(self, X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
         try:
-            if X.empty: return pd.DataFrame()
+            if X.empty:
+                return pd.DataFrame()
             mis = mutual_info_classif(X, y, random_state=42)
             df_mi = pd.DataFrame({
                 'feature': X.columns,
@@ -162,25 +165,60 @@ class FeatureAnalyzer:
                 self._save_fig("features","correlations","correlation_heatmap.png")
 
             if not rf_imp.empty:
-                self._plot_bar(rf_imp, 'importance', 'feature',
-                               "RF Feature Importance",
-                               "feature_importance.png")
+                self._plot_bar(
+                    rf_imp,
+                    xcol='importance',
+                    ycol='feature',
+                    title="RF Feature Importance",
+                    fname="feature_importance.png"
+                )
 
             if not mi.empty:
-                self._plot_bar(mi, 'mutual_info', 'feature',
-                               "Mutual Info",
-                               "mutual_information.png")
+                self._plot_bar(
+                    mi,
+                    xcol='mutual_info',
+                    ycol='feature',
+                    title="Mutual Info",
+                    fname="mutual_information.png"
+                )
         except Exception as e:
             logging.error(f"Plot error: {e}")
 
-    def _plot_bar(self, df, xcol, ycol, title, fname):
-        plt.figure(figsize=(10, min(15, len(df)*0.4)))
-        sns.barplot(data=df, x=xcol, y=ycol)
-        plt.title(title)
-        plt.tight_layout()
-        self._save_fig("features","importance",fname)
+    def _plot_bar(self, df: pd.DataFrame, xcol: str, ycol: str, title: str, fname: str):
+        """
+        Creates a bar plot with additional numeric checks.
+        """
+        try:
+            if df.empty:
+                logging.warning("DataFrame is empty. Skipping bar plot.")
+                return
 
-    def _save_fig(self, cat, subcat, fname):
+            # Check if xcol in df and numeric
+            if xcol not in df.columns:
+                logging.warning(f"Column '{xcol}' not found in DataFrame. Skipping bar plot.")
+                return
+            if not np.issubdtype(df[xcol].dtype, np.number):
+                logging.warning(f"Column '{xcol}' not numeric. dtype={df[xcol].dtype}. Skipping bar plot.")
+                return
+
+            # ycol can be string (feature name)
+            if ycol not in df.columns:
+                logging.warning(f"Column '{ycol}' not found in DataFrame. Skipping bar plot.")
+                return
+
+            # Sort by xcol descending
+            df_sorted = df.sort_values(by=xcol, ascending=False)
+
+            plt.figure(figsize=(10, min(15, len(df_sorted)*0.4)))
+            sns.barplot(data=df_sorted, x=xcol, y=ycol, color='skyblue')
+            plt.title(title)
+            plt.tight_layout()
+            self._save_fig("features", "importance", fname)
+        except Exception as e:
+            logging.error(f"Error creating bar plot: {e}")
+
+    def _save_fig(self, cat: str, subcat: str, fname: str):
+        """Saves current figure."""
         try:
             path = self.output_manager.get_path(cat, subcat, fname)
             plt.savefig(path, dpi=300, bbox_inches='tight')
@@ -190,6 +228,7 @@ class FeatureAnalyzer:
             logging.error(f"Save fig error: {e}")
 
     def _save_group_stats(self, gname, stats):
+        """Saves stats about group features."""
         try:
             feats = stats.get('importances', {})
             df = pd.DataFrame(list(feats.items()), columns=['feature','importance'])
@@ -199,22 +238,27 @@ class FeatureAnalyzer:
             logging.error(f"Group stats error: {e}")
 
     def _save_correlations(self, corr: pd.DataFrame):
+        """Saves correlation matrix to CSV if not empty."""
         try:
-            if corr.empty: return
+            if corr.empty:
+                return
             p = self.output_manager.get_path("features","correlations","correlation_matrix.csv")
             corr.to_csv(p)
         except Exception as e:
             logging.error(f"Save corr error: {e}")
 
     def _save_importances(self, df: pd.DataFrame, fname: str, score_col='importance'):
+        """Saves importance or mutual_info to CSV if not empty."""
         try:
-            if df.empty: return
-            p = self.output_manager.get_path("features","importance",fname)
+            if df.empty:
+                return
+            p = self.output_manager.get_path("features","importance", fname)
             df.to_csv(p, index=False)
         except Exception as e:
             logging.error(f"Save importances error: {e}")
 
     def _save_summary(self):
+        """Saves textual summary of the analysis."""
         try:
             p = self.output_manager.get_path("features","summaries","complete_analysis.txt")
             with open(p, 'w') as f:
@@ -226,7 +270,7 @@ class FeatureAnalyzer:
                     f.write(f"  accuracy: {s['accuracy']:.4f}\n")
                     top3 = sorted(s['importances'].items(), key=lambda x: x[1], reverse=True)[:3]
                     f.write("  top3:\n")
-                    for a,b in top3:
+                    for a, b in top3:
                         f.write(f"    {a}: {b:.4f}\n")
 
                 rf_df = self.results.get('feature_importance', pd.DataFrame())

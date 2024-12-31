@@ -1,4 +1,5 @@
 import matplotlib
+
 matplotlib.use('Agg')  # Non-interactive backend
 import shap
 import matplotlib.pyplot as plt
@@ -181,10 +182,10 @@ class SHAPAnalyzer:
         try:
             if self.shap_values is None:
                 return
-            self._plot_summary(X)             # Default (dot) summary plot
-            self._plot_beeswarm(X)            # BeeSwarm = dot-plot (similar to summary, but separate if we like)
-            self._plot_summary_bar(X)         # Bar-Plot summary
-            self._plot_mean_abs_importance(X) # Mean absolute shap importance
+            self._plot_summary(X)  # Default (dot) summary plot
+            self._plot_beeswarm(X)  # BeeSwarm = dot-plot
+            self._plot_summary_bar(X)  # Bar-Plot summary
+            self._plot_mean_abs_importance(X)  # Mean absolute shap importance
         except Exception as e:
             logging.error(f"Error creating visualizations: {str(e)}")
 
@@ -195,8 +196,9 @@ class SHAPAnalyzer:
         try:
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
-                self.shap_values, X,
-                plot_type="dot",  # Dot-plot, a.k.a. beeswarm
+                self.shap_values,
+                X,
+                plot_type="dot",
                 max_display=self.max_display,
                 show=False
             )
@@ -204,23 +206,24 @@ class SHAPAnalyzer:
             path = self.output_manager.get_path("models", "shap", "summary_plot.png")
             plt.savefig(path, bbox_inches='tight', dpi=300)
             plt.close()
-            logging.info(f"SHAP summary (dot) plot saved: {path}")
+            logging.info(f"SHAP summary plot saved: {path}")
         except Exception as e:
             logging.error(f"Error creating SHAP summary plot: {str(e)}")
 
     def _plot_beeswarm(self, X):
         """
-        Alternative beeswarm plot (just an example, you can decide if you really need a second one).
+        Alternative beeswarm plot.
         """
         try:
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
-                self.shap_values, X,
-                plot_type="dot",  # again, dot => beeswarm
+                self.shap_values,
+                X,
+                plot_type="dot",
                 max_display=self.max_display,
                 show=False
             )
-            plt.title(f"{self.model_name} - Alternate Beeswarm")
+            plt.title(f"{self.model_name} - SHAP Beeswarm Plot")
             path = self.output_manager.get_path("models", "shap", "beeswarm_plot.png")
             plt.savefig(path, bbox_inches='tight', dpi=300)
             plt.close()
@@ -235,7 +238,8 @@ class SHAPAnalyzer:
         try:
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
-                self.shap_values, X,
+                self.shap_values,
+                X,
                 plot_type="bar",
                 max_display=self.max_display,
                 show=False
@@ -250,36 +254,45 @@ class SHAPAnalyzer:
 
     def _plot_mean_abs_importance(self, X):
         """
-        Creates a simple bar chart of mean absolute shap values (user-defined).
+        Creates a bar chart of mean absolute SHAP values.
         """
         try:
-            abs_shap = np.abs(self.shap_values).mean(axis=0)
-            features_count = len(abs_shap)
+            # Convert shap_values to numpy array if it isn't already
+            shap_values_array = np.array(self.shap_values)
 
-            # Sort by descending mean(|SHAP|)
-            sorted_idx = np.argsort(abs_shap)[::-1]
+            # Calculate mean absolute SHAP values
+            mean_abs_shap = np.abs(shap_values_array).mean(axis=0)
 
+            # Get feature names
             if isinstance(X, pd.DataFrame):
-                feature_names = X.columns
+                feature_names = X.columns.tolist()
             else:
-                feature_names = [f"feature_{i}" for i in range(features_count)]
+                feature_names = [f"feature_{i}" for i in range(shap_values_array.shape[1])]
 
-            sorted_feature_names = feature_names[sorted_idx]
-            sorted_values = abs_shap[sorted_idx]
+            # Create DataFrame for sorting
+            importance_df = pd.DataFrame({
+                'feature': feature_names,
+                'importance': mean_abs_shap
+            })
+
+            # Sort by importance
+            importance_df = importance_df.sort_values('importance', ascending=True).reset_index(drop=True)
 
             plt.figure(figsize=(12, 8))
-            plt.bar(range(features_count), sorted_values, color='skyblue')
-            plt.xticks(range(features_count), sorted_feature_names, rotation=45, ha='right')
-            plt.xlabel("Features")
-            plt.ylabel("Mean(|SHAP value|)")
-            plt.title(f"{self.model_name} - SHAP Feature Importance (Mean Abs)")
-            plt.tight_layout()
+            plt.barh(range(len(importance_df)), importance_df['importance'])
+            plt.yticks(range(len(importance_df)), importance_df['feature'])
+            plt.xlabel('Mean |SHAP value|')
+            plt.title(f"{self.model_name} - Feature Importance")
 
             plot_path = self.output_manager.get_path("models", "shap", "shap_feature_importance_meanabs.png")
             plt.savefig(plot_path, bbox_inches='tight', dpi=300)
             plt.close()
-            logging.info(f"SHAP mean abs feature importance plot saved: {plot_path}")
 
+            # Save importance values to CSV
+            csv_path = self.output_manager.get_path("models", "shap", "feature_importance.csv")
+            importance_df.to_csv(csv_path, index=False)
+
+            logging.info(f"Feature importance plot and CSV saved")
         except Exception as e:
             logging.error(f"Error creating feature importance plot: {str(e)}")
 
@@ -309,33 +322,41 @@ class SHAPAnalyzer:
 
     def _save_analysis_results(self, X):
         """
-        Saves shap_values and mean absolute importance as CSV files.
+        Saves SHAP values and feature importance to CSV files.
         """
         try:
-            shap_values_path = self.output_manager.get_path("models", "shap", "shap_values.csv")
-
+            # Save SHAP values with appropriate column names
             if isinstance(X, pd.DataFrame):
-                shap_df = pd.DataFrame(self.shap_values, columns=X.columns)
+                shap_df = pd.DataFrame(
+                    self.shap_values,
+                    columns=X.columns
+                )
             else:
-                shap_df = pd.DataFrame(self.shap_values)
+                shap_df = pd.DataFrame(
+                    self.shap_values,
+                    columns=[f"feature_{i}" for i in range(X.shape[1])]
+                )
 
-            shap_df.to_csv(shap_values_path, index=False)
-            logging.info(f"SHAP values saved: {shap_values_path}")
+            shap_path = self.output_manager.get_path("models", "shap", "shap_values.csv")
+            shap_df.to_csv(shap_path, index=False)
 
-            abs_shap = np.abs(self.shap_values).mean(axis=0)
+            # Calculate and save mean absolute SHAP values
+            mean_abs_shap = np.abs(self.shap_values).mean(axis=0)
+
             if isinstance(X, pd.DataFrame):
                 feat_names = X.columns
             else:
-                feat_names = [f"feature_{i}" for i in range(len(abs_shap))]
+                feat_names = [f"feature_{i}" for i in range(len(mean_abs_shap))]
 
             importance_df = pd.DataFrame({
                 'feature': feat_names,
-                'importance': abs_shap
+                'importance': mean_abs_shap
             }).sort_values('importance', ascending=False)
 
             importance_path = self.output_manager.get_path("models", "shap", "shap_feature_importance.csv")
             importance_df.to_csv(importance_path, index=False)
-            logging.info(f"SHAP-based feature importance saved: {importance_path}")
+
+            logging.info("SHAP analysis results saved to CSV files")
 
         except Exception as e:
             logging.error(f"Error saving SHAP analysis results: {str(e)}")

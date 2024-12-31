@@ -29,15 +29,14 @@ class ScikitLearnTrafficClassifier:
         gridsearch_scoring: str = "accuracy"
     ):
         """
-        Args:
-            model: scikit-learn classifier
-            output_manager: handles output paths
-            data_visualizer: for optional plots
-            test_size: fraction for test split
-            random_state: random seed
-            cv_folds: folds in cross-validation
-            param_grid: hyperparams for GridSearch
-            gridsearch_scoring: metric for GridSearch
+        model: scikit-learn classifier
+        output_manager: handles output paths
+        data_visualizer: for optional plots
+        test_size: fraction for test split
+        random_state: random seed
+        cv_folds: cross-val folds
+        param_grid: hyperparams for GridSearch
+        gridsearch_scoring: scoring metric for GridSearch
         """
         self.model = model
         self.output_manager = output_manager
@@ -59,11 +58,12 @@ class ScikitLearnTrafficClassifier:
 
         Steps:
           1) Validate input
-          2) Split into X/y
+          2) Split X/y
           3) Build pipeline [Scaler -> model]
-          4) Optional GridSearch
+          4) Optional GridSearchCV
           5) Predict + classification report
           6) Return metrics
+          7) Save GridSearch results if param_grid
         """
         try:
             # 1) Validate input
@@ -104,6 +104,7 @@ class ScikitLearnTrafficClassifier:
                     logging.error(f"Column '{col}' not numeric.")
                     return {}
 
+            # Train/test split
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y,
                 test_size=self.test_size,
@@ -129,11 +130,27 @@ class ScikitLearnTrafficClassifier:
                     verbose=1
                 )
                 grid.fit(X_train, y_train)
+
                 self.pipeline = grid.best_estimator_
                 best_params = grid.best_params_
                 best_score = grid.best_score_
+
                 logging.info(f"Best params: {best_params}")
                 logging.info(f"Best CV score={best_score:.4f}")
+
+                # Save GridSearch results
+                model_type = type(self.model).__name__
+                cv_results_df = pd.DataFrame(grid.cv_results_)
+                cv_csv_path = self.output_manager.get_path("training", "gridsearch", f"{model_type}_cv_results.csv")
+                cv_results_df.to_csv(cv_csv_path, index=False)
+                logging.info(f"GridSearch results saved to: {cv_csv_path}")
+
+                best_params_path = self.output_manager.get_path("training", "gridsearch", f"{model_type}_best_params.txt")
+                with open(best_params_path, "w") as f:
+                    f.write("Best Params:\n")
+                    f.write(str(best_params) + "\n")
+                    f.write(f"Best Score: {best_score:.4f}\n")
+
             else:
                 logging.info("No param_grid provided; fitting directly.")
                 pipeline.fit(X_train, y_train)
@@ -154,8 +171,9 @@ class ScikitLearnTrafficClassifier:
             if acc is not None:
                 logging.info(f"Test Accuracy={acc:.3f}")
             else:
-                logging.info("No accuracy in classification_report.")
+                logging.info("No accuracy reported in classification_report.")
 
+            # 6) Return metrics
             return metrics
 
         except Exception as e:
