@@ -200,22 +200,27 @@ class TrafficAnalyzer:
                 else:
                     logging.warning(f"No accuracy reported for {name}.")
 
-                # 6) SHAP analysis if predict_proba
+                # 6) SHAP analysis if predict_proba is available
                 best_pipeline = classifier.best_estimator_
                 if best_pipeline and hasattr(best_pipeline["model"], 'predict_proba'):
-                    # Plot ROC curve
-                    # We use X_test and y_test from the classifier
-                    # If pipeline has a scaler, apply it
+                    # -------------- WICHTIGER FIX FÜR FEATURE-NAMEN --------------
+                    # Erstelle ein DataFrame aus dem skalierten Array,
+                    # damit SHAP echte Spaltennamen sieht (statt "feature_0", "feature_1", etc.)
                     X_test_scaled = best_pipeline["scaler"].transform(classifier.X_test)
+                    X_test_scaled_df = pd.DataFrame(
+                        X_test_scaled,
+                        columns=classifier.X_test.columns
+                    )
                     y_test = classifier.y_test
+
+                    # ROC Curve
                     self.data_visualizer.plot_roc_curve(
                         model=best_pipeline["model"],
                         X_test=X_test_scaled,
                         y_test=y_test,
                         model_name=name
                     )
-
-                    # Optional: plot PR curve
+                    # Precision-Recall
                     self.data_visualizer.plot_precision_recall_curve(
                         model=best_pipeline["model"],
                         X_test=X_test_scaled,
@@ -223,14 +228,14 @@ class TrafficAnalyzer:
                         model_name=name
                     )
 
-                    # SHAP
+                    # SHAP mit DataFrame aufrufen:
                     shap_analyzer = SHAPAnalyzer(
                         best_pipeline["model"],
                         self.output_manager,
                         max_display=10,
                         max_samples=50
                     )
-                    shap_analyzer.explain_global(X_test_scaled)
+                    shap_analyzer.explain_global(X_test_scaled_df)
                 else:
                     logging.info(f"Skipping SHAP & ROC for {name} (no predict_proba).")
 
@@ -285,8 +290,8 @@ class TrafficAnalyzer:
 def main():
     """Example usage with static paths."""
     try:
-        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/shadowsocks/shadowsocks_traffic_20_sec_selenium_only_port_8388_500_aes_128_12-28"
-        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/regular_selenium_traffic_on_port_443_20s_500_12-31"
+        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/test/shadow_test"
+        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/test/PROTON_test"
         results_dir = "/home/gino/PycharmProjects/myenv/ba/results_training"
 
         analyzer = TrafficAnalyzer(proxy_dir, normal_dir, results_dir)

@@ -1,5 +1,6 @@
-import matplotlib
+# file: shap_analyzer.py
 
+import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import shap
 import matplotlib.pyplot as plt
@@ -18,10 +19,18 @@ class SHAPAnalyzer:
     """
 
     def __init__(self, model, output_manager, max_display=20, max_samples=500):
+        """
+        Args:
+            model: The trained model (e.g., RandomForestClassifier instance).
+            output_manager: Manages file paths and directories.
+            max_display: Max number of features to display in SHAP plots.
+            max_samples: If dataset is larger than this, it will be sampled.
+        """
         self.model = model
         self.output_manager = output_manager
         self.max_display = max_display
         self.max_samples = max_samples
+        # We'll grab the "class name" for the model name (e.g. "RandomForestClassifier").
         self.model_name = self.model.__class__.__name__
         self.explainer = None
         self.shap_values = None
@@ -34,7 +43,7 @@ class SHAPAnalyzer:
         """
         Main entry point for global SHAP analysis.
         X: Feature DataFrame
-        y: (Optional) target series if needed
+        y: Optional target Series if needed (often not strictly required).
         """
         try:
             logging.info(f"Starting global SHAP analysis for {self.model_name}...")
@@ -72,7 +81,7 @@ class SHAPAnalyzer:
 
     def explain_local(self, X, instance_indices):
         """
-        Provides local SHAP explanations for given instance indices.
+        Provides local SHAP explanations (force plots) for given instance indices.
         """
         try:
             if self.explainer is None:
@@ -150,10 +159,10 @@ class SHAPAnalyzer:
         """
         try:
             if self._is_tree_based_model():
-                logging.info("Using TreeExplainer for a tree-based model.")
+                logging.info(f"Using TreeExplainer for a tree-based model: {self.model_name}")
                 return shap.TreeExplainer(self.model)
             else:
-                logging.info("Using KernelExplainer (model is not tree-based).")
+                logging.info(f"Using KernelExplainer for a non-tree-based model: {self.model_name}")
                 background = shap.sample(X, 100) if len(X) > 100 else X
                 return shap.KernelExplainer(self.model.predict_proba, background)
         except Exception as e:
@@ -166,9 +175,11 @@ class SHAPAnalyzer:
         """
         try:
             shap_values = self.explainer.shap_values(X)
+            # For multiclass: shap_values is a list [class0, class1, class2...]
             if isinstance(shap_values, list) and len(shap_values) > 1:
-                shap_values = shap_values[1]
+                shap_values = shap_values[1]  # Typically choose class 1
             elif isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+                # In some cases, shap_values has shape (n_samples, n_features, n_classes)
                 shap_values = shap_values[:, :, 1]
             return shap_values
         except Exception as e:
@@ -177,33 +188,35 @@ class SHAPAnalyzer:
 
     def _create_visualizations(self, X):
         """
-        Calls the main plotting methods if shap_values is not None.
+        Creates the main SHAP plots (beeswarm, bar, etc.) if shap_values is not None.
         """
         try:
             if self.shap_values is None:
                 return
-            self._plot_summary(X)  # Default (dot) summary plot
-            self._plot_beeswarm(X)  # BeeSwarm = dot-plot
-            self._plot_summary_bar(X)  # Bar-Plot summary
-            self._plot_mean_abs_importance(X)  # Mean absolute shap importance
+            self._plot_summary(X)       # Summary (dot) plot
+            self._plot_beeswarm(X)      # Beeswarm plot
+            self._plot_summary_bar(X)   # Bar-plot summary
+            self._plot_mean_abs_importance(X)  # Mean absolute SHAP importance
         except Exception as e:
-            logging.error(f"Error creating visualizations: {str(e)}")
+            logging.error(f"Error creating SHAP plots: {str(e)}")
 
     def _plot_summary(self, X):
         """
-        Plots a SHAP summary plot (dot plot) and saves it (the "classic" beeswarm).
+        Plots a SHAP summary dot plot and saves it.
         """
         try:
             plt.figure(figsize=(12, 8))
+            # Make sure feature names are passed if X is a DataFrame
             shap.summary_plot(
                 self.shap_values,
-                X,
+                features=X,
+                feature_names=X.columns if hasattr(X, 'columns') else None,
                 plot_type="dot",
                 max_display=self.max_display,
                 show=False
             )
-            plt.title(f"{self.model_name} - SHAP Summary (Dot/Beeswarm)")
-            path = self.output_manager.get_path("models", "shap", "summary_plot.png")
+            plt.title(f"{self.model_name} - SHAP Summary Plot")
+            path = self.output_manager.get_path("models", self.model_name, "summary_plot.png")
             plt.savefig(path, bbox_inches='tight', dpi=300)
             plt.close()
             logging.info(f"SHAP summary plot saved: {path}")
@@ -212,19 +225,20 @@ class SHAPAnalyzer:
 
     def _plot_beeswarm(self, X):
         """
-        Alternative beeswarm plot.
+        Creates a beeswarm plot (which is essentially the same as the summary dot plot).
         """
         try:
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
                 self.shap_values,
-                X,
+                features=X,
+                feature_names=X.columns if hasattr(X, 'columns') else None,
                 plot_type="dot",
                 max_display=self.max_display,
                 show=False
             )
             plt.title(f"{self.model_name} - SHAP Beeswarm Plot")
-            path = self.output_manager.get_path("models", "shap", "beeswarm_plot.png")
+            path = self.output_manager.get_path("models", self.model_name, "beeswarm_plot.png")
             plt.savefig(path, bbox_inches='tight', dpi=300)
             plt.close()
             logging.info(f"SHAP beeswarm plot saved: {path}")
@@ -233,19 +247,20 @@ class SHAPAnalyzer:
 
     def _plot_summary_bar(self, X):
         """
-        Plots a SHAP summary plot in 'bar' mode and saves it.
+        Plots a SHAP summary bar plot and saves it.
         """
         try:
             plt.figure(figsize=(12, 8))
             shap.summary_plot(
                 self.shap_values,
-                X,
+                features=X,
+                feature_names=X.columns if hasattr(X, 'columns') else None,
                 plot_type="bar",
                 max_display=self.max_display,
                 show=False
             )
-            plt.title(f"{self.model_name} - SHAP Summary Bar")
-            path = self.output_manager.get_path("models", "shap", "summary_bar_plot.png")
+            plt.title(f"{self.model_name} - SHAP Summary Bar Plot")
+            path = self.output_manager.get_path("models", self.model_name, "summary_bar_plot.png")
             plt.savefig(path, bbox_inches='tight', dpi=300)
             plt.close()
             logging.info(f"SHAP bar summary plot saved: {path}")
@@ -254,10 +269,9 @@ class SHAPAnalyzer:
 
     def _plot_mean_abs_importance(self, X):
         """
-        Creates a bar chart of mean absolute SHAP values.
+        Creates a bar chart of mean absolute SHAP values for each feature.
         """
         try:
-            # Convert shap_values to numpy array if it isn't already
             shap_values_array = np.array(self.shap_values)
 
             # Calculate mean absolute SHAP values
@@ -269,32 +283,29 @@ class SHAPAnalyzer:
             else:
                 feature_names = [f"feature_{i}" for i in range(shap_values_array.shape[1])]
 
-            # Create DataFrame for sorting
+            # Create a DataFrame for sorting
             importance_df = pd.DataFrame({
                 'feature': feature_names,
                 'importance': mean_abs_shap
-            })
-
-            # Sort by importance
-            importance_df = importance_df.sort_values('importance', ascending=True).reset_index(drop=True)
+            }).sort_values('importance', ascending=True).reset_index(drop=True)
 
             plt.figure(figsize=(12, 8))
             plt.barh(range(len(importance_df)), importance_df['importance'])
             plt.yticks(range(len(importance_df)), importance_df['feature'])
-            plt.xlabel('Mean |SHAP value|')
-            plt.title(f"{self.model_name} - Feature Importance")
+            plt.xlabel('Mean |SHAP Value|')
+            plt.title(f"{self.model_name} - Mean Absolute SHAP Importance")
 
-            plot_path = self.output_manager.get_path("models", "shap", "shap_feature_importance_meanabs.png")
+            plot_path = self.output_manager.get_path("models", self.model_name, "shap_feature_importance_meanabs.png")
             plt.savefig(plot_path, bbox_inches='tight', dpi=300)
             plt.close()
 
-            # Save importance values to CSV
-            csv_path = self.output_manager.get_path("models", "shap", "feature_importance.csv")
+            # Save this importance data to CSV
+            csv_path = self.output_manager.get_path("models", self.model_name, "shap_feature_importance_meanabs.csv")
             importance_df.to_csv(csv_path, index=False)
 
-            logging.info(f"Feature importance plot and CSV saved")
+            logging.info(f"Mean absolute SHAP importance plot and CSV saved for {self.model_name}")
         except Exception as e:
-            logging.error(f"Error creating feature importance plot: {str(e)}")
+            logging.error(f"Error creating feature importance plot for SHAP: {str(e)}")
 
     def _plot_local_explanation(self, shap_values, instance, feature_names, idx):
         """
@@ -310,9 +321,13 @@ class SHAPAnalyzer:
                 show=False,
                 matplotlib=True
             )
-            plt.title(f"Local Explanation for Instance {idx}")
+            plt.title(f"{self.model_name} - Local Explanation (instance {idx})")
 
-            plot_path = self.output_manager.get_path("models", "shap", f"local_explanation_{idx}.png")
+            plot_path = self.output_manager.get_path(
+                "models",
+                self.model_name,
+                f"local_explanation_{idx}.png"
+            )
             plt.savefig(plot_path, bbox_inches='tight', dpi=300)
             plt.close()
             logging.info(f"Local SHAP explanation plot saved for instance {idx}: {plot_path}")
@@ -322,25 +337,27 @@ class SHAPAnalyzer:
 
     def _save_analysis_results(self, X):
         """
-        Saves SHAP values and feature importance to CSV files.
+        Saves SHAP values and a SHAP-based feature importance to CSV files,
+        including the model name in the filenames for clarity.
         """
         try:
-            # Save SHAP values with appropriate column names
+            # 1) Save raw SHAP values
             if isinstance(X, pd.DataFrame):
-                shap_df = pd.DataFrame(
-                    self.shap_values,
-                    columns=X.columns
-                )
+                shap_df = pd.DataFrame(self.shap_values, columns=X.columns)
             else:
                 shap_df = pd.DataFrame(
                     self.shap_values,
-                    columns=[f"feature_{i}" for i in range(X.shape[1])]
+                    columns=[f"feature_{i}" for i in range(self.shap_values.shape[1])]
                 )
 
-            shap_path = self.output_manager.get_path("models", "shap", "shap_values.csv")
+            shap_path = self.output_manager.get_path(
+                "models",
+                self.model_name,
+                f"{self.model_name}_shap_values.csv"
+            )
             shap_df.to_csv(shap_path, index=False)
 
-            # Calculate and save mean absolute SHAP values
+            # 2) Mean absolute SHAP
             mean_abs_shap = np.abs(self.shap_values).mean(axis=0)
 
             if isinstance(X, pd.DataFrame):
@@ -353,10 +370,14 @@ class SHAPAnalyzer:
                 'importance': mean_abs_shap
             }).sort_values('importance', ascending=False)
 
-            importance_path = self.output_manager.get_path("models", "shap", "shap_feature_importance.csv")
+            importance_path = self.output_manager.get_path(
+                "models",
+                self.model_name,
+                f"{self.model_name}_shap_feature_importance.csv"
+            )
             importance_df.to_csv(importance_path, index=False)
 
-            logging.info("SHAP analysis results saved to CSV files")
+            logging.info(f"SHAP analysis results saved to CSV for {self.model_name}")
 
         except Exception as e:
             logging.error(f"Error saving SHAP analysis results: {str(e)}")

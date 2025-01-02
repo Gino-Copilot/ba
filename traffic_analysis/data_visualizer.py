@@ -1,5 +1,3 @@
-# file: data_visualizer.py
-
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import logging
@@ -355,7 +353,7 @@ class DataVisualizer:
         importances = np.array(importances, dtype=np.float64)
 
         # Convert feature_names to a standard list
-        feature_names_list = list(feature_names)  # ensure it's a normal Python list
+        feature_names_list = list(feature_names)
 
         # 3) Check length
         if len(importances) != len(feature_names_list):
@@ -365,22 +363,18 @@ class DataVisualizer:
             )
             return
 
-        # additional numeric check
-        if not np.issubdtype(importances.dtype, np.number):
-            logging.warning(f"[{model_name}] importances are not numeric. dtype={importances.dtype}. Skipping plot.")
-            return
-
         # 4) Sort
         sorted_idx = np.argsort(importances).astype(int)
         sorted_importances = importances[sorted_idx]
         sorted_names = [feature_names_list[int(i)] for i in sorted_idx]
 
-        # 5) barh
+        # 5) barh plot
         try:
             plt.figure(figsize=(10, max(4, len(feature_names_list) * 0.3)))
             plt.barh(sorted_names, sorted_importances, color=self.colors[0])
             plt.xlabel("Importance")
-            plt.ylabel("Feature")
+            # Changed the ylabel for clarity:
+            plt.ylabel("Feature Name")
             plt.title(f"Feature Importances - {model_name}")
             plt.tight_layout()
 

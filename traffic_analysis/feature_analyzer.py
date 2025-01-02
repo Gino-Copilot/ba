@@ -1,5 +1,3 @@
-# file: feature_analyzer.py
-
 import logging
 import matplotlib
 matplotlib.use('Agg')
@@ -201,7 +199,7 @@ class FeatureAnalyzer:
                 logging.warning(f"Column '{xcol}' not numeric. dtype={df[xcol].dtype}. Skipping bar plot.")
                 return
 
-            # ycol can be string (feature name)
+            # ycol can be string (e.g., "feature")
             if ycol not in df.columns:
                 logging.warning(f"Column '{ycol}' not found in DataFrame. Skipping bar plot.")
                 return
@@ -212,6 +210,9 @@ class FeatureAnalyzer:
             plt.figure(figsize=(10, min(15, len(df_sorted)*0.4)))
             sns.barplot(data=df_sorted, x=xcol, y=ycol, color='skyblue')
             plt.title(title)
+            # Explicit axis labels for clarity:
+            plt.xlabel(xcol.capitalize())
+            plt.ylabel("Feature Name")
             plt.tight_layout()
             self._save_fig("features", "importance", fname)
         except Exception as e:

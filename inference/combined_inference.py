@@ -44,8 +44,8 @@ def setup_logging():
 
 def main():
     # 1) Define paths and files
-    pcap_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/unlabeled/20241229_203756"
-    model_path = "/home/gino/PycharmProjects/myenv/ba/models/RandomForest_selenium_20S_500.joblib"
+    pcap_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/reg_half_half_selen_youttube_traffic_port_443_20s_12-31"
+    model_path = "/home/gino/PycharmProjects/myenv/ba/results_training/2024-12-31_16-03__shadowsocks_traffic_20_sec_youtube_only_port_8388_500_aes_256_12-29_vs_regular_youtube_traffic_on_port_443_20s_500_12-28/20241231-160333/trained/best/BEST_RandomForestClassifier_pipeline.joblib"
     results_base_dir = "/home/gino/PycharmProjects/myenv/ba/inference_results"
 
     # Create folder name: "<dd-mm-yyyy>_<HH-mm>__combined_inference" (no seconds)
