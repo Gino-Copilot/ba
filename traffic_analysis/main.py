@@ -117,7 +117,7 @@ class TrafficAnalyzer:
             logging.info("Starting the traffic analysis pipeline...")
 
             # 1) Copy PCAPs
-            inspector = DataInspector(min_file_size_bytes=1000, min_flow_count=2)
+            inspector = DataInspector(min_file_size_bytes=10000, min_flow_count=5)
             inspector.copy_valid_pcaps(self.proxy_dir, self.clean_proxy_dir)
             inspector.copy_valid_pcaps(self.normal_dir, self.clean_normal_dir)
 
@@ -203,9 +203,9 @@ class TrafficAnalyzer:
                 # 6) SHAP analysis if predict_proba is available
                 best_pipeline = classifier.best_estimator_
                 if best_pipeline and hasattr(best_pipeline["model"], 'predict_proba'):
-                    # -------------- WICHTIGER FIX FÜR FEATURE-NAMEN --------------
-                    # Erstelle ein DataFrame aus dem skalierten Array,
-                    # damit SHAP echte Spaltennamen sieht (statt "feature_0", "feature_1", etc.)
+                    # -------------- Important FIX for FEATURE-NAMES --------------
+                    # Create a DataFrame from the scaled array,
+                    # SHAP can show corret column names(instead "feature_0", "feature_1", etc.)
                     X_test_scaled = best_pipeline["scaler"].transform(classifier.X_test)
                     X_test_scaled_df = pd.DataFrame(
                         X_test_scaled,
@@ -228,7 +228,7 @@ class TrafficAnalyzer:
                         model_name=name
                     )
 
-                    # SHAP mit DataFrame aufrufen:
+                    # SHAP call with DataFrame :
                     shap_analyzer = SHAPAnalyzer(
                         best_pipeline["model"],
                         self.output_manager,
@@ -290,8 +290,8 @@ class TrafficAnalyzer:
 def main():
     """Example usage with static paths."""
     try:
-        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/test/shadow_test"
-        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/test/PROTON_test"
+        proxy_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/shadowsocks_traffic"
+        normal_dir = "/home/gino/PycharmProjects/myenv/ba/traffic_data/non_shadowsocks_traffic"
         results_dir = "/home/gino/PycharmProjects/myenv/ba/results_training"
 
         analyzer = TrafficAnalyzer(proxy_dir, normal_dir, results_dir)

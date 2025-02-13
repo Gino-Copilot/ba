@@ -14,9 +14,7 @@ class TrafficCapture:
         interface="wlp0s20f3",
         port=443
     ):
-        """
-        Dieses Skript zeichnet nur den Traffic auf Port 443 auf.
-        """
+
         # Include date in folder name
         current_date = datetime.now().strftime("%m-%d")
         folder_name = f"{traffic_type}_{current_date}"
@@ -104,11 +102,12 @@ class TrafficCapture:
                 proc.kill()
 
 def main():
-    # Beispiel: Erfassen von 10 Dateien, jeweils 10 Sekunden lang, auf Port 443
+
+    
     traffic_capture = TrafficCapture(
-        traffic_type="regular_selenium_traffic_on_port_443_20s_500",
-        interval=20,
-        file_count=500,
+        traffic_type="mixed_traffic_not_trained_no_tunnel",
+        interval=5,
+        file_count=100,
         interface="wlp0s20f3",
         port=443
     )
